@@ -2,17 +2,17 @@
 |  SPELUNKY EXTENDED STATS  |
 +---------------------------+
 
-CRATES OPENED:      11
+CRATES OPENED:      13
 CHESTS OPENED:      4
 
-IDOLS GRABBED:      62
+IDOLS GRABBED:      85
 IDOLS CONVERTED:    8
 
-DAMSELS GRABBED:    628
+DAMSELS GRABBED:    641
 KISSES BOUGHT:      0
 DAMSELS BOUGHT:     1
-DAMSELS SAVED:      17
-DAMSELS KILLED:     138
+DAMSELS SAVED:      18
+DAMSELS KILLED:     139
 
 ITEMS BOUGHT:       0
 ITEMS STOLEN:       3
@@ -23,8 +23,8 @@ DICE GAMES LOST:    0
 
 LEVEL        DEATHS
 ------------+------------
- 1          | 349
- 2          | 18
+ 1          | 359
+ 2          | 19
  3          | 6
  4          | 9
  5          | 7
@@ -40,7 +40,7 @@ LEVEL        DEATHS
  15         | 1
  16         | 4
 ------------+------------
- TOTAL      | 419
+ TOTAL      | 430
 
 ENEMY        DEATHS
 ------------+------------
@@ -71,13 +71,13 @@ ENEMY        DEATHS
 
 MISC         DEATHS
 ------------+------------
+ ROCK       | 2
  ???        | 0
- ???        | 0
- CRUSHED    | 44
+ CRUSHED    | 45
  LONG FALL  | 34
- SPIKES     | 31
+ SPIKES     | 34
  ???        | 0
- ARROW TRAP | 31
+ ARROW TRAP | 32
  SPEAR TRAP | 2
  SMASH TRAP | 3
  ???        | 0
@@ -86,10 +86,10 @@ MISC         DEATHS
 
 ENEMY        KILLS
 ------------+------------
- BAT        | 92
- SNAKE      | 220
- SPIDER     | 59
- G. SPIDER  | 2
+ BAT        | 101
+ SNAKE      | 240
+ SPIDER     | 69
+ G. SPIDER  | 3
  CAVEMAN    | 4
  SKELETON   | 16
  ZOMBIE     | 7
@@ -110,4 +110,4 @@ ENEMY        KILLS
  ???        | 0
  OLMEC      | 1
 ------------+------------
- TOTAL      | 484
+ TOTAL      | 524

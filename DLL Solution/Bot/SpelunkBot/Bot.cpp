@@ -12,6 +12,7 @@
 #include "NotSoSolidSnake.h"
 #include "Indie.h"
 #include "FishBot.h"
+#include "DebugBot.h"
 #include <memory>
 
 std::unique_ptr<IBot> bot;
@@ -62,6 +63,8 @@ void CreateBot(double botSelector)
 		case 8:
 			bot = std::make_unique<FishBot>();
 			break;
+		case 9:
+			bot = std::make_unique<DebugBot>();
 		default:
 			break;
 	}
@@ -94,7 +97,7 @@ SPELUNKBOT_API double GetHoldingItem(void)
 }
 SPELUNKBOT_API double GetIsInAir(void)
 {
-	return bot->GetHasGoal();
+	return bot->GetHasGoal();//wtf?
 }
 SPELUNKBOT_API double GetIsJetpacking(void)
 {

@@ -192,6 +192,15 @@ GMEXPORT double SampleFunction(double a, double b)
 	return a * b;
 }
 
+GMEXPORT string TestFunction(double a)
+{
+	if (a == 1)
+		return "dupa";
+	else
+		return "zupa";
+	
+}
+
 /*
 	\todo Usage unknown
 
@@ -1151,7 +1160,7 @@ GMEXPORT double SaveDynamicObjectFilesDebug()
 			}
 			else
 			{
-				fileStream << 0;
+				fileStream << '#'; //mapFog[j][i];
 			}
 			fileStream << " ";
 		}
@@ -1244,6 +1253,32 @@ GMEXPORT double SaveSpiderwebsToFile()
 }
 
 /**
+* \brief DisplayLevelLayout displays the current level layout in a console.
+* moja
+* \note This function should not be changed or used when implementing a bot
+*/
+GMEXPORT double DisplayLevelLayout()
+{
+	for (int i = 0; i < Y_NODES; i++)
+	{
+		for (int j = 0; j < X_NODES; j++)
+		{
+			if (mapFog[j][i] == 0)
+			{
+				cout << spmap[j][i];
+			}
+			else
+			{
+				cout << mapFog[j][i];
+			}
+			cout << " ";
+		}
+		cout << "\n";
+	}
+	return 0;
+}
+
+/**
  * \brief SaveLevelLayoutToFile saves the current level layout into a text file.
  *
  * \note This function should not be changed or used when implementing a bot
@@ -1271,6 +1306,7 @@ GMEXPORT double SaveLevelLayoutToFile()
 	fileStream.close();
 	return 0;
 }
+
 
 #pragma endregion
 
@@ -1421,7 +1457,7 @@ GMEXPORT double CalculatePathFromXYtoXY(double x1, double y1, double x2, double 
 			openList.remove(current);
 			current->opened = false;
 
-			// Add the current point from the open list
+			// Add the current point to the closed list
 			closedList.push_back(current);
 			current->closed = true;
 
