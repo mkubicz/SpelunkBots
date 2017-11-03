@@ -75,6 +75,10 @@ int screenBottom;
 int screenWidth;
 int screenHeight;
 
+enum FACING
+{ LEFT = 0, RIGHT };
+bool spfacing;
+
 // hold arrays of each type of object in here 
 // means user can query the nearest object, or all of them
 // and if it is 0, c++ can safely return false
@@ -1862,4 +1866,36 @@ GMEXPORT double RecordStats(double val, char* stat)
 	}
 	return 1;
 }
+#pragma endregion
+
+#pragma region New Functions
+/**
+* \brief UpdateFacing Gets the information which way the spelunker is facing from the source code.
+*
+* @param facing tells which way the spelunker is facing - 18 for LEFT, 19 for RIGHT (they are kept in the game that way).
+*
+* \note This function should not be changed or used when implementing a bot
+*/
+GMEXPORT double UpdateFacing(double facing)
+{
+	spfacing = facing == 18 ? LEFT : RIGHT;
+	return 0;
+}
+
+/**
+* \brief IsFacingLeft Tells if the spelunker is facing left. To be used by the bot.
+*/
+GMEXPORT bool IsFacingLeft()
+{
+	return spfacing == LEFT;
+}
+
+/**
+* \brief IsFacingRight Tells if the spelunker is facing right. To be used by the bot.
+*/
+GMEXPORT bool IsFacingRight()
+{
+	return spfacing == RIGHT;
+}
+
 #pragma endregion

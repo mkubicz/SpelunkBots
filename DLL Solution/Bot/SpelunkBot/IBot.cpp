@@ -110,6 +110,8 @@ void IBot::InitialiseDLLFunctions()
 	IsNodePassable = (IsNodePassablePROC)GetProcAddress(spelunkbots_hModule, "IsNodePassable");
 	
 	DisplayLevelLayout = (DisplayLevelLayoutPROC)GetProcAddress(spelunkbots_hModule, "DisplayLevelLayout");
+	IsFacingLeft = (IsFacingLeftPROC)GetProcAddress(spelunkbots_hModule, "IsFacingLeft");
+	IsFacingRight = (IsFacingRightPROC)GetProcAddress(spelunkbots_hModule, "IsFacingRight");
 }
 
 void IBot::Reset()

@@ -31,6 +31,9 @@
     <Filter Include="Source Files\Bots\Examples">
       <UniqueIdentifier>{b7d69d58-d454-4f46-b67c-2c3be8c5ee54}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Bots\DebugBot">
+      <UniqueIdentifier>{d122897f-0968-48c3-9ec3-f4ebfd02ef35}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -114,7 +117,7 @@
       <Filter>Source Files\Bots\Examples</Filter>
     </ClCompile>
     <ClCompile Include="DebugBot.cpp">
-      <Filter>Source Files\Bots\Examples</Filter>
+      <Filter>Source Files\Bots\DebugBot</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

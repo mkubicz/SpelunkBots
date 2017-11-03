@@ -66,6 +66,8 @@ typedef double(__cdecl *IsCollectableInNodePROC)(double x, double y, double usin
 typedef double(__cdecl *IsNodePassablePROC)(double x, double y, double usingPixelCoords);
 
 typedef double(__cdecl *DisplayLevelLayoutPROC)();
+typedef bool(__cdecl *IsFacingLeftPROC)();
+typedef bool(__cdecl *IsFacingRightPROC)();
 
 #pragma endregion
 
@@ -172,6 +174,8 @@ public:
 	IsNodePassablePROC IsNodePassable;
 
 	DisplayLevelLayoutPROC DisplayLevelLayout;
+	IsFacingLeftPROC IsFacingLeft;
+	IsFacingRightPROC IsFacingRight;
 
 	inline double GetHasGoal(void)
 	{
