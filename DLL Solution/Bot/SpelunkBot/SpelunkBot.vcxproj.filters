@@ -34,6 +34,15 @@
     <Filter Include="Source Files\Bots\DebugBot">
       <UniqueIdentifier>{d122897f-0968-48c3-9ec3-f4ebfd02ef35}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Bots\DebugBot">
+      <UniqueIdentifier>{2aa42426-ed3a-4308-b12c-2887c1d0d597}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Bots\DebugBot\Actions">
+      <UniqueIdentifier>{7597cd5f-fb21-4c83-8091-3639b19671c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Bots\DebugBot\Actions">
+      <UniqueIdentifier>{e42125ae-c239-463e-9514-b12ce9037633}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -76,7 +85,19 @@
       <Filter>Header Files\Bots\Examples</Filter>
     </ClInclude>
     <ClInclude Include="DebugBot.h">
-      <Filter>Header Files\Bots\Examples</Filter>
+      <Filter>Header Files\Bots\DebugBot</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities.h">
+      <Filter>Header Files\Bots\DebugBot</Filter>
+    </ClInclude>
+    <ClInclude Include="CentralizeAction.h">
+      <Filter>Header Files\Bots\DebugBot\Actions</Filter>
+    </ClInclude>
+    <ClInclude Include="IMovementAction.h">
+      <Filter>Header Files\Bots\DebugBot\Actions</Filter>
+    </ClInclude>
+    <ClInclude Include="WalkAction.h">
+      <Filter>Header Files\Bots\DebugBot\Actions</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -118,6 +139,18 @@
     </ClCompile>
     <ClCompile Include="DebugBot.cpp">
       <Filter>Source Files\Bots\DebugBot</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities.cpp">
+      <Filter>Source Files\Bots\DebugBot</Filter>
+    </ClCompile>
+    <ClCompile Include="CentralizeAction.cpp">
+      <Filter>Source Files\Bots\DebugBot\Actions</Filter>
+    </ClCompile>
+    <ClCompile Include="IMovementAction.cpp">
+      <Filter>Source Files\Bots\DebugBot\Actions</Filter>
+    </ClCompile>
+    <ClCompile Include="WalkAction.cpp">
+      <Filter>Source Files\Bots\DebugBot\Actions</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

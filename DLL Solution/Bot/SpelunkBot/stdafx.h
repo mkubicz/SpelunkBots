@@ -17,6 +17,9 @@
 const int NODE_COORDS = 0;
 const int PIXEL_COORDS = 1;
 
+const int LEFT = 0;
+const int RIGHT = 1;
+
 const int Y_NODES = 34;
 const int X_NODES = 42;
 

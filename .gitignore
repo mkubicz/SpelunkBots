@@ -197,3 +197,5 @@ FakesAssemblies/
 *.db
 *.opendb
 Performance/
+*.lvl
+*.txt

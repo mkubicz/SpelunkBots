@@ -1,28 +1,18 @@
 #pragma once
 #include "IBot.h"
+#include "IMovementAction.h"
 
 
 class DebugBot : public IBot
 {
 public:
 	DebugBot();// { }
-	~DebugBot() { }
+	~DebugBot();// { }
 
-	enum ACTION 
-	{IDLE, CENTRALIZE, WALKRIGHT, WALKLEFT};
-
-	std::queue<ACTION> _actionsQ;
-	ACTION _currentAction = IDLE;
+	std::queue<IMovementAction*> _actionsQ;
 	bool _actionDone = false;
 
-	bool CloseToZero(double x);
-
-	bool Centralize();
-
-	bool _walkLeftInProgress = false;
-	double _targetPositionX;
-	bool WalkLeft(double pixels);
-
-
+	void ExecuteOrders(ordersStruct orders);
+	void ClearOrders();
 	void Update() override;
 };

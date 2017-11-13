@@ -1,97 +1,88 @@
 #include "stdafx.h"
 #include "DebugBot.h"
+#include "CentralizeAction.h"
+#include "WalkAction.h"
+
 
 DebugBot::DebugBot()
 {
-	_actionsQ.push(CENTRALIZE);
-	_actionsQ.push(WALKLEFT);
-	_actionsQ.push(CENTRALIZE);
-	_actionsQ.push(IDLE);
+	IMovementAction* a;
+	a = new WalkAction(this, LEFT, 4.65, NODE_COORDS);
+	_actionsQ.push(a);
+	a = new CentralizeAction(this);
+	_actionsQ.push(a);
+	a = new WalkAction(this, LEFT, 1, NODE_COORDS);
+	_actionsQ.push(a);
+	a = new CentralizeAction(this);
+	_actionsQ.push(a);	
+	a = new WalkAction(this, LEFT, 2.15, NODE_COORDS);
+	_actionsQ.push(a);
+	a = new CentralizeAction(this);
+	_actionsQ.push(a);
+
+	/*
+	IMovementAction* a = new CentralizeAction(this);
+	std::queue<IMovementAction*> Q1;
+	Q1.push(a);
+
+	CentralizeAction a2(this);
+	Q1.push(&a2); 
+	//& przed zmiennπ - pobranie adresu
+	//* przed wskaünikiem - wy≥uskanie wartoúci
+	*/
 }
 
-bool DebugBot::CloseToZero(double x)
+DebugBot::~DebugBot()
 {
-	if (x < 0.1 && x > -0.1) return true;
-	else return false;
-}
-
-
-//Centralize will issue commands to bot that will get him closer to the middle of the node he is currently standing on
-//will return true if bot is centralized, otherwise false.
-bool DebugBot::Centralize()
-{
-	double fractpart, intpart, distFromMiddle;
-	fractpart = modf(_playerPositionXNode, &intpart);
-	distFromMiddle = fractpart - 0.5;
-
-	if (CloseToZero(abs(distFromMiddle)))
+	while (!_actionsQ.empty())
 	{
-		_goRight = false;
-		_goLeft = false;
-		return true;
-	}
-	else
-	{
-		if (distFromMiddle < 0) _goRight = true;
-		else _goLeft = true;
+		delete _actionsQ.front();
+		_actionsQ.pop();
 	}
 }
 
-//fixed distance? fixed time? move to the center of next node? stop when you enter next node?
-//in node coords for now
-bool DebugBot::WalkLeft(double distance)
+void DebugBot::ExecuteOrders(ordersStruct orders)
 {
-	if (!_walkLeftInProgress)
-	{
-		_targetPositionX = _playerPositionXNode - distance;
-		_walkLeftInProgress = true;
-	}
+	_goRight = orders.goRight;
+	_goLeft = orders.goLeft;
+	_jump = orders.jump;
+	_attack = orders.attack;
+	_lookUp = orders.lookUp;
+	_duck = orders.duck;
+	_ropep = orders.ropep;
+	//_bombp = orders.bombp; TODO
+}
 
-	if (CloseToZero(abs(_playerPositionXNode - _targetPositionX)))
-	{
-		_goLeft = false;
-		_walkLeftInProgress = false;
-		return true;
-	}
-	else
-	{
-		_goLeft = true;
-		return false;
-	}
+void DebugBot::ClearOrders()
+{
+	_goRight = false;
+	_goLeft = false;
+	_jump = false;
+	_attack = false;
+	_lookUp = false;
+	_duck = false;
+	_ropep = false;
+	//_bombp = false;
 }
 
 void DebugBot::Update()
 {
-	if (_currentAction == IDLE || _actionDone)
+	if (!_actionsQ.empty())
 	{
-		if (!_actionsQ.empty())
+		ordersStruct orders = (_actionsQ.front())->GetOrders();
+		ExecuteOrders(orders);
+
+		if ((_actionsQ.front())->ActionDone())
 		{
-			_currentAction = _actionsQ.front();
+			delete _actionsQ.front();
 			_actionsQ.pop();
-			_actionDone = false;
+			ClearOrders();
 		}
-
 	}
-
-	switch (_currentAction)
+	else
 	{
-		case IDLE:
-			_actionDone = true;
-			break;
-		case CENTRALIZE:
-			if (Centralize())
-				_actionDone = true;
-			break;
-		case WALKLEFT:
-			if (WalkLeft(4))
-				_actionDone = true;
-			break;
-		case WALKRIGHT:
-			break;
-		default:
-			break;
+		ClearOrders();
 	}
 
 
 }
-

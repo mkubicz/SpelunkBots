@@ -269,6 +269,22 @@ public:
 	{
 		return _waitTimer;
 	}
+	inline double GetPlayerPositionX(void)
+	{
+		return _playerPositionX;
+	}
+	inline double GetPlayerPositionY(void)
+	{
+		return _playerPositionY;
+	}
+	inline double GetPlayerPositionXNode(void)
+	{
+		return _playerPositionXNode;
+	}
+	inline double GetPlayerPositionYNode(void)
+	{
+		return _playerPositionYNode;
+	}
 
 	virtual void Update() = 0;
 	virtual void Reset();
