@@ -5,6 +5,11 @@
 IMovementAction::IMovementAction(IBot* bot)
 {
 	_bot = bot;
+	_actionDone = false;
+	_actionInProgress = false;
+	_goingRight = false;
+	_targetX = bot->GetPlayerPositionX();
+	_targetY = bot->GetPlayerPositionY();
 }
 
 IMovementAction::~IMovementAction()

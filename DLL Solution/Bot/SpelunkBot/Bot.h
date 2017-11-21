@@ -73,5 +73,8 @@ SPELUNKBOT_API double GetLookUp(void);
 SPELUNKBOT_API double GetDuck(void);
 SPELUNKBOT_API double GetHanging(void);
 SPELUNKBOT_API double GetRopep(void);
-
+SPELUNKBOT_API double GetBombp(void);
+SPELUNKBOT_API double GetPayp(void);
+SPELUNKBOT_API double GetItemp(void);
+SPELUNKBOT_API double GetRunp(void);
 #pragma endregion

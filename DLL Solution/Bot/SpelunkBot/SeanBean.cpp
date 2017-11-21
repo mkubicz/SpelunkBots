@@ -13,8 +13,8 @@ void SeanBean::Update()
 				if (GetNodeState(nodeX, nodeY, NODE_COORDS) == spSpike)
 				{
 					_hasGoal = true;
-					_targetX = nodeX * PIXELS_IN_NODES;
-					_targetY = nodeY * PIXELS_IN_NODES;
+					_targetX = nodeX * PIXELS_IN_NODE;
+					_targetY = nodeY * PIXELS_IN_NODE;
 					CalculatePathFromXYtoXY(_playerPositionX, _playerPositionY, _targetX, _targetY, PIXEL_COORDS);
 					std::cout << "FOUND: X: " << (_targetX / 16) << " Y: " << (_targetY / 16) << std::endl;
 					return;

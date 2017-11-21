@@ -11,16 +11,16 @@ void GoldDigger::Update()
 			{
 				if (NumberOfCollectableTypeInNode(spGoldBar, nodeX, nodeY, NODE_COORDS) > 0)
 				{
-					_targetX = nodeX * PIXELS_IN_NODES;
-					_targetY = nodeY * PIXELS_IN_NODES;
+					_targetX = nodeX * PIXELS_IN_NODE;
+					_targetY = nodeY * PIXELS_IN_NODE;
 					_hasGoal = true;
 					CalculatePathFromXYtoXY(_playerPositionX, _playerPositionY, _targetX, _targetY, PIXEL_COORDS);
 					return;
 				}
 				else if (NumberOfCollectableTypeInNode(spGoldBars, nodeX, nodeY, NODE_COORDS) > 0)
 				{
-					_targetX = nodeX * PIXELS_IN_NODES;
-					_targetY = nodeY * PIXELS_IN_NODES;
+					_targetX = nodeX * PIXELS_IN_NODE;
+					_targetY = nodeY * PIXELS_IN_NODE;
 					_hasGoal = true;
 					CalculatePathFromXYtoXY(_playerPositionX, _playerPositionY, _targetX, _targetY, PIXEL_COORDS);
 					return;

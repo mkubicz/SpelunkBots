@@ -9,7 +9,7 @@ void DiscoveryDan::Update()
 		{
 			if (GetFogState(nodeX, _playerPositionYNode, NODE_COORDS) == 1)
 			{
-				_targetX = nodeX * PIXELS_IN_NODES;
+				_targetX = nodeX * PIXELS_IN_NODE;
 				_targetY = _playerPositionY;
 				_hasGoal = true;
 				CalculatePathFromXYtoXY(_playerPositionX, _playerPositionY, _targetX, _targetY, PIXEL_COORDS);
@@ -22,8 +22,8 @@ void DiscoveryDan::Update()
 			{
 				if (GetNodeState(nodeX, nodeY, NODE_COORDS) == spExit)
 				{
-					_targetX = nodeX * PIXELS_IN_NODES;
-					_targetY = nodeY * PIXELS_IN_NODES;
+					_targetX = nodeX * PIXELS_IN_NODE;
+					_targetY = nodeY * PIXELS_IN_NODE;
 					_hasGoal = true;
 					CalculatePathFromXYtoXY(_playerPositionX, _playerPositionY, _targetX, _targetY, PIXEL_COORDS);
 					return;

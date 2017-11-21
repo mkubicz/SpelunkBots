@@ -13,6 +13,7 @@
 #include <windows.h>
 #include <iostream>
 #include <queue>
+#include "utilities.h"
 
 const int NODE_COORDS = 0;
 const int PIXEL_COORDS = 1;
@@ -23,11 +24,11 @@ const int RIGHT = 1;
 const int Y_NODES = 34;
 const int X_NODES = 42;
 
-const int PIXELS_IN_NODES = 16;
+const int PIXELS_IN_NODE = 16;
 
 enum MOVEMENTACTION
 {
-	IDLE, CENTRALIZE, WALKRIGHT, WALKLEFT
+	IDLE, CENTRALIZE, WALKRIGHT, WALKLEFT, WALKUPRIGHT, WALKUPLEFT
 };
 
 enum VariableType

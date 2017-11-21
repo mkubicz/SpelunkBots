@@ -83,6 +83,7 @@
     <ClInclude Include="BasicBotExampleOne.h" />
     <ClInclude Include="CentralizeAction.h" />
     <ClInclude Include="DebugBot.h" />
+    <ClInclude Include="HangDropAction.h" />
     <ClInclude Include="IMovementAction.h" />
     <ClInclude Include="JordanBot.h" />
     <ClInclude Include="Bot.h" />
@@ -91,17 +92,20 @@
     <ClInclude Include="GoldDigger.h" />
     <ClInclude Include="IBot.h" />
     <ClInclude Include="Indie.h" />
+    <ClInclude Include="JumpAboveAction.h" />
     <ClInclude Include="NotSoSolidSnake.h" />
     <ClInclude Include="SeanBean.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Utilities.h" />
     <ClInclude Include="WalkAction.h" />
+    <ClInclude Include="WalkUpAction.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BasicBotExampleOne.cpp" />
     <ClCompile Include="CentralizeAction.cpp" />
     <ClCompile Include="DebugBot.cpp" />
+    <ClCompile Include="HangDropAction.cpp" />
     <ClCompile Include="IMovementAction.cpp" />
     <ClCompile Include="JordanBot.cpp" />
     <ClCompile Include="DiscoveryDan.cpp" />
@@ -118,6 +122,7 @@
     <ClCompile Include="GoldDigger.cpp" />
     <ClCompile Include="IBot.cpp" />
     <ClCompile Include="Indie.cpp" />
+    <ClCompile Include="JumpAboveAction.cpp" />
     <ClCompile Include="NotSoSolidSnake.cpp" />
     <ClCompile Include="SeanBean.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -126,6 +131,7 @@
     </ClCompile>
     <ClCompile Include="Utilities.cpp" />
     <ClCompile Include="WalkAction.cpp" />
+    <ClCompile Include="WalkUpAction.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

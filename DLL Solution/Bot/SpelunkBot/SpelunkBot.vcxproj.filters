@@ -99,6 +99,15 @@
     <ClInclude Include="WalkAction.h">
       <Filter>Header Files\Bots\DebugBot\Actions</Filter>
     </ClInclude>
+    <ClInclude Include="WalkUpAction.h">
+      <Filter>Header Files\Bots\DebugBot\Actions</Filter>
+    </ClInclude>
+    <ClInclude Include="HangDropAction.h">
+      <Filter>Header Files\Bots\DebugBot\Actions</Filter>
+    </ClInclude>
+    <ClInclude Include="JumpAboveAction.h">
+      <Filter>Header Files\Bots\DebugBot\Actions</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -150,6 +159,15 @@
       <Filter>Source Files\Bots\DebugBot\Actions</Filter>
     </ClCompile>
     <ClCompile Include="WalkAction.cpp">
+      <Filter>Source Files\Bots\DebugBot\Actions</Filter>
+    </ClCompile>
+    <ClCompile Include="WalkUpAction.cpp">
+      <Filter>Source Files\Bots\DebugBot\Actions</Filter>
+    </ClCompile>
+    <ClCompile Include="HangDropAction.cpp">
+      <Filter>Source Files\Bots\DebugBot\Actions</Filter>
+    </ClCompile>
+    <ClCompile Include="JumpAboveAction.cpp">
       <Filter>Source Files\Bots\DebugBot\Actions</Filter>
     </ClCompile>
   </ItemGroup>

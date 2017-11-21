@@ -18,8 +18,8 @@ void Indie::Update()
 				{
 					if (NumberOfCollectableTypeInNode(spGoldBar, nodeX, nodeY, NODE_COORDS))
 					{
-						_targetX = nodeX * PIXELS_IN_NODES;
-						_targetY = nodeY * PIXELS_IN_NODES;
+						_targetX = nodeX * PIXELS_IN_NODE;
+						_targetY = nodeY * PIXELS_IN_NODE;
 						_hasGoal = true;
 						_itemGoal = false;
 						CalculatePathFromXYtoXY(_playerPositionX, _playerPositionY, _targetX, _targetY, PIXEL_COORDS);
@@ -33,8 +33,8 @@ void Indie::Update()
 				{
 					if (NumberOfCollectableTypeInNode(spGoldIdol, nodeX, nodeY, NODE_COORDS))
 					{
-						_targetX = nodeX * PIXELS_IN_NODES;
-						_targetY = nodeY * PIXELS_IN_NODES;
+						_targetX = nodeX * PIXELS_IN_NODE;
+						_targetY = nodeY * PIXELS_IN_NODE;
 						_hasGoal = true;
 						_itemGoal = true;
 						if (_playerPositionXNode != nodeX || _playerPositionYNode != nodeY)

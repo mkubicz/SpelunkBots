@@ -12,6 +12,9 @@ struct ordersStruct
 	bool attack = false;
 	bool ropep = false;
 	bool bombp = false;
+	bool run = false;
+	bool pay = false;
+	bool itemp = false;
 };
 
 class IMovementAction
@@ -21,7 +24,11 @@ protected:
 	//DebugBot bot;
 
 	MOVEMENTACTION _actionType;
-	bool _actionDone;
+	bool _actionDone;	
+	bool _actionInProgress;
+	bool _goingRight;
+	int _targetX;
+	int _targetY;
 
 public:
 	IMovementAction(IBot* bot);

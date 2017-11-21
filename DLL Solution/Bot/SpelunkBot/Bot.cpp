@@ -179,6 +179,22 @@ SPELUNKBOT_API double GetRopep(void)
 {
 	return bot->GetRopep();
 }
+SPELUNKBOT_API double GetBombp(void)
+{
+	return bot->GetBombp();
+}
+SPELUNKBOT_API double GetPayp(void)
+{
+	return bot->GetPayp();
+}
+SPELUNKBOT_API double GetItemp(void)
+{
+	return bot->GetItemp();
+}
+SPELUNKBOT_API double GetRunp(void)
+{
+	return bot->GetRunp();
+}
 
 #pragma endregion
 

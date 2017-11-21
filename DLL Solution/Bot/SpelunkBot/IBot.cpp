@@ -39,6 +39,10 @@ void IBot::InitialiseVariables()
 	_lookUp = false;
 	_duck = false;
 	_ropep = false;
+	_bombp = false;
+	_runp = false;
+	_payp = false;
+	_itemp = false;
 	_hanging = false;
 	_isHanging = false;
 }
@@ -124,8 +128,8 @@ void IBot::Reset()
 
 void IBot::UpdateBotPosition(double nodeX, double nodeY)
 {
-	_playerPositionX = nodeX * PIXELS_IN_NODES;
-	_playerPositionY = nodeY * PIXELS_IN_NODES;
+	_playerPositionX = nodeX * PIXELS_IN_NODE;
+	_playerPositionY = nodeY * PIXELS_IN_NODE;
 
 	_playerPositionXNode = nodeX;
 	_playerPositionYNode = nodeY;

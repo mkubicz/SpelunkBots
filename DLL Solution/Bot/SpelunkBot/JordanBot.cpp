@@ -21,8 +21,8 @@ void JordanBot::Update()
 				if (GetNodeState(nodeX, nodeY, NODE_COORDS) == spExit)
 				{
 					_hasGoal = true;
-					_targetX = nodeX * PIXELS_IN_NODES;
-					_targetY = nodeY * PIXELS_IN_NODES;
+					_targetX = nodeX * PIXELS_IN_NODE;
+					_targetY = nodeY * PIXELS_IN_NODE;
 					CalculatePathFromXYtoXY(_playerPositionX, _playerPositionY, _targetX, _targetY, PIXEL_COORDS);
 					return;
 				}

@@ -102,10 +102,14 @@ protected:
 	bool _jump;
 	bool _attack;
 	bool _lookUp;
+	bool _ropep;
+	bool _bombp;
+	bool _runp;
+	bool _payp;
+	bool _itemp;
 	bool _duck;
 	bool _holdingItem;
 	bool _hanging;
-	bool _ropep;
 
 public:
 	IBot();
@@ -248,6 +252,22 @@ public:
 	inline double GetRopep(void)
 	{
 		return ConvertBoolToDouble(_ropep);
+	}
+	inline double GetBombp(void)
+	{
+		return ConvertBoolToDouble(_bombp);
+	}
+	inline double GetRunp(void)
+	{
+		return ConvertBoolToDouble(_runp);
+	}
+	inline double GetPayp(void)
+	{
+		return ConvertBoolToDouble(_payp);
+	}
+	inline double GetItemp(void)
+	{
+		return ConvertBoolToDouble(_itemp);
 	}
 	inline double GetTargetX(void)
 	{

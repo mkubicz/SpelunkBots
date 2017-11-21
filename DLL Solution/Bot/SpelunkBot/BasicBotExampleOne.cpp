@@ -18,8 +18,8 @@ void BasicBotExampleOne::Update()
 				{
 					_hasGoal = true;
 					_itemGoal = true;
-					_targetX = x * PIXELS_IN_NODES;
-					_targetY = y * PIXELS_IN_NODES;
+					_targetX = x * PIXELS_IN_NODE;
+					_targetY = y * PIXELS_IN_NODE;
 					CalculatePathFromXYtoXY(_playerPositionX, _playerPositionY, _targetX, _targetY, PIXEL_COORDS);
 					std::cout << "FOUND EXIT" << std::endl;
 				}

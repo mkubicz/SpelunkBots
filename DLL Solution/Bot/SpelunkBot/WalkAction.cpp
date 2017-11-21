@@ -5,7 +5,11 @@
 WalkAction::WalkAction(IBot *bot, bool goingRight, double distance, bool usingPixelCoords)
 	: IMovementAction(bot)
 {
-	_actionType = WALKLEFT;
+	if (goingRight) 
+		_actionType = WALKRIGHT; //do I need this?
+	else
+		_actionType = WALKLEFT;
+
 	_actionDone = false;
 	_actionInProgress = false;
 	_usingPixelCoords = usingPixelCoords;
@@ -22,19 +26,19 @@ ordersStruct WalkAction::GetOrders()
 
 		if (_usingPixelCoords)
 		{
-			_targetPositionXNode = _bot->GetPlayerPositionX() + _distance;
-			ConvertToNodeCoordinates(_targetPositionXNode);
+			_targetX = _bot->GetPlayerPositionX() + _distance;
 		}
 		else
 		{
-			_targetPositionXNode = _bot->GetPlayerPositionXNode() + _distance;
+			int distancePixel = ConvertToPixelCoordinates(_distance);
+			_targetX = _bot->GetPlayerPositionX() + distancePixel;
 		}
 		_actionInProgress = true;
 	}
 
 	ordersStruct orders;
 
-	if (CloseToZero(abs(_bot->GetPlayerPositionXNode() - _targetPositionXNode)))
+	if (closeToTarget(_bot->GetPlayerPositionX(), _targetX))
 	{
 		_goingRight ? orders.goRight = false : orders.goLeft = false;
 		_actionDone = true;
@@ -45,5 +49,46 @@ ordersStruct WalkAction::GetOrders()
 		_actionDone = false;
 	}
 
+
 	return orders;
 }
+
+
+/*
+ordersStruct WalkAction::GetOrders()
+{
+	//if first time getting orders - set target to walk to
+	if (!_actionInProgress)
+	{
+		if (!_goingRight) _distance = -_distance;
+
+		if (_usingPixelCoords)
+		{
+			_targetPositionXNode = _bot->GetPlayerPositionX() + _distance;
+			ConvertToNodeCoordinates(_targetPositionXNode); //TODO test
+		}
+		else
+		{
+			_targetPositionXNode = _bot->GetPlayerPositionXNode() + _distance;
+		}
+		_actionInProgress = true;
+	}
+
+	ordersStruct orders;
+	
+	if (CloseToZero(abs(_bot->GetPlayerPositionXNode() - _targetPositionXNode)))
+	//if (abs(_bot->GetPlayerPositionXNode() - _targetPositionXNode) == 0.3)
+	{
+		_goingRight ? orders.goRight = false : orders.goLeft = false;
+		_actionDone = true;
+	}
+	else
+	{
+		_goingRight ? orders.goRight = true : orders.goLeft = true;
+		_actionDone = false;
+	}
+	
+
+	return orders;
+}
+*/
