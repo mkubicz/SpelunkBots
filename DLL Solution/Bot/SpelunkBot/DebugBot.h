@@ -10,9 +10,9 @@ public:
 	~DebugBot();// { }
 
 	std::queue<IMovementAction*> _actionsQ;
-	bool _actionDone = false;
 
 	void ExecuteOrders(ordersStruct orders);
 	void ClearOrders();
 	void Update() override;
+	void NewLevel() override;
 };

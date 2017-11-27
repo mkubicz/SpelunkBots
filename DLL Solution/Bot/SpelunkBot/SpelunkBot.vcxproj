@@ -93,6 +93,7 @@
     <ClInclude Include="IBot.h" />
     <ClInclude Include="Indie.h" />
     <ClInclude Include="JumpAboveAction.h" />
+    <ClInclude Include="JumpAction.h" />
     <ClInclude Include="NotSoSolidSnake.h" />
     <ClInclude Include="SeanBean.h" />
     <ClInclude Include="stdafx.h" />
@@ -123,6 +124,7 @@
     <ClCompile Include="IBot.cpp" />
     <ClCompile Include="Indie.cpp" />
     <ClCompile Include="JumpAboveAction.cpp" />
+    <ClCompile Include="JumpAction.cpp" />
     <ClCompile Include="NotSoSolidSnake.cpp" />
     <ClCompile Include="SeanBean.cpp" />
     <ClCompile Include="stdafx.cpp">

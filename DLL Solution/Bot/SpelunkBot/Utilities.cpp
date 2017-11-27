@@ -44,7 +44,20 @@ bool IsBotAgainstTheWall(int playerPositionX, bool goingRight)
 
 }
 
+
 bool closeToTarget(int playerPositionX, int targetPositionX)
 {
 	return abs(playerPositionX - targetPositionX) <= 6;  //6 - magic number which minimises walking error
+}
+
+bool closeToTargetFall(int playerPositionX, int targetPositionX, bool running)
+{
+	if (running) return abs(playerPositionX - targetPositionX) <= PIXELS_IN_NODE*2 + 6;
+	else return closeToTarget(playerPositionX, targetPositionX);
+}
+
+bool WentThrough(bool goingRight, int x1, int x2)
+{
+	if (goingRight) return x1 >= x2;
+	else return x2 >= x1;
 }

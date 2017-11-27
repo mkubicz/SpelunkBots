@@ -3,6 +3,10 @@
 #include "Utilities.h"
 
 WalkAction::WalkAction(IBot *bot, bool goingRight, double distance, bool usingPixelCoords)
+	: WalkAction(bot, goingRight, false, distance, usingPixelCoords)
+{}
+
+WalkAction::WalkAction(IBot *bot, bool goingRight, bool pressRun, double distance, bool usingPixelCoords)
 	: IMovementAction(bot)
 {
 	if (goingRight) 
@@ -14,6 +18,7 @@ WalkAction::WalkAction(IBot *bot, bool goingRight, double distance, bool usingPi
 	_actionInProgress = false;
 	_usingPixelCoords = usingPixelCoords;
 	_goingRight = goingRight;
+	_pressRun = pressRun;
 	_distance = distance;
 }
 
@@ -49,6 +54,8 @@ ordersStruct WalkAction::GetOrders()
 		_actionDone = false;
 	}
 
+
+	orders.run = _pressRun;
 
 	return orders;
 }

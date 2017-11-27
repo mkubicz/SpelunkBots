@@ -5,11 +5,45 @@
 #include "WalkUpAction.h"
 #include "HangDropAction.h"
 #include "JumpAboveAction.h"
+#include "JumpAction.h"
 
 DebugBot::DebugBot()
 {
 
 	IMovementAction* a;	
+
+	//JUMPTEST
+	/*
+	a = new WalkAction(this, RIGHT, NORUN, 1, NODE_COORDS);
+	_actionsQ.push(a);
+	a = new JumpAction(this, RIGHT, true, 3, 0);
+	_actionsQ.push(a);
+	a = new WalkAction(this, RIGHT, NORUN, 5, NODE_COORDS);
+	_actionsQ.push(a);
+	a = new JumpAction(this, RIGHT, true, 7, 0);
+	_actionsQ.push(a);
+	a = new JumpAction(this, LEFT, true, 7, 0);
+	_actionsQ.push(a);
+	a = new WalkAction(this, LEFT, NORUN, 5, NODE_COORDS);
+	_actionsQ.push(a);
+	a = new JumpAction(this, LEFT, true, 3, 0);
+	_actionsQ.push(a);
+	a = new WalkAction(this, LEFT, NORUN, 1, NODE_COORDS);
+	_actionsQ.push(a);
+	*/
+
+	//WALKTEST
+	/*
+	a = new WalkAction(this, RIGHT, true, 5, NODE_COORDS);
+	_actionsQ.push(a);
+	a = new WalkAction(this, RIGHT, true, 5, NODE_COORDS);
+	_actionsQ.push(a);
+	a = new WalkAction(this, RIGHT, true, 5, NODE_COORDS);
+	_actionsQ.push(a);
+	*/
+
+	/*
+	//JUMPABOVETEST
 	a = new WalkAction(this, RIGHT, 5, NODE_COORDS);
 	_actionsQ.push(a);
 	a = new JumpAboveAction(this, RIGHT);
@@ -34,9 +68,10 @@ DebugBot::DebugBot()
 	_actionsQ.push(a);
 	a = new JumpAboveAction(this, LEFT);
 	_actionsQ.push(a);
-
+	*/
 
 	/*
+	//HANGDROPTEST
 	a = new CentralizeAction(this);
 	_actionsQ.push(a);
 	a = new HangDropAction(this, RIGHT, false);
@@ -51,6 +86,7 @@ DebugBot::DebugBot()
 	_actionsQ.push(a);
 	*/
 	
+	//WALKUPTEST
 	/*
 	a = new WalkAction(this, RIGHT, 5, NODE_COORDS);
 	_actionsQ.push(a);
@@ -77,6 +113,7 @@ DebugBot::DebugBot()
 	a = new WalkUpAction(this, RIGHT);
 	_actionsQ.push(a);
 	*/
+
 	/*
 	IMovementAction* a = new CentralizeAction(this);
 	std::queue<IMovementAction*> Q1;
@@ -87,6 +124,56 @@ DebugBot::DebugBot()
 	//& przed zmiennπ - pobranie adresu
 	//* przed wskaünikiem - wy≥uskanie wartoúci
 	*/
+}
+
+void DebugBot::NewLevel()
+{
+	ClearOrders();
+
+	while (!_actionsQ.empty())
+	{
+		delete _actionsQ.front();
+		_actionsQ.pop();
+	}
+
+	IMovementAction* a;
+
+	a = new WalkAction(this, RIGHT, NORUN, 1, NODE_COORDS);
+	_actionsQ.push(a);
+	a = new JumpAction(this, RIGHT, true, 3, 0);
+	_actionsQ.push(a);
+	a = new WalkAction(this, RIGHT, NORUN, 5, NODE_COORDS);
+	_actionsQ.push(a);
+	a = new JumpAction(this, RIGHT, true, 7, 0);
+	_actionsQ.push(a);
+	a = new WalkAction(this, RIGHT, NORUN, 5, NODE_COORDS);
+	_actionsQ.push(a);
+	a = new JumpAction(this, RIGHT, false, 4, 4);
+	_actionsQ.push(a);
+	a = new WalkAction(this, RIGHT, NORUN, 3, NODE_COORDS);
+	_actionsQ.push(a);
+	a = new JumpAction(this, RIGHT, false, 2, 5);
+	_actionsQ.push(a);
+	a = new JumpAction(this, LEFT, false, 3, 4);
+	_actionsQ.push(a);
+	a = new WalkAction(this, LEFT, NORUN, 4, NODE_COORDS);
+	_actionsQ.push(a);
+	a = new JumpAction(this, LEFT, true, 3, 1);
+	_actionsQ.push(a);
+	a = new WalkAction(this, LEFT, NORUN, 4, NODE_COORDS);
+	_actionsQ.push(a);
+	a = new JumpAction(this, LEFT, true, 2, 2);
+	_actionsQ.push(a);
+	a = new WalkAction(this, LEFT, NORUN, 2, NODE_COORDS);
+	_actionsQ.push(a);
+	a = new JumpAction(this, LEFT, true, 4, 2);
+	_actionsQ.push(a);
+	a = new WalkAction(this, LEFT, NORUN, 2, NODE_COORDS);
+	_actionsQ.push(a);
+	a = new JumpAction(this, LEFT, true, 6, 1);
+	_actionsQ.push(a);
+	a = new WalkAction(this, LEFT, NORUN, 2, NODE_COORDS);
+	_actionsQ.push(a);
 }
 
 DebugBot::~DebugBot()
@@ -131,9 +218,9 @@ void DebugBot::ClearOrders()
 
 void DebugBot::Update()
 {
-	if (_playerPositionX == 100)
+	if (IsFacingLeft())
 	{
-		std::cout << "jest" << std::endl;
+		//std::cout << "lewo" << std::endl;
 	}
 
 
