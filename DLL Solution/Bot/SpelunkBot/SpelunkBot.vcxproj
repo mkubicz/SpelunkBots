@@ -94,7 +94,9 @@
     <ClInclude Include="Indie.h" />
     <ClInclude Include="JumpAboveAction.h" />
     <ClInclude Include="JumpAction.h" />
+    <ClInclude Include="MapSearchNode.h" />
     <ClInclude Include="NotSoSolidSnake.h" />
+    <ClInclude Include="Pathfinder.h" />
     <ClInclude Include="SeanBean.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -125,7 +127,9 @@
     <ClCompile Include="Indie.cpp" />
     <ClCompile Include="JumpAboveAction.cpp" />
     <ClCompile Include="JumpAction.cpp" />
+    <ClCompile Include="MapSearchNode.cpp" />
     <ClCompile Include="NotSoSolidSnake.cpp" />
+    <ClCompile Include="Pathfinder.cpp" />
     <ClCompile Include="SeanBean.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

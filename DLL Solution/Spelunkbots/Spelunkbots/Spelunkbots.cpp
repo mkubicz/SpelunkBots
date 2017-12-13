@@ -1405,21 +1405,23 @@ GMEXPORT double CalculatePathFromXYtoXY(double x1, double y1, double x2, double 
 		start->x = x1;
 		start->y = y1;
 
-		fileStream << "START";
-		fileStream << " START X: ";
+		fileStream << "START:" << endl;
+		fileStream << "X: ";
 		fileStream << start->x;
-		fileStream << " START Y: ";
+		fileStream << " Y: ";
 		fileStream << start->y;
+		fileStream << endl;
 
 		MapSearchNode* end = new MapSearchNode();
 		end->x = x2;
 		end->y = y2;
 
-		fileStream << "END";
-		fileStream << " END X: ";
+		fileStream << "END" << endl;
+		fileStream << "X: ";
 		fileStream << end->x;
-		fileStream << " END Y: ";
+		fileStream << " Y: ";
 		fileStream << end->y;
+		fileStream << endl;
 
 		MapSearchNode* current = new MapSearchNode();
 		MapSearchNode* child = new MapSearchNode();

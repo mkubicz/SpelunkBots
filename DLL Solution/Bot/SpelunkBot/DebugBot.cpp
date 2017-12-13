@@ -9,28 +9,34 @@
 
 DebugBot::DebugBot()
 {
-
-	IMovementAction* a;	
-
-	//JUMPTEST
+	_pathfinder = new Pathfinder(this);
+	NewLevel();
 	/*
-	a = new WalkAction(this, RIGHT, NORUN, 1, NODE_COORDS);
-	_actionsQ.push(a);
-	a = new JumpAction(this, RIGHT, true, 3, 0);
-	_actionsQ.push(a);
-	a = new WalkAction(this, RIGHT, NORUN, 5, NODE_COORDS);
-	_actionsQ.push(a);
-	a = new JumpAction(this, RIGHT, true, 7, 0);
-	_actionsQ.push(a);
-	a = new JumpAction(this, LEFT, true, 7, 0);
-	_actionsQ.push(a);
-	a = new WalkAction(this, LEFT, NORUN, 5, NODE_COORDS);
-	_actionsQ.push(a);
-	a = new JumpAction(this, LEFT, true, 3, 0);
-	_actionsQ.push(a);
-	a = new WalkAction(this, LEFT, NORUN, 1, NODE_COORDS);
-	_actionsQ.push(a);
+	IMovementAction* a = new CentralizeAction(this);
+	std::queue<IMovementAction*> Q1;
+	Q1.push(a);
+
+	CentralizeAction a2(this);
+	Q1.push(&a2); 
+	//& przed zmiennπ - pobranie adresu
+	//* przed wskaünikiem - wy≥uskanie wartoúci
 	*/
+}
+
+void DebugBot::NewLevel()
+{
+	_debugTimer = 30;
+
+	InitialiseVariables();
+	ClearOrders();
+
+	while (!_actionsQ.empty())
+	{
+		delete _actionsQ.front();
+		_actionsQ.pop();
+	}
+
+	IMovementAction* a;
 
 	//WALKTEST
 	/*
@@ -51,7 +57,7 @@ DebugBot::DebugBot()
 	a = new WalkAction(this, LEFT, 2, NODE_COORDS);
 	_actionsQ.push(a);
 	a = new JumpAboveAction(this, LEFT);
-	_actionsQ.push(a);	
+	_actionsQ.push(a);
 	a = new WalkAction(this, RIGHT, 2, NODE_COORDS);
 	_actionsQ.push(a);
 	a = new JumpAboveAction(this, RIGHT);
@@ -85,13 +91,13 @@ DebugBot::DebugBot()
 	a = new HangDropAction(this, LEFT, false);
 	_actionsQ.push(a);
 	*/
-	
+
 	//WALKUPTEST
 	/*
 	a = new WalkAction(this, RIGHT, 5, NODE_COORDS);
 	_actionsQ.push(a);
 	a = new WalkUpAction(this, RIGHT);
-	_actionsQ.push(a);	
+	_actionsQ.push(a);
 	a = new WalkAction(this, RIGHT, 2, NODE_COORDS);
 	_actionsQ.push(a);
 	a = new WalkUpAction(this, RIGHT);
@@ -114,30 +120,8 @@ DebugBot::DebugBot()
 	_actionsQ.push(a);
 	*/
 
+	//JUMPTEST
 	/*
-	IMovementAction* a = new CentralizeAction(this);
-	std::queue<IMovementAction*> Q1;
-	Q1.push(a);
-
-	CentralizeAction a2(this);
-	Q1.push(&a2); 
-	//& przed zmiennπ - pobranie adresu
-	//* przed wskaünikiem - wy≥uskanie wartoúci
-	*/
-}
-
-void DebugBot::NewLevel()
-{
-	ClearOrders();
-
-	while (!_actionsQ.empty())
-	{
-		delete _actionsQ.front();
-		_actionsQ.pop();
-	}
-
-	IMovementAction* a;
-
 	a = new WalkAction(this, RIGHT, NORUN, 1, NODE_COORDS);
 	_actionsQ.push(a);
 	a = new JumpAction(this, RIGHT, true, 3, 0);
@@ -174,6 +158,7 @@ void DebugBot::NewLevel()
 	_actionsQ.push(a);
 	a = new WalkAction(this, LEFT, NORUN, 2, NODE_COORDS);
 	_actionsQ.push(a);
+	*/
 }
 
 DebugBot::~DebugBot()
@@ -183,6 +168,7 @@ DebugBot::~DebugBot()
 		delete _actionsQ.front();
 		_actionsQ.pop();
 	}
+	delete _pathfinder;
 }
 
 
@@ -218,12 +204,39 @@ void DebugBot::ClearOrders()
 
 void DebugBot::Update()
 {
-	if (IsFacingLeft())
+	if (_debugTimer < 0)
 	{
-		//std::cout << "lewo" << std::endl;
+		_pathfinder->NeighboursDebug((int)_playerPositionXNode, (int)_playerPositionYNode);
+		_debugTimer = 10;
 	}
+	_debugTimer -= 1;
 
 
+	/*
+	if (!_hasGoal)
+	{
+		for (int nodeX = 0; nodeX < X_NODES; nodeX += 1)
+		{
+			for (int nodeY = 0; nodeY < Y_NODES; nodeY += 1)
+			{
+				double a = GetNodeState(nodeX, nodeY, NODE_COORDS);
+				if (a == spExit)
+				//if (GetNodeState(nodeX, nodeY, NODE_COORDS) == spExit)
+				{
+					_targetX = nodeX * PIXELS_IN_NODE;
+					_targetY = nodeY * PIXELS_IN_NODE;
+					_hasGoal = true;
+					_pathfinder->CalculatePath(_playerPositionX, _playerPositionY, _targetX, _targetY, PIXEL_COORDS);
+					return;
+				}
+			}
+		}
+	}
+	*/
+	
+	
+	/*
+	//execute orders from action queue
 	if (!_actionsQ.empty())
 	{
 		ordersStruct orders = (_actionsQ.front())->GetOrders();
@@ -240,6 +253,6 @@ void DebugBot::Update()
 	{
 		ClearOrders();
 	}
-
+	*/
 
 }

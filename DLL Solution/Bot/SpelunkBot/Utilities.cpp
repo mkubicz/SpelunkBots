@@ -12,16 +12,22 @@ void ConvertToNodeCoordinates(double &x)
 	x /= 16;
 }
 
-int ConvertToPixelCoordinates(double x)
-{
-	x *= 16;
-	return x;
-}
-
 void ConvertToNodeCoordinates(double &x, double &y)
 {
 	x /= 16;
 	y /= 16;
+}
+
+void ConvertToNodeCoordinates(double &x1, double &y1, double &x2, double &y2)
+{
+	ConvertToNodeCoordinates(x1, y1);
+	ConvertToNodeCoordinates(x2, y2);
+}
+
+int ConvertToPixelCoordinates(double x)
+{
+	x *= 16;
+	return x;
 }
 
 void GetIntPartFractPart(double value, double &intpart, double &fractpart)

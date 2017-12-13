@@ -43,6 +43,12 @@
     <Filter Include="Source Files\Bots\DebugBot\Actions">
       <UniqueIdentifier>{e42125ae-c239-463e-9514-b12ce9037633}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Bots\DebugBot\Pathfinding">
+      <UniqueIdentifier>{de4901cb-b331-45fa-99ea-39c62b22a13e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Bots\DebugBot\Pathfinder">
+      <UniqueIdentifier>{ac96e5d7-39df-4b28-a88f-932a73a8176e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -111,6 +117,12 @@
     <ClInclude Include="JumpAction.h">
       <Filter>Header Files\Bots\DebugBot\Actions</Filter>
     </ClInclude>
+    <ClInclude Include="MapSearchNode.h">
+      <Filter>Header Files\Bots\DebugBot\Pathfinding</Filter>
+    </ClInclude>
+    <ClInclude Include="Pathfinder.h">
+      <Filter>Header Files\Bots\DebugBot\Pathfinding</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -175,6 +187,12 @@
     </ClCompile>
     <ClCompile Include="JumpAction.cpp">
       <Filter>Source Files\Bots\DebugBot\Actions</Filter>
+    </ClCompile>
+    <ClCompile Include="MapSearchNode.cpp">
+      <Filter>Source Files\Bots\DebugBot\Pathfinder</Filter>
+    </ClCompile>
+    <ClCompile Include="Pathfinder.cpp">
+      <Filter>Source Files\Bots\DebugBot\Pathfinder</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
