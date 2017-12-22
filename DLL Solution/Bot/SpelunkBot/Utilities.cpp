@@ -7,10 +7,10 @@ bool CloseToZero(double x)
 	else return false;
 }
 
-void ConvertToNodeCoordinates(double &x)
-{
-	x /= 16;
-}
+//void ConvertToNodeCoordinates(double &x)
+//{
+//	x /= 16;
+//}
 
 void ConvertToNodeCoordinates(double &x, double &y)
 {
@@ -22,6 +22,11 @@ void ConvertToNodeCoordinates(double &x1, double &y1, double &x2, double &y2)
 {
 	ConvertToNodeCoordinates(x1, y1);
 	ConvertToNodeCoordinates(x2, y2);
+}
+
+double ConvertToNodeCoordinates(double x)
+{
+	return x / 16;
 }
 
 int ConvertToPixelCoordinates(double x)
@@ -56,11 +61,22 @@ bool closeToTarget(int playerPositionX, int targetPositionX)
 	return abs(playerPositionX - targetPositionX) <= 6;  //6 - magic number which minimises walking error
 }
 
-bool closeToTargetFall(int playerPositionX, int targetPositionX, bool running)
+
+bool closeToTargetFall(int playerPositionX, int targetPositionX, bool running, int distY)
 {
-	if (running) return abs(playerPositionX - targetPositionX) <= PIXELS_IN_NODE*2 + 6;
-	else return closeToTarget(playerPositionX, targetPositionX);
+	if (distY <= 0) //jumpup or jumpflat
+	{
+		if (running) return abs(playerPositionX - targetPositionX) <= PIXELS_IN_NODE * 1.5;
+		else return closeToTarget(playerPositionX, targetPositionX);
+	}
+	else
+	{ //jumpdown
+		if (running) return abs(playerPositionX - targetPositionX) <= PIXELS_IN_NODE * 2;
+		else return abs(playerPositionX - targetPositionX) <= 12;
+	}
+
 }
+
 
 bool WentThrough(bool goingRight, int x1, int x2)
 {

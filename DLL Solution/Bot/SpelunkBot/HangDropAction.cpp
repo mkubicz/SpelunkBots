@@ -22,15 +22,29 @@ ordersStruct HangDropAction::GetOrders()
 
 	if (!_actionInProgress)
 	{
-		int nodenr = (int)_bot->GetPlayerPositionXNode();
-		_targetX = _goingRight ? (nodenr + 1) * PIXELS_IN_NODE : (nodenr * PIXELS_IN_NODE) - 1;
-		_targetY = playerPosY + PIXELS_IN_NODE;
-
+		int nodeXnr = (int)_bot->GetPlayerPositionXNode();
+		int nodeYnr = (int)_bot->GetPlayerPositionYNode();
+		_targetX = _goingRight ? (nodeXnr + 1) * PIXELS_IN_NODE : (nodeXnr * PIXELS_IN_NODE) - 1;
+		_targetYHang = playerPosY + PIXELS_IN_NODE;
+		
+		
+		int dropX = _goingRight ? playerPosX + PIXELS_IN_NODE : playerPosX - PIXELS_IN_NODE;
+		for (int i = 2; i <= Y_NODES; i++) //if over 8, the bot will take damage
+		{
+			if (!_bot->IsNodePassable(dropX, (playerPosY + i*PIXELS_IN_NODE), PIXEL_COORDS))
+			{
+				_targetY = playerPosY + (i-1)*PIXELS_IN_NODE;
+				break;
+			}
+		}
+		
 		_actionInProgress = true;
 	}
 
+	/*
 	if (playerPosY == _targetY) _state = HANGING;
 	if (playerPosY > _targetY) _state = FALLING;
+	*/
 
 	switch (_state)
 	{
@@ -38,6 +52,8 @@ ordersStruct HangDropAction::GetOrders()
 			if (_goingRight && _targetX - playerPosX > 0) orders.goRight = true;
 			if (!_goingRight && playerPosX - _targetX > 0) orders.goLeft = true;
 			if (closeToTarget(playerPosX, _targetX)) orders.duck = true;
+			
+			if (playerPosY == _targetYHang) _state = HANGING;
 			break;
 		case HANGING:
 			if (_lookDownTimer != 0)
@@ -49,10 +65,12 @@ ordersStruct HangDropAction::GetOrders()
 			{
 				orders.duck = true;
 				orders.jump = true;
+
+				if (playerPosY >= _targetYHang) _state = FALLING;
 			}
 			break;
 		case FALLING:
-			if (_previousPosY == playerPosY) _actionDone = true;
+			if (playerPosY == _targetY) _actionDone = true;
 			break;
 	}
 

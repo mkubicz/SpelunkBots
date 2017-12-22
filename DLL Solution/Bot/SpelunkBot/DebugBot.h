@@ -7,19 +7,28 @@
 class DebugBot : public IBot
 {
 public:
-	DebugBot();// { }
+	DebugBot();
+	// { }
 	~DebugBot();// { }
 
 
 
 	void ExecuteOrders(ordersStruct orders);
-	void ClearOrders();
+
 	void Update() override;
 	void NewLevel() override;
 
 private:
 	std::queue<IMovementAction*> _actionsQ;
 	Pathfinder* _pathfinder;
+	
+	enum STATE {SEARCHING_FOR_EXIT, CREATING_COMMANDS, EXECUTING_COMMANDS};
+	STATE _state;
+	void InitialiseHelperVariables();
+	void CreateCommands(std::vector<MapSearchNode*> path);
+	void ClearOrders();
+	bool FindExit(int & x, int & y);
 
 	int _debugTimer;
+	bool _commandsCreated;
 };

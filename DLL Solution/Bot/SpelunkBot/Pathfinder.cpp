@@ -2,6 +2,7 @@
 #include "Pathfinder.h"
 #include <vector>
 #include <list>
+#include <algorithm>
 #include <fstream>
 #include <ostream>
 
@@ -29,7 +30,7 @@ bool Pathfinder::Pelna(int x, int y)
 }
 
 
-vector<MapSearchNode*> Pathfinder::GetNeighboursList(MapSearchNode* node, std::map<int, std::map<int, MapSearchNode*>> grid)
+vector<MapSearchNode*> Pathfinder::CalculateNeighboursList(MapSearchNode* node, std::map<int, std::map<int, MapSearchNode*>> grid)
 {
 	int x = node->_x;
 	int y = node->_y;
@@ -114,7 +115,7 @@ vector<MapSearchNode*> Pathfinder::GetNeighboursList(MapSearchNode* node, std::m
 		{
 			if (Pelna(x + i - 1, y))
 			{
-				neighbours.push_back(grid[x + i - 1][y]);
+				neighbours.push_back(grid[x + i - 1][y-1]);
 				break;
 			}
 		}
@@ -188,11 +189,11 @@ vector<MapSearchNode*> Pathfinder::GetNeighboursList(MapSearchNode* node, std::m
 	/*
 	 * DOWN hangdrop
 	 */
-	
+	MAX = 8;
 	//right
 	if (Pusta(x + 1, y) && Pusta(x + 1, y + 1))
 	{
-		for (int j = 2; j <= 8; j++)
+		for (int j = 2; j <= MAX; j++)
 		{
 			if (Pelna(x + 1, y + j))
 			{
@@ -205,7 +206,7 @@ vector<MapSearchNode*> Pathfinder::GetNeighboursList(MapSearchNode* node, std::m
 	//left
 	if (Pusta(x - 1, y) && Pusta(x - 1, y + 1))
 	{
-		for (int j = 2; j <= 8; j++)
+		for (int j = 2; j <= MAX; j++)
 		{
 			if (Pelna(x - 1, y + j))
 			{
@@ -220,7 +221,7 @@ vector<MapSearchNode*> Pathfinder::GetNeighboursList(MapSearchNode* node, std::m
 	* DOWN jump
 	*/
 	int MAXx = 7;
-	int MAXy = 7;
+	int MAXy = 5;
 
 	//right
 	if (Pusta(x + 1, y + 1))
@@ -240,6 +241,20 @@ vector<MapSearchNode*> Pathfinder::GetNeighboursList(MapSearchNode* node, std::m
 					neighbours.push_back(grid[x - i][y + j]);
 	}
 
+
+	//DEBUG
+	/*
+	ofstream fileStream;
+	fileStream.open(".\\Pathfinder\\neighbours.txt");
+
+	for (int i = 0; i < neighbours.size(); i++)
+	{
+		fileStream << " X: " << neighbours[i]->_x;
+		fileStream << " Y: " << neighbours[i]->_y;
+		fileStream << endl;
+	}
+	fileStream.close();
+	*/
 
 	return neighbours;
 }
@@ -310,7 +325,7 @@ void Pathfinder::NeighboursDebug(int x, int y)
 		}
 	}
 
-	std::vector<MapSearchNode*> neighbours = GetNeighboursList(node, grid);
+	std::vector<MapSearchNode*> neighbours = CalculateNeighboursList(node, grid);
 	
 
 	for (int i = 0; i < neighbours.size(); i++)
@@ -323,9 +338,21 @@ void Pathfinder::NeighboursDebug(int x, int y)
 
 }
 
-/*
-double Pathfinder::CalculatePath(double x1, double y1, double x2, double y2, double usingPixelCoords)
+std::vector<MapSearchNode*> Pathfinder::GetPathList()
 {
+	return _pathList;
+}
+
+bool Pathfinder::CanStandInNode(int x, int y)
+{
+	return _bot->IsNodePassable(x, y, NODE_COORDS) && !_bot->IsNodePassable(x, y + 1, NODE_COORDS);
+}
+
+
+bool Pathfinder::CalculatePath(double x1, double y1, double x2, double y2, double usingPixelCoords)
+{
+	bool path_found = false;
+
 	if (usingPixelCoords)
 		ConvertToNodeCoordinates(x1, y1, x2, y2);
 
@@ -404,6 +431,7 @@ double Pathfinder::CalculatePath(double x1, double y1, double x2, double y2, dou
 			if (current->_x == end->_x && current->_y == end->_y)
 			{
 				fileStream << endl << "end reached";
+				path_found = true;
 				break;
 			}
 
@@ -417,58 +445,43 @@ double Pathfinder::CalculatePath(double x1, double y1, double x2, double y2, dou
 
 
 			//Get reachable neighbours
-			//std::vector<MapSearchNode*> neighbours = GetNeighboursList(current, grid);
+			std::vector<MapSearchNode*> neighbours = CalculateNeighboursList(current, grid);
 
-
-
-			// Get all the current adjacent walkable points
-			for (int x = -1; x < 2; x++)
+			for (int i = 0; i < neighbours.size(); i++)
 			{
-				for (int y = -1; y < 2; y++)
+				child = neighbours[i];
+
+				// if it's closed then pass
+				if (child->_closed)
+					//(spmap[child->_x][child->_y] != 0 && spmap[child->_x][child->_y] != 3 && spmap[child->_x][child->_y] != 4 && spmap[child->_x][child->_y] != 2 && spmap[child->_x][child->_y] != 9))
 				{
-					if (x == 0 && y == 0)
+					fileStream << "\n";
+					fileStream << "closed";
+					continue;
+				}
+
+				// IF AT A CORNER?
+
+				// if it's already in the opened list
+				if (child->_opened)
+				{
+					if (child->_gScore > child->GetGScore(current))
 					{
-						// ignore current node, pass
-						continue;
-					}
-
-					if (x == 0 || y == 0)
-					{
-
-						child = grid[current->_x + x][current->_y + y];
-
-						// if it's closed or not walkable then pass
-						if (child->_closed || !_bot->IsNodePassable(child->_x, child->_y, NODE_COORDS))
-							//(spmap[child->_x][child->_y] != 0 && spmap[child->_x][child->_y] != 3 && spmap[child->_x][child->_y] != 4 && spmap[child->_x][child->_y] != 2 && spmap[child->_x][child->_y] != 9))
-						{
-							fileStream << "\n";
-							fileStream << "closed or not walkable";
-							continue;
-						}
-
-						// IF AT A CORNER?
-
-						// if it's already in the opened list
-						if (child->_opened)
-						{
-							if (child->_gScore > child->GetGScore(current))
-							{
-								child->_parent = current;
-								child->ComputeScores(end);
-							}
-						}
-						else
-						{
-							openList.push_back(child);
-							child->_opened = true;
-
-							// COMPUTE THE G
-							child->_parent = current;
-							child->ComputeScores(end);
-						}
+						child->_parent = current;
+						child->ComputeScores(end);
 					}
 				}
+				else
+				{
+					openList.push_back(child);
+					child->_opened = true;
+
+					// COMPUTE THE G
+					child->_parent = current;
+					child->ComputeScores(end);
+				}
 			}
+
 			n++;
 			fileStream << "\n";
 		}
@@ -488,23 +501,31 @@ double Pathfinder::CalculatePath(double x1, double y1, double x2, double y2, dou
 		// resolve the path starting from the end point
 		while (current->_parent && current != start)
 		{
-			fileStream << "X ";
-			fileStream << current->_x;
-			fileStream << " Y ";
-			fileStream << current->_y;
-			fileStream << "\n";
 			_pathList.push_back(current);
 			current = current->_parent;
-			n++;
 		}
+
+		reverse(_pathList.begin(), _pathList.end());
+
+		for (int i = 0; i < _pathList.size(); i++)
+		{
+
+			fileStream << "X ";
+			fileStream << _pathList[i]->_x;
+			fileStream << " Y ";
+			fileStream << _pathList[i]->_y;
+			fileStream << "\n";
+		}
+
 		fileStream.close();
-		return 0;
+		return path_found;
 
 		
 	}
-	return 0;
+	else //we are standing on the exit
+		return true;
 }
-*/
+
 
 
 

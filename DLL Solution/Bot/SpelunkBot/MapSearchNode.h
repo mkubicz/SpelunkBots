@@ -15,6 +15,8 @@ private:
 	bool _closed;
 
 public:
+	int GetX();
+	int GetY();
 	double GetGScore(MapSearchNode *p);
 	double GetHScore(MapSearchNode *p);
 	double GetFScore();

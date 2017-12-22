@@ -8,6 +8,7 @@ private:
 	bool _hanging;
 	int _lookDownTimer;
 	int _previousPosY;
+	int _targetYHang;
 	enum STATE { WALKING, HANGING, FALLING };
 	STATE _state;
 public:

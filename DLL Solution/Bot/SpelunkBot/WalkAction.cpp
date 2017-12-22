@@ -27,23 +27,20 @@ ordersStruct WalkAction::GetOrders()
 	//if first time getting orders - set target to walk to
 	if (!_actionInProgress)
 	{
+		if (_usingPixelCoords) _distance = ConvertToNodeCoordinates(_distance);
 		if (!_goingRight) _distance = -_distance;
 
-		if (_usingPixelCoords)
-		{
-			_targetX = _bot->GetPlayerPositionX() + _distance;
-		}
-		else
-		{
-			int distancePixel = ConvertToPixelCoordinates(_distance);
-			_targetX = _bot->GetPlayerPositionX() + distancePixel;
-		}
+		int nodenr = (int)_bot->GetPlayerPositionXNode();
+
+		//target calculated from center of current node
+		_targetX = (nodenr + _distance) * PIXELS_IN_NODE + (PIXELS_IN_NODE / 2);
+
 		_actionInProgress = true;
 	}
 
 	ordersStruct orders;
 
-	if (closeToTarget(_bot->GetPlayerPositionX(), _targetX))
+	if (closeToTarget(_bot->GetPlayerPositionX(), _targetX)) //TODO if running, close to target function should be different
 	{
 		_goingRight ? orders.goRight = false : orders.goLeft = false;
 		_actionDone = true;

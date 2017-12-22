@@ -2,6 +2,16 @@
 #include "MapSearchNode.h"
 
 
+int MapSearchNode::GetX()
+{
+	return _x;
+}
+
+int MapSearchNode::GetY()
+{
+	return _y;
+}
+
 double MapSearchNode::GetGScore(MapSearchNode *p)
 {
 	return p->_gScore + ((_x == p->_x || _y == p->_y) ? 1 : 1.5);

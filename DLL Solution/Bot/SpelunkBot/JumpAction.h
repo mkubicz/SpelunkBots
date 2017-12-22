@@ -8,12 +8,13 @@ private:
 	int _distY;
 	int _startPosXside;
 	int _targetXSide;
+	int _climbTimer;
+	int _hangTimer;
 	int _jumpTimer;
 	int _previousPosX;
 	int _previousPosY;
 	bool _running;
 	bool _goingUp;
-	bool _hangedForOneFrame;
 	enum STATE { WALKING, JUMPING, FALLING, HANGING, CLIMBING };
 	STATE _state;
 

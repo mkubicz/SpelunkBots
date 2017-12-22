@@ -10,15 +10,19 @@ JumpAction::JumpAction(IBot * bot, bool goingRight, bool goingUp, int distX, int
 	_distY = distY;
 	_previousPosX = (int)_bot->GetPlayerPositionX();
 	_previousPosY = (int)_bot->GetPlayerPositionY();
-	_jumpTimer = 60;
+	_climbTimer = 4;
+	_hangTimer = 2;
+	if (distX <= 2) _jumpTimer = 1;
+	if (distX > 2 && distX <= 5) _jumpTimer = 3;
+	if (distX > 5) _jumpTimer = 6;
 	_state = WALKING;
-	_hangedForOneFrame = false;
 	_running = abs(distX) > 3;
 }
 
 
 ordersStruct JumpAction::GetOrders()
 {
+	int distToTargetY;
 	int playerPosX = (int)_bot->GetPlayerPositionX();
 	int playerPosY = (int)_bot->GetPlayerPositionY();
 	ordersStruct orders;
@@ -44,9 +48,13 @@ ordersStruct JumpAction::GetOrders()
 		&& _state != CLIMBING) _state = HANGING;
 
 
+
+	distToTargetY = ConvertToNodeCoordinates(abs(playerPosY - _targetY));
+
 	switch (_state)
 	{
 		case WALKING:
+			//walking/running to the edge of node and jumping
 			if (_running) orders.run = true;
 			_goingRight ? orders.goRight = true : orders.goLeft = true;
 
@@ -58,29 +66,49 @@ ordersStruct JumpAction::GetOrders()
 
 			break;
 		case JUMPING:
-			//if (_running) orders.run = true;
+			//holding the jump button for a few frames and moving closer to target
 			_goingRight ? orders.goRight = true : orders.goLeft = true;
-			orders.jump = true;
+			if (_jumpTimer > 0)
+			{
+				orders.jump = true;
+				_jumpTimer -= 1;
+			}
 
-			//if bot starts to lose altitude or if he is close to target and has some vertical distance to travel, state = falling
-			if (playerPosY > _previousPosY || (closeToTargetFall(playerPosX, _targetX, orders.run) && _distY > 2)) _state = FALLING;
+			//if bot is below the target the falling state should not be triggered
+			if (playerPosY < (_targetY + 8))
+			{
+				//if bot is close to target, trigger free falling
+				if (closeToTargetFall(playerPosX, _targetX, _running, _distY))
+				{
+					_state = FALLING;
+				}
+			}
 
 			break;
 		case FALLING:
-			if (closeToTargetFall(playerPosX, _targetX, _running) && _distY > 2) {/*i'm falling free yeah*/}
-			else //move closer to target
-			{
-				if (playerPosX < _targetX) orders.goRight = true;
-				else orders.goLeft = true;
-			}
-			if (playerPosY == _targetY) _actionDone = true;
+			//falling free
+			if (closeToTarget(playerPosX, _targetX) && _targetY == playerPosY) _actionDone = true;
+
 			break;
 		case HANGING:
-			_state = CLIMBING;
+			if (_hangTimer > 0)
+			{
+				_hangTimer -= 1;
+				_goingRight ? orders.goRight = true : orders.goLeft = true;
+			}
+			else
+			{
+				_state = CLIMBING;
+				orders.jump = true;
+			}
+
 			break;
 		case CLIMBING:
-			if (playerPosY > _targetY) orders.jump = true;
-			else _goingRight ? orders.goRight = true : orders.goLeft = true;
+			if (_climbTimer > 0)
+			{
+				_climbTimer -= 1;
+				_goingRight ? orders.goRight = true : orders.goLeft = true;
+			}
 			break;
 		default:
 			break;
@@ -88,6 +116,7 @@ ordersStruct JumpAction::GetOrders()
 
 
 	if (closeToTarget(playerPosX, _targetX) && _targetY == playerPosY) _actionDone = true;
+	
 
 	_previousPosX = playerPosX;
 	_previousPosY = playerPosY;
