@@ -11,6 +11,7 @@ private:
 public:
 	WalkAction(IBot *bot, bool goingRight, double distance, bool usingPixelCoords);
 	WalkAction(IBot *bot, bool goingRight, bool pressRun, double distance, bool usingPixelCoords);
+	void AddDistance(int distance);
 	~WalkAction() {};
 
 	ordersStruct GetOrders() override;

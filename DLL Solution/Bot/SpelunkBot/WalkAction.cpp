@@ -22,6 +22,11 @@ WalkAction::WalkAction(IBot *bot, bool goingRight, bool pressRun, double distanc
 	_distance = distance;
 }
 
+void WalkAction::AddDistance(int distance)
+{
+	_distance += distance;
+}
+
 ordersStruct WalkAction::GetOrders()
 {
 	//if first time getting orders - set target to walk to

@@ -17,3 +17,10 @@ bool closeToTarget(int playerPositionX, int targetPositionX);
 bool closeToTargetFall(int playerPosX, int targetPosX, bool running, int distY);
 
 bool WentThrough(bool goingRight, int x1, int x2);
+
+struct Node
+{
+	int x;
+	int y;
+
+};

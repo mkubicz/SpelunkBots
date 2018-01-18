@@ -8,6 +8,9 @@ WalkUpAction::WalkUpAction(IBot *bot, bool goingRight)
 	_goingRight = goingRight;
 	_actionInProgress = false;
 	_againstTheWall = false;
+
+	_finished = false;
+	_finishedTimer = 6;
 }
 
 
@@ -23,49 +26,107 @@ ordersStruct WalkUpAction::GetOrders()
 {
 	ordersStruct orders;
 
-	//first - get targets
-	if (!_actionInProgress)
+	if (!_finished)
 	{
-		//int nodenr = (int)_bot->GetPlayerPositionXNode() + 1;
-		int nodenr = _goingRight ? (int)_bot->GetPlayerPositionXNode() + 1 : (int)_bot->GetPlayerPositionXNode() - 1;
-		_targetX = (nodenr * PIXELS_IN_NODE) + (PIXELS_IN_NODE/2);
-		
-		//check if need to go 1 node up or 2 nodes up
-		if (_bot->IsNodePassable(nodenr, _bot->GetPlayerPositionYNode() - 1, NODE_COORDS))
-			_targetY = _bot->GetPlayerPositionY() - PIXELS_IN_NODE;
+		//first - get targets
+		if (!_actionInProgress)
+		{
+			//int nodenr = (int)_bot->GetPlayerPositionXNode() + 1;
+			int nodenr = _goingRight ? (int)_bot->GetPlayerPositionXNode() + 1 : (int)_bot->GetPlayerPositionXNode() - 1;
+			_targetX = (nodenr * PIXELS_IN_NODE) + (PIXELS_IN_NODE / 2);
+
+			//check if need to go 1 node up or 2 nodes up
+			if (_bot->IsNodePassable(nodenr, _bot->GetPlayerPositionYNode() - 1, NODE_COORDS))
+				_targetY = _bot->GetPlayerPositionY() - PIXELS_IN_NODE;
+			else
+				_targetY = _bot->GetPlayerPositionY() - (PIXELS_IN_NODE * 2);
+
+
+			_actionInProgress = true;
+		}
+
+		//second - hug the wall
+		if (!_againstTheWall)
+		{
+			_goingRight ? orders.goRight = true : orders.goLeft = true;
+			if (IsBotAgainstTheWall(_bot->GetPlayerPositionX(), _goingRight)) _againstTheWall = true;
+		}
 		else
-			_targetY = _bot->GetPlayerPositionY() - (PIXELS_IN_NODE * 2);
-		
+		{
+			//third - jump up
+			if (_bot->GetPlayerPositionY() > _targetY)
+			{
+				orders.jump = true;
+			}
+			if (!closeToTarget(_bot->GetPlayerPositionX(), _targetX))
+				_goingRight ? orders.goRight = true : orders.goLeft = true;
 
-		_actionInProgress = true;
-	}
 
-	//second - hug the wall
-	if (!_againstTheWall)
-	{
-		_goingRight ? orders.goRight = true : orders.goLeft = true;
-		if (IsBotAgainstTheWall(_bot->GetPlayerPositionX(), _goingRight)) _againstTheWall = true;
+			if (_bot->GetPlayerPositionY() <= _targetY && closeToTarget(_bot->GetPlayerPositionX(), _targetX) && _previousPosX != _bot->GetPlayerPositionX())
+				_finished = true;
+
+		}
+
+		_previousPosX = _bot->GetPlayerPositionX();
 	}
 	else
 	{
-		//third - jump up
-		if (_bot->GetPlayerPositionY() > _targetY)
-		{
-			orders.jump = true;
-		}
-		if (!closeToTarget(_bot->GetPlayerPositionX(), _targetX))
-			_goingRight ? orders.goRight = true : orders.goLeft = true;
-		
-
-		if (_bot->GetPlayerPositionY() <= _targetY && closeToTarget(_bot->GetPlayerPositionX(), _targetX) && _previousPosX != _bot->GetPlayerPositionX())
+		_finishedTimer -= 1;
+		if (_finishedTimer == 0)
 			_actionDone = true;
-
 	}
-
-	_previousPosX = _bot->GetPlayerPositionX();
 
 	return orders;
 }
+
+
+//ordersStruct WalkUpAction::GetOrders()
+//{
+//	ordersStruct orders;
+//
+//	//first - get targets
+//	if (!_actionInProgress)
+//	{
+//		//int nodenr = (int)_bot->GetPlayerPositionXNode() + 1;
+//		int nodenr = _goingRight ? (int)_bot->GetPlayerPositionXNode() + 1 : (int)_bot->GetPlayerPositionXNode() - 1;
+//		_targetX = (nodenr * PIXELS_IN_NODE) + (PIXELS_IN_NODE/2);
+//		
+//		//check if need to go 1 node up or 2 nodes up
+//		if (_bot->IsNodePassable(nodenr, _bot->GetPlayerPositionYNode() - 1, NODE_COORDS))
+//			_targetY = _bot->GetPlayerPositionY() - PIXELS_IN_NODE;
+//		else
+//			_targetY = _bot->GetPlayerPositionY() - (PIXELS_IN_NODE * 2);
+//		
+//
+//		_actionInProgress = true;
+//	}
+//
+//	//second - hug the wall
+//	if (!_againstTheWall)
+//	{
+//		_goingRight ? orders.goRight = true : orders.goLeft = true;
+//		if (IsBotAgainstTheWall(_bot->GetPlayerPositionX(), _goingRight)) _againstTheWall = true;
+//	}
+//	else
+//	{
+//		//third - jump up
+//		if (_bot->GetPlayerPositionY() > _targetY)
+//		{
+//			orders.jump = true;
+//		}
+//		if (!closeToTarget(_bot->GetPlayerPositionX(), _targetX))
+//			_goingRight ? orders.goRight = true : orders.goLeft = true;
+//		
+//
+//		if (_bot->GetPlayerPositionY() <= _targetY && closeToTarget(_bot->GetPlayerPositionX(), _targetX) && _previousPosX != _bot->GetPlayerPositionX())
+//			_actionDone = true;
+//
+//	}
+//
+//	_previousPosX = _bot->GetPlayerPositionX();
+//
+//	return orders;
+//}
 
 
 

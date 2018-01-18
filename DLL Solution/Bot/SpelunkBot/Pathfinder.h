@@ -11,9 +11,14 @@ public:
 	~Pathfinder();
 
 	std::vector<MapSearchNode*> CalculateNeighboursList(MapSearchNode* node, std::map<int, std::map<int, MapSearchNode*>> grid);
+	std::vector<Node> CalculateNeighboursList(Node node);
+	bool isCloseToFog(int x, int y, int closeness);
+	bool isCloseToFog(MapSearchNode *n, int closeness);
+	bool FindExplorationPath(double x1, double y1, double usingPixelCoords);
 	bool CalculatePath(double x1, double y1, double x2, double y2, double usingPixelCoords);
 	void NeighboursDebug(int x, int y);
 	std::vector<MapSearchNode*> GetPathList();
+	std::vector<Node> GetPathListNode();
 
 	bool CanStandInNode(int x, int y);
 

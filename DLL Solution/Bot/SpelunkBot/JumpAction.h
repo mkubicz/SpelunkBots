@@ -7,6 +7,7 @@ private:
 	int _distX;
 	int _distY;
 	int _startPosXside;
+	int _startPosXmid;
 	int _targetXSide;
 	int _climbTimer;
 	int _hangTimer;
@@ -15,8 +16,10 @@ private:
 	int _previousPosY;
 	bool _running;
 	bool _goingUp;
-	enum STATE { WALKING, JUMPING, FALLING, HANGING, CLIMBING };
+	enum STATE { WALKING, JUMPING, FALLING, HANGING, CLIMBING,	SMALLJUMP };
 	STATE _state;
+
+	bool _smljmp_backedUp;
 
 public:
 	JumpAction(IBot * bot, bool goingRight, bool goingUp, int distX, int distY);

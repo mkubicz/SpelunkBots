@@ -13,6 +13,7 @@ private:
 	MapSearchNode* _parent;
 	bool _opened;
 	bool _closed;
+	bool _visited = false;
 
 public:
 	int GetX();

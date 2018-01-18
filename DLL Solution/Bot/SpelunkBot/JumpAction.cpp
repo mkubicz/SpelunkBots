@@ -15,8 +15,13 @@ JumpAction::JumpAction(IBot * bot, bool goingRight, bool goingUp, int distX, int
 	if (distX <= 2) _jumpTimer = 1;
 	if (distX > 2 && distX <= 5) _jumpTimer = 3;
 	if (distX > 5) _jumpTimer = 6;
-	_state = WALKING;
+	if (distX == 1)
+		_state = SMALLJUMP;
+	else
+		_state = WALKING;
 	_running = abs(distX) > 3;
+
+	_smljmp_backedUp = false;
 }
 
 
@@ -37,6 +42,7 @@ ordersStruct JumpAction::GetOrders()
 		_targetY = playerPosY + (_distY * PIXELS_IN_NODE);
 		_targetXSide = _goingRight ? (nodenr + _distX) * PIXELS_IN_NODE : (nodenr + 1 + _distX) * PIXELS_IN_NODE;
 		_startPosXside = _goingRight ? (nodenr * PIXELS_IN_NODE) + PIXELS_IN_NODE : (nodenr * PIXELS_IN_NODE);
+		_startPosXmid = (nodenr * PIXELS_IN_NODE) + (PIXELS_IN_NODE / 2);
 
 		_actionInProgress = true;
 	}
@@ -53,6 +59,25 @@ ordersStruct JumpAction::GetOrders()
 
 	switch (_state)
 	{
+		case SMALLJUMP:
+			//only when x=1 and y=2
+			
+			//back up a little bit
+			if (!_smljmp_backedUp)
+			{
+				(!_goingRight) ? orders.goRight = true : orders.goLeft = true;
+				if (WentThrough(!_goingRight, playerPosX, _startPosXmid))
+				{
+					_smljmp_backedUp = true;
+				}
+			}
+			else
+			{
+				orders.jump = true;
+				_goingRight ? orders.goRight = true : orders.goLeft = true;
+			}
+
+			break;
 		case WALKING:
 			//walking/running to the edge of node and jumping
 			if (_running) orders.run = true;
@@ -63,7 +88,7 @@ ordersStruct JumpAction::GetOrders()
 				orders.jump = true;
 				_state = JUMPING;
 			}
-
+			
 			break;
 		case JUMPING:
 			//holding the jump button for a few frames and moving closer to target

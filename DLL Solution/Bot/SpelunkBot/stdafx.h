@@ -14,9 +14,12 @@
 #include <iostream>
 #include <queue>
 #include "utilities.h"
+#include <time.h>
 
 const int NODE_COORDS = 0;
 const int PIXEL_COORDS = 1;
+
+const int NONE = -1;
 
 const int LEFT = 0;
 const int RIGHT = 1;

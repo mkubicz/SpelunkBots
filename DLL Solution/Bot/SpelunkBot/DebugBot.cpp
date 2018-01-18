@@ -9,6 +9,7 @@
 
 DebugBot::DebugBot()
 {
+	//Node _current = Node{ (int)GetPlayerPositionXNode(), (int)GetPlayerPositionYNode()};
 	_pathfinder = new Pathfinder(this);
 	NewLevel();
 }
@@ -16,11 +17,14 @@ DebugBot::DebugBot()
 void DebugBot::InitialiseHelperVariables()
 {
 	_state = SEARCHING_FOR_EXIT;
+	//_state = DEBUG;
 }
 
 void DebugBot::NewLevel()
 {
 	_debugTimer = 30;
+
+
 
 	InitialiseVariables();
 	InitialiseHelperVariables();
@@ -36,7 +40,24 @@ void DebugBot::NewLevel()
 	 * TESTING AND DEBUGGING
 	 */
 	IMovementAction* a;
-	//_state = EXECUTING_COMMANDS;
+
+	//SMALLJUMPTEST
+	/*
+	a = new WalkAction(this, RIGHT, false, 3, NODE_COORDS);
+	_actionsQ.push(a);
+	a = new WalkUpAction(this, RIGHT);
+	_actionsQ.push(a);
+	a = new JumpAction(this, RIGHT, UP, 1, 2);
+	_actionsQ.push(a);
+	*/
+
+	//SMALLJUMPTEST2
+	/*
+	a = new WalkAction(this, LEFT, false, 6, NODE_COORDS);
+	_actionsQ.push(a);
+	a = new JumpAction(this, RIGHT, UP, 1, 2);
+	_actionsQ.push(a);
+	*/
 
 	//WALKTEST
 	/*
@@ -281,7 +302,7 @@ void DebugBot::ClearOrders()
 	_itemp = false;
 }
 
-void DebugBot::CreateCommands(std::vector<MapSearchNode*> path)
+void DebugBot::CreateCommands(std::vector<Node> path)
 {
 
 	bool actionFound = false;
@@ -291,8 +312,8 @@ void DebugBot::CreateCommands(std::vector<MapSearchNode*> path)
 
 	for (int i = 0; i < path.size(); i++)
 	{
-		targetX = path[i]->GetX();
-		targetY = path[i]->GetY();
+		targetX = path[i].x;
+		targetY = path[i].y;
 
 		int distX = abs(targetX - currX);
 		int distY = abs(targetY - currY);
@@ -300,11 +321,31 @@ void DebugBot::CreateCommands(std::vector<MapSearchNode*> path)
 		//walk
 		if (distX == 1 && currY == targetY && !actionFound)
 		{
-			//na razie akcje chodzenia sπ tylko 1-kratkowe, moøna dorobiÊ ich scalanie
+			
+			if (targetX > currX)
+			{
+				if (!_actionsQ.empty() && _actionsQ.back()->ActionType() == WALKRIGHT)
+					//previous action is also a WalkRight, so we increase its distance instead of creating a new command (ActionBatchingô)
+					dynamic_cast<WalkAction*>(_actionsQ.back())->AddDistance(distX);	
+				else
+					_actionsQ.push(new WalkAction(this, RIGHT, NORUN, distX, NODE_COORDS));
+			}
+			else
+			{
+				if (!_actionsQ.empty() && _actionsQ.back()->ActionType() == WALKLEFT)
+					//previous action is also a WalkLeft, so we increase its distance instead of creating a new command (ActionBatchingô)
+					dynamic_cast<WalkAction*>(_actionsQ.back())->AddDistance(distX);
+				else
+					_actionsQ.push(new WalkAction(this, LEFT, NORUN, distX, NODE_COORDS));
+			}
+
+			/*
 			if (targetX > currX)
 				_actionsQ.push(new WalkAction(this, RIGHT, NORUN, distX, NODE_COORDS));
 			else
 				_actionsQ.push(new WalkAction(this, LEFT, NORUN, distX, NODE_COORDS));
+				*/
+			
 			actionFound = true;
 		}
 
@@ -322,11 +363,40 @@ void DebugBot::CreateCommands(std::vector<MapSearchNode*> path)
 		if (distX == 1 && (distY == 1 || distY == 2) && !actionFound)
 		{
 			if (targetX > currX)
+			{
+				if (distY == 2 && IsNodePassable(targetX, targetY + 2, NODE_COORDS))
+				{
+					_actionsQ.push(new JumpAction(this, RIGHT, UP, distX, distY));
+					//_actionsQ.push(new CentralizeAction(this));
+				}
+				else
+					_actionsQ.push(new WalkUpAction(this, RIGHT));
+			}
+			else
+			{
+				if (distY == 2 && IsNodePassable(targetX, targetY + 2, NODE_COORDS))
+				{
+					_actionsQ.push(new JumpAction(this, LEFT, UP, distX, distY));
+					//_actionsQ.push(new CentralizeAction(this));
+				}
+				else
+					_actionsQ.push(new WalkUpAction(this, LEFT));
+
+			}
+			actionFound = true;
+		}
+
+		/*
+		//walkup
+		if (distX == 1 && (distY == 1 || distY == 2) && !actionFound)
+		{
+			if (targetX > currX)
 				_actionsQ.push(new WalkUpAction(this, RIGHT));
 			else
 				_actionsQ.push(new WalkUpAction(this, LEFT));
 			actionFound = true;
 		}
+		*/
 
 		//jumpabove
 		if (currX == targetX && !actionFound)
@@ -351,6 +421,7 @@ void DebugBot::CreateCommands(std::vector<MapSearchNode*> path)
 					_actionsQ.push(new JumpAction(this, LEFT, DOWN, distX, distY));
 				else
 					_actionsQ.push(new JumpAction(this, LEFT, UP, distX, distY));
+			//_actionsQ.push(new CentralizeAction(this));
 			actionFound = true;
 		}
 
@@ -370,8 +441,8 @@ bool DebugBot::FindExit(int &x, int &y)
 		{
 			if (GetNodeState(nodeX, nodeY, NODE_COORDS) == spExit)
 			{
-				x = nodeX * PIXELS_IN_NODE;
-				y = nodeY * PIXELS_IN_NODE;
+				x = nodeX;
+				y = nodeY;
 				return true;
 			}
 		}
@@ -379,31 +450,98 @@ bool DebugBot::FindExit(int &x, int &y)
 	return false;
 }
 
+
 void DebugBot::Update()
 {
 	int exitX, exitY;
+	int playerPosXNode = (int)_playerPositionXNode;
+	int playerPosYNode = (int)_playerPositionYNode;
 
-	/*
+	
 	if (_debugTimer < 0)
 	{
 		_pathfinder->NeighboursDebug((int)_playerPositionXNode, (int)_playerPositionYNode);
 		_debugTimer = 10;
 	}
 	_debugTimer -= 1;
-	*/
-
+	
+	
+	
 	
 	switch (_state)
 	{
 		case SEARCHING_FOR_EXIT:
-			if (FindExit(exitX, exitY) && _pathfinder->CalculatePath(_playerPositionX, _playerPositionY, exitX, exitY, PIXEL_COORDS))
+			if (FindExit(exitX, exitY) && _pathfinder->CalculatePath(_playerPositionXNode, _playerPositionYNode, exitX, exitY, NODE_COORDS))
 			{
-				CreateCommands(_pathfinder->GetPathList());
+				CreateCommands(_pathfinder->GetPathListNode());
 				_hasGoal = true;
-				_state = EXECUTING_COMMANDS;
 			}
-			else 
+			else
 			{
+				//dfs
+				_pathfinder->FindExplorationPath(_playerPositionXNode, _playerPositionYNode, NODE_COORDS);
+				CreateCommands(_pathfinder->GetPathListNode());
+
+			}
+
+			_state = EXECUTING_COMMANDS;
+			break;
+
+		case EXECUTING_COMMANDS:
+			if (!_actionsQ.empty())
+			{
+				ordersStruct orders = (_actionsQ.front())->GetOrders();
+				ExecuteOrders(orders);
+
+				if ((_actionsQ.front())->ActionDone())
+				{
+					delete _actionsQ.front();
+					_actionsQ.pop();
+					ClearOrders();
+				}
+			}
+			else
+			{
+				ClearOrders();
+				//if (_hasGoal) _lookUp = true;
+				if (GetNodeState(_playerPositionX, _playerPositionY, PIXEL_COORDS) == spExit)
+					_lookUp = true;
+				else 
+					_state = SEARCHING_FOR_EXIT;
+			}
+
+			break;
+
+		case DEBUG:
+			if (!_actionsQ.empty())
+			{
+				ordersStruct orders = (_actionsQ.front())->GetOrders();
+				ExecuteOrders(orders);
+
+				if ((_actionsQ.front())->ActionDone())
+				{
+					delete _actionsQ.front();
+					_actionsQ.pop();
+					ClearOrders();
+				}
+			}
+	}
+	
+	
+}
+
+
+/*
+IMovementAction* a = new CentralizeAction(this);
+std::queue<IMovementAction*> Q1;
+Q1.push(a);
+
+CentralizeAction a2(this);
+Q1.push(&a2);
+//& przed zmiennπ - pobranie adresu
+//* przed wskaünikiem - wy≥uskanie wartoúci
+*/
+
 				//eksplorowanie mg≥y
 				//simple solution: find fog, find standable tile next to it, try to create path -> success: go -> fail: find another fog or standable tile
 				/*
@@ -442,47 +580,78 @@ void DebugBot::Update()
 					}
 				}
 				*/
-			}
 
-			break;
 
-		case EXECUTING_COMMANDS:
-			if (!_actionsQ.empty())
-			{
-				ordersStruct orders = (_actionsQ.front())->GetOrders();
-				ExecuteOrders(orders);
 
-				if ((_actionsQ.front())->ActionDone())
+				//make a random move with priority
+				//priority: going down, same as previous
+				/*
+				int currPosX = (int)_playerPositionXNode;
+				int currPosY = (int)_playerPositionYNode;
+				std::vector<Node> neighbours = _pathfinder->CalculateNeighboursList(Node{ currPosX, currPosY });
+
+				int dirX, dirY;
+
+				int i = 0;
+				while (i < neighbours.size())
 				{
-					delete _actionsQ.front();
-					_actionsQ.pop();
-					ClearOrders();
+				if (neighbours[i].y > currPosY)
+				dirY = DOWN;
+				else if (neighbours[i].y == currPosY)
+				dirY = NONE;
+				else
+				dirY = UP;
+
+				if (neighbours[i].x > currPosX)
+				dirX = RIGHT;
+				else if (neighbours[i].x == currPosX)
+				dirX = NONE;
+				else
+				dirX = LEFT;
+
+				if (dirY == DOWN) break;
+				if (dirX == prevDirX) break;
+
+				i++;
 				}
-			}
-			else
-			{
-				ClearOrders();
-				//if (_hasGoal) _lookUp = true;
-				if (GetNodeState(_playerPositionX, _playerPositionY, PIXEL_COORDS) == spExit)
-					_lookUp = true;
-				else 
-					_state = SEARCHING_FOR_EXIT;
-			}
 
-			break;
-	}
-	
-	
-}
+				if (i == neighbours.size())
+				{
+				srand(time(NULL));
+				i = rand() % neighbours.size();
+
+				if (neighbours[i].y > currPosY)
+				dirY = DOWN;
+				else if (neighbours[i].y == currPosY)
+				dirY = NONE;
+				else
+				dirY = UP;
+
+				if (neighbours[i].x > currPosX)
+				dirX = RIGHT;
+				else if (neighbours[i].x == currPosX)
+				dirX = NONE;
+				else
+				dirX = LEFT;
+				}
 
 
-/*
-IMovementAction* a = new CentralizeAction(this);
-std::queue<IMovementAction*> Q1;
-Q1.push(a);
+				prevDirX = dirX;
+				prevDirY = dirY;
 
-CentralizeAction a2(this);
-Q1.push(&a2);
-//& przed zmiennπ - pobranie adresu
-//* przed wskaünikiem - wy≥uskanie wartoúci
-*/
+				std::vector<Node> path;
+				path.push_back(neighbours[i]);
+
+				CreateCommands(path);
+				*/
+
+				//move to fog
+				/*
+				int targetX = _playerPositionXNode;
+				while (targetX < X_NODES && GetFogState(targetX, _playerPositionYNode, NODE_COORDS) == 0)
+				{
+				targetX += 1;
+				}
+
+				std::vector<Node> neighbours = _pathfinder->CalculateNeighboursList(current);
+				*/
