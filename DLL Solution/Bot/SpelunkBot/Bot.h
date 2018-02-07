@@ -45,6 +45,28 @@ SPELUNKBOT_API double Update(double botSelector, double botXPos, double botYPos)
 	the previous level without resetting all the bots' varables. 
 */
 SPELUNKBOT_API double NewLevel(void);
+
+////Game objects management methods
+////Copied from Spelunkbots to here for easier access to the lists of enemies and collectables
+///*
+//	ResestEnemies removes all enemies from the enemiesList vector.
+//*/
+//SPELUNKBOT_API double ResetEnemies();
+///*
+//	NodeContainsEnemy adds an enemy to the enemiesList vector.
+//*/
+//SPELUNKBOT_API double NodeContainsEnemy(double x, double y, double type, double id);
+///*
+//	UpdateEnemyAtNode updates the position of an enemy at a given node, with a particular id, in the enemyList vector with its current position.
+//*/
+//SPELUNKBOT_API double UpdateEnemyAtNode(double x, double y, double id);
+///*
+//	RemoveEnemyWithID removes an enemy with the given id.
+//*/
+//SPELUNKBOT_API double RemoveEnemyWithID(double id);
+
+
+
 /*
 	Getter functions for variables.
 

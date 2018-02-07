@@ -23,4 +23,6 @@ struct Node
 	int x;
 	int y;
 
+	int actionToReach;
+
 };

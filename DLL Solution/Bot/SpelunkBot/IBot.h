@@ -69,6 +69,10 @@ typedef double(__cdecl *DisplayLevelLayoutPROC)();
 typedef bool(__cdecl *IsFacingLeftPROC)();
 typedef bool(__cdecl *IsFacingRightPROC)();
 
+typedef collectableObject*(__cdecl *GetIthCollectablePROC)(int i);
+typedef collectableObject*(__cdecl *GetIthEnemyPROC)(int i);
+typedef collectableObject(__cdecl *GetVisibleEnemiesPROC)();
+
 #pragma endregion
 
 class IBot
@@ -180,6 +184,10 @@ public:
 	DisplayLevelLayoutPROC DisplayLevelLayout;
 	IsFacingLeftPROC IsFacingLeft;
 	IsFacingRightPROC IsFacingRight;
+
+	GetIthCollectablePROC GetIthCollectable;
+	GetIthEnemyPROC GetIthEnemy;
+	GetVisibleEnemiesPROC GetVisibleEnemies;
 
 	inline double GetHasGoal(void)
 	{

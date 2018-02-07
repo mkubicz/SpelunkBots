@@ -96,12 +96,14 @@
     <ClInclude Include="JumpAction.h" />
     <ClInclude Include="MapSearchNode.h" />
     <ClInclude Include="NotSoSolidSnake.h" />
+    <ClInclude Include="ObjectManager.h" />
     <ClInclude Include="Pathfinder.h" />
     <ClInclude Include="SeanBean.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Utilities.h" />
     <ClInclude Include="WalkAction.h" />
+    <ClInclude Include="WalkOffLedgeAction.h" />
     <ClInclude Include="WalkUpAction.h" />
   </ItemGroup>
   <ItemGroup>
@@ -129,6 +131,7 @@
     <ClCompile Include="JumpAction.cpp" />
     <ClCompile Include="MapSearchNode.cpp" />
     <ClCompile Include="NotSoSolidSnake.cpp" />
+    <ClCompile Include="ObjectManager.cpp" />
     <ClCompile Include="Pathfinder.cpp" />
     <ClCompile Include="SeanBean.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -137,6 +140,7 @@
     </ClCompile>
     <ClCompile Include="Utilities.cpp" />
     <ClCompile Include="WalkAction.cpp" />
+    <ClCompile Include="WalkOffLedgeAction.cpp" />
     <ClCompile Include="WalkUpAction.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -199,9 +199,9 @@ GMEXPORT double SampleFunction(double a, double b)
 GMEXPORT string TestFunction(double a)
 {
 	if (a == 1)
-		return "dupa";
+		return "test";
 	else
-		return "zupa";
+		return "testtest";
 	
 }
 
@@ -957,6 +957,23 @@ GMEXPORT double IsCollectableInNode(double x, double y, double usingPixelCoords)
 	return 0;
 }
 
+/**
+* \brief GetIthCollectable returns ith element from the collectables list.
+* \brief Bot should get elements one by one until it encounters a NULL. Its done thie way because passing collection through DLL barriers is problematic.
+*
+* @param i The index of collectable to get.
+*
+* @return collectablesList[i]
+*
+*/
+GMEXPORT collectableObject* GetIthCollectable(int i)
+{
+	if (collectablesList.size() > i)
+		return &collectablesList.at(i);
+	else
+		return NULL;
+}
+
 #pragma endregion
 
 #pragma region Enemies
@@ -1140,6 +1157,24 @@ GMEXPORT double IsEnemyInNode(double x, double y, double usingPixelCoords)
 	}
 	return 0;
 }
+
+/**
+* \brief GetIthEnemy returns ith element from the enemies list.
+* \brief Bot should get elements one by one until it encounters a NULL. Its done thie way because passing collection through DLL barriers is problematic.
+*
+* @param i The index of enemy to get.
+*
+* @return enemiesList[i]
+*
+*/
+GMEXPORT collectableObject* GetIthEnemy(int i)
+{
+	if (enemiesList.size() > i)
+		return &enemiesList.at(i);
+	else
+		return NULL;
+}
+
 
 #pragma endregion
 
@@ -1649,13 +1684,13 @@ GMEXPORT double GetNextPathYPos(double x, double y, double usingPixelCoords)
  * @param y The y coordinate of the node to check
  * @param usingPixelCoords A bool to inform the API what coordinate system to use; true (1) if using pixel coordinates, false (0) if using node coordinates
  *
- * @return 1 if the node is passable, 0 otherwise
+ * @return 1 if the node is passable, 0 otherwise (CHANGE: now returns 1 also if node is in fog) (ANOTHER CHANGE: now returns 1 again if node is in fog)
  *
  * \note GM script: IsNodePassable.
 */
 GMEXPORT double IsNodePassable(double x, double y, double usingPixelCoords)
 {
-	int passableTypes[] = { 0, 2, 3, 4, 12 };
+	int passableTypes[] = {0, 2, 3, 4, 12 };
 
 	if (usingPixelCoords)
 		ConvertToNodeCoordinates(x, y);

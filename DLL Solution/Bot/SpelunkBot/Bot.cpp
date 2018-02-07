@@ -15,7 +15,7 @@
 #include "DebugBot.h"
 #include <memory>
 
-std::unique_ptr<IBot> bot;
+std::shared_ptr<IBot> bot;
 
 double ConvertBoolToDouble(bool valToConvert)
 {
@@ -197,6 +197,36 @@ SPELUNKBOT_API double GetRunp(void)
 }
 
 #pragma endregion
+
+//#pragma region Game objects management
+////see bot.h for explanation
+//
+//SPELUNKBOT_API double ResetEnemies()
+//{
+//	std::dynamic_pointer_cast<DebugBot, IBot>(bot)->GetObjectManager()->ResetEnemies();
+//	return 0;
+//}
+//
+//SPELUNKBOT_API double NodeContainsEnemy(double x, double y, double type, double id)
+//{
+//	std::dynamic_pointer_cast<DebugBot, IBot>(bot)->GetObjectManager()->NodeContainsEnemy(x, y, type, id);
+//	return 0;
+//}
+//
+//SPELUNKBOT_API double UpdateEnemyAtNode(double x, double y, double id)
+//{
+//	std::dynamic_pointer_cast<DebugBot, IBot>(bot)->GetObjectManager()->UpdateEnemyAtNode(x, y, id);
+//	return 0;
+//}
+//
+//
+//SPELUNKBOT_API double RemoveEnemyWithID(double id)
+//{
+//	std::dynamic_pointer_cast<DebugBot, IBot>(bot)->GetObjectManager()->RemoveEnemyWithID(id);
+//	return 0;
+//}
+//
+//#pragma endregion
 
 #pragma region Bot Logic
 

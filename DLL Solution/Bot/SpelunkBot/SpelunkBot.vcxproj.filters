@@ -49,6 +49,12 @@
     <Filter Include="Source Files\Bots\DebugBot\Pathfinder">
       <UniqueIdentifier>{ac96e5d7-39df-4b28-a88f-932a73a8176e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Bots\DebugBot\ObjectManager">
+      <UniqueIdentifier>{68cafede-b2b2-4fd3-ad55-994dd8ba73c2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Bots\DebugBot\ObjectManager">
+      <UniqueIdentifier>{b10e98cb-db2e-40a9-a0ff-acdc2ddcda26}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -123,6 +129,12 @@
     <ClInclude Include="Pathfinder.h">
       <Filter>Header Files\Bots\DebugBot\Pathfinding</Filter>
     </ClInclude>
+    <ClInclude Include="WalkOffLedgeAction.h">
+      <Filter>Header Files\Bots\DebugBot\Actions</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectManager.h">
+      <Filter>Header Files\Bots\DebugBot\ObjectManager</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -193,6 +205,12 @@
     </ClCompile>
     <ClCompile Include="Pathfinder.cpp">
       <Filter>Source Files\Bots\DebugBot\Pathfinder</Filter>
+    </ClCompile>
+    <ClCompile Include="WalkOffLedgeAction.cpp">
+      <Filter>Source Files\Bots\DebugBot\Actions</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectManager.cpp">
+      <Filter>Source Files\Bots\DebugBot\ObjectManager</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

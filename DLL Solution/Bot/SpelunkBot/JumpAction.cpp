@@ -12,18 +12,41 @@ JumpAction::JumpAction(IBot * bot, bool goingRight, bool goingUp, int distX, int
 	_previousPosY = (int)_bot->GetPlayerPositionY();
 	_climbTimer = 4;
 	_hangTimer = 2;
-	if (distX <= 2) _jumpTimer = 1;
-	if (distX > 2 && distX <= 5) _jumpTimer = 3;
-	if (distX > 5) _jumpTimer = 6;
-	if (distX == 1)
+	_ontoLadder = false;
+
+	if (_goingRight)
+		if (_goingUp)
+			_actionType = JUMPUPRIGHT;
+		else
+			_actionType = JUMPDOWNRIGHT;
+	else
+		if (_goingUp)
+			_actionType = JUMPUPLEFT;
+		else
+			_actionType = JUMPDOWNLEFT;
+		
+
+	_smljmp_backedUp = false;
+	if (_distX == 1)
 		_state = SMALLJUMP;
 	else
 		_state = WALKING;
-	_running = abs(distX) > 3;
 
-	_smljmp_backedUp = false;
+	_running = abs(_distX) > 3 && !(abs(_distX) == 4 && _distY == 0);
+
+	if (distX <= 2) _jumpTimer = 1;
+	if (distX > 2 && distX <= 5) _jumpTimer = 3;
+	if (distX > 5) _jumpTimer = 6;
+
+
+
 }
 
+JumpAction::JumpAction(IBot * bot, bool goingRight, bool goingUp, bool ontoLadder, int distX, int distY)
+	: JumpAction(bot, goingRight, goingUp, distX, distY)
+{
+	_ontoLadder = ontoLadder;
+}
 
 ordersStruct JumpAction::GetOrders()
 {
@@ -53,6 +76,8 @@ ordersStruct JumpAction::GetOrders()
 		(playerPosX > _targetX - PIXELS_IN_NODE || !_goingRight)
 		&& _state != CLIMBING) _state = HANGING;
 
+
+	if (_ontoLadder) orders.lookUp = true;
 
 
 	distToTargetY = ConvertToNodeCoordinates(abs(playerPosY - _targetY));
@@ -141,6 +166,9 @@ ordersStruct JumpAction::GetOrders()
 
 
 	if (closeToTarget(playerPosX, _targetX) && _targetY == playerPosY) _actionDone = true;
+
+	if (_ontoLadder && abs(playerPosX - _targetX) <= 2 && (_targetY-8 < playerPosY && _targetY + 24 > playerPosY)) 
+		_actionDone = true;
 	
 
 	_previousPosX = playerPosX;

@@ -1,4 +1,8 @@
-START START X: 37 START Y: 11END END X: 24 END Y: 11searching Current X: 37 Current Y: 11
+START:
+X: 37 Y: 11
+END
+X: 24 Y: 11
+searching Current X: 37 Current Y: 11
 closed or not walkable
 closed or not walkable
 searching Current X: 36 Current Y: 11

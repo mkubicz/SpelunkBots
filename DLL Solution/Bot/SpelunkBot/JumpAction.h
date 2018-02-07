@@ -16,6 +16,7 @@ private:
 	int _previousPosY;
 	bool _running;
 	bool _goingUp;
+	bool _ontoLadder;
 	enum STATE { WALKING, JUMPING, FALLING, HANGING, CLIMBING,	SMALLJUMP };
 	STATE _state;
 
@@ -23,5 +24,6 @@ private:
 
 public:
 	JumpAction(IBot * bot, bool goingRight, bool goingUp, int distX, int distY);
+	JumpAction(IBot * bot, bool goingRight, bool goingUp, bool ontoLadder, int distX, int distY);
 	ordersStruct GetOrders();
 };

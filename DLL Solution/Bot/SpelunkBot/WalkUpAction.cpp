@@ -5,6 +5,7 @@ WalkUpAction::WalkUpAction(IBot *bot, bool goingRight)
 	: IMovementAction(bot)
 {
 	goingRight ? _actionType = WALKUPRIGHT : _actionType = WALKUPLEFT;
+
 	_goingRight = goingRight;
 	_actionInProgress = false;
 	_againstTheWall = false;

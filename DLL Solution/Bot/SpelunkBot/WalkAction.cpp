@@ -10,7 +10,7 @@ WalkAction::WalkAction(IBot *bot, bool goingRight, bool pressRun, double distanc
 	: IMovementAction(bot)
 {
 	if (goingRight) 
-		_actionType = WALKRIGHT; //do I need this?
+		_actionType = WALKRIGHT;
 	else
 		_actionType = WALKLEFT;
 

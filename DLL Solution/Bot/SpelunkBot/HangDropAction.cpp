@@ -4,8 +4,14 @@
 HangDropAction::HangDropAction(IBot* bot, bool goingRight, bool lookDown)
 	: IMovementAction(bot)
 {
-	_actionInProgress = false;
 	_goingRight = goingRight;
+
+	if (_goingRight)
+		_actionType = HANGDROPRIGHT;
+	else
+		_actionType = HANGDROPLEFT;
+
+	_actionInProgress = false;
 	_lookDown = lookDown;
 	_lookDownTimer = _lookDown ? 60 : 0;
 	_actionDone = false;

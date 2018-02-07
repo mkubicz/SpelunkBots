@@ -5,6 +5,12 @@ JumpAboveAction::JumpAboveAction(IBot* bot, bool goingRight)
 	: IMovementAction(bot)
 {
 	_goingRight = goingRight;
+
+	if (_goingRight)
+		_actionType = JUMPABOVERIGHT;
+	else
+		_actionType = JUMPABOVELEFT;
+
 	_jumped = false;
 }
 

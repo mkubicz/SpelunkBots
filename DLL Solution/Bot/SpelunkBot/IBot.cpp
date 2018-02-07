@@ -116,6 +116,10 @@ void IBot::InitialiseDLLFunctions()
 	DisplayLevelLayout = (DisplayLevelLayoutPROC)GetProcAddress(spelunkbots_hModule, "DisplayLevelLayout");
 	IsFacingLeft = (IsFacingLeftPROC)GetProcAddress(spelunkbots_hModule, "IsFacingLeft");
 	IsFacingRight = (IsFacingRightPROC)GetProcAddress(spelunkbots_hModule, "IsFacingRight");
+
+	GetIthCollectable = (GetIthCollectablePROC)GetProcAddress(spelunkbots_hModule, "GetIthCollectable");
+	GetIthEnemy = (GetIthEnemyPROC)GetProcAddress(spelunkbots_hModule, "GetIthEnemy");
+	GetVisibleEnemies = (GetVisibleEnemiesPROC)GetProcAddress(spelunkbots_hModule, "GetVisibleEnemies");
 }
 
 void IBot::Reset()
