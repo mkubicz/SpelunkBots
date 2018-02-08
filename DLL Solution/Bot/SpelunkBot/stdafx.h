@@ -121,6 +121,25 @@ enum VariableType
 	TYPE_BOOLEAN = 0, TYPE_STRING, TYPE_DOUBLE
 };
 
+enum SpState
+{
+	spSTANDING = 10,
+	spRUNNING = 11,
+	spDUCKING = 12,
+	spLOOKING_UP = 13,
+	spCLIMBING = 14,
+	spJUMPING = 15,
+	spFALLING = 16,
+	spDYING = 17,
+	spLEFT = 18,
+	spRIGHT = 19,
+	spON_GROUND = 20,
+	spIN_AIR = 21,
+	spON_LADDER = 22,
+	spHANGING = 23,
+	spDUCKTOHANG = 24,
+};
+
 enum TerrainType
 {
 	spEmptyNode = 0,

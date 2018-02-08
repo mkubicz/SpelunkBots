@@ -429,6 +429,11 @@ ObjectManager* DebugBot::GetObjectManager()
 	return _objectManager;
 }
 
+SpState DebugBot::SpelunkerState()
+{
+	return (SpState)GetSpelunkerState();
+}
+
 
 void DebugBot::ExecuteOrders(ordersStruct orders)
 {
@@ -902,7 +907,7 @@ void DebugBot::Update()
 	_objectManager->UpdateGameObjectLists();
 
 
-
+	std::cout << SpelunkerState() << std::endl;
 
 
 

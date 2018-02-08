@@ -78,6 +78,7 @@ int screenHeight;
 enum FACING
 { LEFT = 0, RIGHT };
 bool spfacing;
+double spSpelunkerState;
 
 // hold arrays of each type of object in here 
 // means user can query the nearest object, or all of them
@@ -1934,5 +1935,33 @@ GMEXPORT bool IsFacingRight()
 {
 	return spfacing == RIGHT;
 }
+
+/**
+* \brief UpdateFacing Gets the information of the state the Spelunker is in.
+*
+* @param state The state of the Spelunker.
+*
+* \note This function should not be changed or used when implementing a bot
+*/
+GMEXPORT double SetSpelunkerState(double state)
+{
+	spSpelunkerState = state;
+	return 0;
+}
+
+/**
+* \brief GetSpelunkerState gets Spelunker state.
+* Posiible states:
+* STANDING = 10, RUNNING = 11, DUCKING = 12, LOOKING_UP = 13, CLIMBING = 14, JUMPING = 15, FALLING = 16,
+* DYING = 17, LEFT = 18, RIGHT = 19, ON_GROUND = 20, IN_AIR = 21, ON_LADDER = 22, HANGING = 23, DUCKTOHANG = 24
+*
+* \note It seems that the game only uses states 10-16.
+* \note To be used by the bot.
+*/
+GMEXPORT int GetSpelunkerState()
+{
+	return spSpelunkerState;
+}
+
 
 #pragma endregion

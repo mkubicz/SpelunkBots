@@ -68,6 +68,7 @@ typedef double(__cdecl *IsNodePassablePROC)(double x, double y, double usingPixe
 typedef double(__cdecl *DisplayLevelLayoutPROC)();
 typedef bool(__cdecl *IsFacingLeftPROC)();
 typedef bool(__cdecl *IsFacingRightPROC)();
+typedef int(__cdecl *GetSpelunkerStatePROC)();
 
 typedef collectableObject*(__cdecl *GetIthCollectablePROC)(int i);
 typedef collectableObject*(__cdecl *GetIthEnemyPROC)(int i);
@@ -114,6 +115,8 @@ protected:
 	bool _duck;
 	bool _holdingItem;
 	bool _hanging;
+
+	GetSpelunkerStatePROC GetSpelunkerState;
 
 public:
 	IBot();

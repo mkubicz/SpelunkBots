@@ -20,6 +20,8 @@ public:
 	void NewLevel() override;
 
 	ObjectManager* GetObjectManager();
+	
+	SpState SpelunkerState();
 
 private:
 	std::queue<IMovementAction*> _actionsQ;
