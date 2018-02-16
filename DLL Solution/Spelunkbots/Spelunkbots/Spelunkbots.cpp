@@ -1955,7 +1955,7 @@ GMEXPORT double SetSpelunkerState(double state)
 * STANDING = 10, RUNNING = 11, DUCKING = 12, LOOKING_UP = 13, CLIMBING = 14, JUMPING = 15, FALLING = 16,
 * DYING = 17, LEFT = 18, RIGHT = 19, ON_GROUND = 20, IN_AIR = 21, ON_LADDER = 22, HANGING = 23, DUCKTOHANG = 24
 *
-* \note It seems that the game only uses states 10-16.
+* \note It seems that the game only uses states 10-16 and 23-24.
 * \note To be used by the bot.
 */
 GMEXPORT int GetSpelunkerState()

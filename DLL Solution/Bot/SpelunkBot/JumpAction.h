@@ -16,14 +16,16 @@ private:
 	int _previousPosY;
 	bool _running;
 	bool _goingUp;
-	bool _ontoLadder;
+	JUMP_TARGET _jumpTarget;
 	enum STATE { WALKING, JUMPING, FALLING, HANGING, CLIMBING,	SMALLJUMP };
 	STATE _state;
 
 	bool _smljmp_backedUp;
 
+	void SetActionType();
+
 public:
 	JumpAction(IBot * bot, bool goingRight, bool goingUp, int distX, int distY);
-	JumpAction(IBot * bot, bool goingRight, bool goingUp, bool ontoLadder, int distX, int distY);
+	JumpAction(IBot * bot, bool goingRight, bool goingUp, JUMP_TARGET target, int distX, int distY);
 	ordersStruct GetOrders();
 };

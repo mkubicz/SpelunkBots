@@ -47,6 +47,11 @@ void IBot::InitialiseVariables()
 	_isHanging = false;
 }
 
+SpState IBot::GetSpelunkerState()
+{
+	return (SpState)GetSpelunkerStateDLL();
+}
+
 void IBot::InitialiseDLLFunctions()
 {
 	spelunkbots_hModule = LoadLibrary(TEXT("spelunkbots.dll"));
@@ -116,7 +121,7 @@ void IBot::InitialiseDLLFunctions()
 	DisplayLevelLayout = (DisplayLevelLayoutPROC)GetProcAddress(spelunkbots_hModule, "DisplayLevelLayout");
 	IsFacingLeft = (IsFacingLeftPROC)GetProcAddress(spelunkbots_hModule, "IsFacingLeft");
 	IsFacingRight = (IsFacingRightPROC)GetProcAddress(spelunkbots_hModule, "IsFacingRight");
-	GetSpelunkerState = (GetSpelunkerStatePROC)GetProcAddress(spelunkbots_hModule, "GetSpelunkerState");
+	GetSpelunkerStateDLL = (GetSpelunkerStatePROC)GetProcAddress(spelunkbots_hModule, "GetSpelunkerState");
 
 	GetIthCollectable = (GetIthCollectablePROC)GetProcAddress(spelunkbots_hModule, "GetIthCollectable");
 	GetIthEnemy = (GetIthEnemyPROC)GetProcAddress(spelunkbots_hModule, "GetIthEnemy");

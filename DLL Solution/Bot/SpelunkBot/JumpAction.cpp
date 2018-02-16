@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "JumpAction.h"
 
-JumpAction::JumpAction(IBot * bot, bool goingRight, bool goingUp, int distX, int distY)
+JumpAction::JumpAction(IBot * bot, bool goingRight, bool goingUp, JUMP_TARGET target, int distX, int distY)
 	: IMovementAction(bot)
 {
 	_goingRight = goingRight;
@@ -12,8 +12,51 @@ JumpAction::JumpAction(IBot * bot, bool goingRight, bool goingUp, int distX, int
 	_previousPosY = (int)_bot->GetPlayerPositionY();
 	_climbTimer = 4;
 	_hangTimer = 2;
-	_ontoLadder = false;
+	_jumpTarget = target;
 
+	SetActionType();
+
+	//if target is a ledge, bot has to jump a bit further than normally, thus we increase distances 
+	//(simpler than making a specialized case for those jumps)
+	if (_jumpTarget == LEDGE)
+	{
+		_distY += 1;
+		_distX += 1;
+	}
+
+
+	_smljmp_backedUp = false;
+	if (_distX == 1)
+		_state = SMALLJUMP;
+	else
+		_state = WALKING;
+
+	_running = abs(_distX) > 3 && !(abs(_distX) == 4 && _distY == 0);
+
+	if (_state == SMALLJUMP)
+	{
+		if (_distY == 2) _jumpTimer = 3;
+		else _jumpTimer = 1;
+	}
+	else
+	{
+		if (_distX <= 2) _jumpTimer = 1;
+		if (_distX > 2 && _distX <= 5) _jumpTimer = 3;
+		if (_distX > 5) _jumpTimer = 6;
+	}
+
+
+
+}
+
+JumpAction::JumpAction(IBot * bot, bool goingRight, bool goingUp, int distX, int distY)
+	: JumpAction(bot, goingRight, goingUp, GROUND, distX, distY)
+{
+}
+
+
+void JumpAction::SetActionType()
+{
 	if (_goingRight)
 		if (_goingUp)
 			_actionType = JUMPUPRIGHT;
@@ -24,28 +67,6 @@ JumpAction::JumpAction(IBot * bot, bool goingRight, bool goingUp, int distX, int
 			_actionType = JUMPUPLEFT;
 		else
 			_actionType = JUMPDOWNLEFT;
-		
-
-	_smljmp_backedUp = false;
-	if (_distX == 1)
-		_state = SMALLJUMP;
-	else
-		_state = WALKING;
-
-	_running = abs(_distX) > 3 && !(abs(_distX) == 4 && _distY == 0);
-
-	if (distX <= 2) _jumpTimer = 1;
-	if (distX > 2 && distX <= 5) _jumpTimer = 3;
-	if (distX > 5) _jumpTimer = 6;
-
-
-
-}
-
-JumpAction::JumpAction(IBot * bot, bool goingRight, bool goingUp, bool ontoLadder, int distX, int distY)
-	: JumpAction(bot, goingRight, goingUp, distX, distY)
-{
-	_ontoLadder = ontoLadder;
 }
 
 ordersStruct JumpAction::GetOrders()
@@ -70,14 +91,8 @@ ordersStruct JumpAction::GetOrders()
 		_actionInProgress = true;
 	}
 
-	//TODO: switch to decent hanging check
-	if (_previousPosX == playerPosX && playerPosY == _targetY + PIXELS_IN_NODE && 
-		(playerPosX < _targetX + PIXELS_IN_NODE || _goingRight) && 
-		(playerPosX > _targetX - PIXELS_IN_NODE || !_goingRight)
-		&& _state != CLIMBING) _state = HANGING;
 
-
-	if (_ontoLadder) orders.lookUp = true;
+	if (_jumpTarget == LADDER) orders.lookUp = true;
 
 
 	distToTargetY = ConvertToNodeCoordinates(abs(playerPosY - _targetY));
@@ -85,7 +100,7 @@ ordersStruct JumpAction::GetOrders()
 	switch (_state)
 	{
 		case SMALLJUMP:
-			//only when x=1 and y=2
+			//only when x=1
 			
 			//back up a little bit
 			if (!_smljmp_backedUp)
@@ -99,7 +114,9 @@ ordersStruct JumpAction::GetOrders()
 			else
 			{
 				orders.jump = true;
-				_goingRight ? orders.goRight = true : orders.goLeft = true;
+				_state = JUMPING;
+				//orders.jump = true;
+				//_goingRight ? orders.goRight = true : orders.goLeft = true;
 			}
 
 			break;
@@ -140,34 +157,14 @@ ordersStruct JumpAction::GetOrders()
 			if (closeToTarget(playerPosX, _targetX) && _targetY == playerPosY) _actionDone = true;
 
 			break;
-		case HANGING:
-			if (_hangTimer > 0)
-			{
-				_hangTimer -= 1;
-				_goingRight ? orders.goRight = true : orders.goLeft = true;
-			}
-			else
-			{
-				_state = CLIMBING;
-				orders.jump = true;
-			}
-
-			break;
-		case CLIMBING:
-			if (_climbTimer > 0)
-			{
-				_climbTimer -= 1;
-				_goingRight ? orders.goRight = true : orders.goLeft = true;
-			}
-			break;
 		default:
 			break;
 	}
 
 
-	if (closeToTarget(playerPosX, _targetX) && _targetY == playerPosY) _actionDone = true;
+	if ((closeToTarget(playerPosX, _targetX) && _targetY == playerPosY) || _bot->GetSpelunkerState() == spHANGING) _actionDone = true;
 
-	if (_ontoLadder && abs(playerPosX - _targetX) <= 2 && (_targetY-8 < playerPosY && _targetY + 24 > playerPosY)) 
+	if (_jumpTarget == LADDER && abs(playerPosX - _targetX) <= 2 && (_targetY-8 < playerPosY && _targetY + 24 > playerPosY)) 
 		_actionDone = true;
 	
 

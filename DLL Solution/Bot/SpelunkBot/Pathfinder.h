@@ -10,7 +10,9 @@ public:
 	Pathfinder(IBot* bot);
 	~Pathfinder();
 
-	std::vector<MapSearchNode*> CalculateNeighboursList(MapSearchNode* node, std::map<int, std::map<int, MapSearchNode*>> grid);
+	std::vector<MapSearchNode*> CalculateNeighboursList(MapSearchNode* node, SpState spstate);
+	std::vector<Node> CalculateNeighboursList(Node node, SpState spstate);
+	std::vector<MapSearchNode*> CalculateNeighboursList(MapSearchNode* node);
 	std::vector<Node> CalculateNeighboursList(Node node);
 	bool HorizontalJumpPathClear(int x, int y, int dist, bool right);
 	bool isCloseToFog(int x, int y, int closeness);
@@ -28,9 +30,16 @@ public:
 private:	
 	IBot* _bot; 
 	std::vector<MapSearchNode*> _pathList;
+	std::map<int, std::map<int, MapSearchNode*> > _grid;
 
 	bool DownJumpPathClear(int x1, int y1, int x2, int y2, bool right);
 	bool WalkOffLedgePathClear(int x1, int y1, int x2, int y2, bool right);
+
+	std::vector<Node> CalculateNeighboursHanging(Node node);
+	std::vector<Node> CalculateNeighboursClimbing(Node node);
+	std::vector<Node> CalculateNeighboursStanding(Node node);
+
+	SpState PredictCurrentState(int x, int y);
 
 	//for simplicity
 	bool Pusta(int x, int y); //the node is passable

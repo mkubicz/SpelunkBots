@@ -59,7 +59,8 @@ ordersStruct HangDropAction::GetOrders()
 			if (!_goingRight && playerPosX - _targetX > 0) orders.goLeft = true;
 			if (closeToTarget(playerPosX, _targetX)) orders.duck = true;
 			
-			if (playerPosY == _targetYHang) _state = HANGING;
+			//if (playerPosY == _targetYHang) _state = HANGING;
+			if (_bot->GetSpelunkerState() == spHANGING) _state = HANGING;
 			break;
 		case HANGING:
 			if (_lookDownTimer != 0)

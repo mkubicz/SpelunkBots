@@ -7,6 +7,9 @@
 #include "JumpAboveAction.h"
 #include "JumpAction.h"
 #include "WalkOffLedgeAction.h"
+#include "ClimbFromHangAction.h"
+#include "HangAction.h"
+#include "DropAction.h"
 
 DebugBot::DebugBot()
 {
@@ -45,6 +48,27 @@ void DebugBot::NewLevel()
 	 * TESTING AND DEBUGGING
 	 */
 	IMovementAction* a;
+
+
+	//CLIMBFROMHANGTEST
+	/*
+	a = new WalkAction(this, RIGHT, false, 3, NODE_COORDS);
+	_actionsQ.push(a);
+	a = new JumpAction(this, RIGHT, UP, LEDGE, 2, 1);
+	_actionsQ.push(a);
+	a = new ClimbFromHangAction(this, RIGHT);
+	_actionsQ.push(a);
+	a = new WalkAction(this, RIGHT, false, 4, NODE_COORDS);
+	_actionsQ.push(a);
+	a = new WalkAction(this, LEFT, false, 4, NODE_COORDS);
+	_actionsQ.push(a);
+	a = new HangAction(this, LEFT);
+	_actionsQ.push(a); 
+	a = new DropAction(this);
+	_actionsQ.push(a);
+	a = new WalkAction(this, LEFT, false, 1, NODE_COORDS);
+	_actionsQ.push(a);
+	*/
 	/*
 	a = new WalkAction(this, RIGHT, false, 2, NODE_COORDS);
 	_actionsQ.push(a);
@@ -326,9 +350,7 @@ void DebugBot::NewLevel()
 	_actionsQ.push(a);
 	a = new WalkAction(this, LEFT, NORUN, 2, NODE_COORDS);
 	_actionsQ.push(a);
-	a = new JumpAction(this, LEFT, true, 6, 1);
-	_actionsQ.push(a);
-	a = new WalkAction(this, LEFT, NORUN, 3, NODE_COORDS);
+	a = new JumpAction(this, LEFT, true, 3, 5);
 	_actionsQ.push(a);
 	*/
 	//JUMPTEST2
@@ -429,10 +451,10 @@ ObjectManager* DebugBot::GetObjectManager()
 	return _objectManager;
 }
 
-SpState DebugBot::SpelunkerState()
-{
-	return (SpState)GetSpelunkerState();
-}
+//SpState DebugBot::SpelunkerState()
+//{
+//	return (SpState)GetSpelunkerState();
+//}
 
 
 void DebugBot::ExecuteOrders(ordersStruct orders)
@@ -747,8 +769,10 @@ void DebugBot::ClearOrders()
 void DebugBot::CreateCommands(std::vector<Node> path)
 {
 	int currX, currY, targetX, targetY, distX, distY;
+	MOVEMENTACTION prevAction = IDLE;
 	currX = (int)_playerPositionXNode;
 	currY = (int)_playerPositionYNode;
+	SpState spState;
 
 	for (int i = 0; i < path.size(); i++)
 	{
@@ -757,8 +781,21 @@ void DebugBot::CreateCommands(std::vector<Node> path)
 		distX = abs(targetX - currX);
 		distY = abs(targetY - currY);
 
-		
-		std::vector<Node> neighbours = _pathfinder->CalculateNeighboursList(Node{ currX, currY });
+		if (currX == (int)_playerPositionXNode && currY == (int)_playerPositionYNode)
+			spState = GetSpelunkerState();
+		else
+		{
+			if (prevAction == HANGRIGHT ||
+				prevAction == HANGLEFT ||
+				prevAction == JUMPUPRIGHT_LEDGE ||
+				prevAction == JUMPUPLEFT_LEDGE)
+				spState = spHANGING;
+			else
+				spState = spSTANDING;
+		}
+
+
+		std::vector<Node> neighbours = _pathfinder->CalculateNeighboursList(Node{ currX, currY }, spState);
 		
 
 		std::vector<MOVEMENTACTION> actionsToReachTarget;
@@ -782,6 +819,7 @@ void DebugBot::CreateCommands(std::vector<Node> path)
 
 		currX = targetX;
 		currY = targetY;
+		prevAction = action;
 	}
 }
 
@@ -809,10 +847,27 @@ void DebugBot::AddActionToActionQueue(MOVEMENTACTION action, int distX, int dist
 			_actionsQ.push(new WalkAction(this, LEFT, NORUN, distX, NODE_COORDS));
 		break;
 	case RUNRIGHT:
-		_actionsQ.push(new WalkAction(this, RIGHT, RUN, distX, NODE_COORDS));
+		if (!_actionsQ.empty() && _actionsQ.back()->ActionType() == RUNRIGHT)
+			//previous action is also a WalkRight, so we increase its distance instead of creating a new command (ActionBatching™)
+			dynamic_cast<WalkAction*>(_actionsQ.back())->AddDistance(distX);
+		else
+			_actionsQ.push(new WalkAction(this, RIGHT, RUN, distX, NODE_COORDS));
 		break;
 	case RUNLEFT:
-		_actionsQ.push(new WalkAction(this, LEFT, RUN, distX, NODE_COORDS));
+		if(!_actionsQ.empty() && _actionsQ.back()->ActionType() == RUNLEFT)
+			//previous action is also a WalkLeft, so we increase its distance instead of creating a new command (ActionBatching™)
+			dynamic_cast<WalkAction*>(_actionsQ.back())->AddDistance(distX);
+		else
+			_actionsQ.push(new WalkAction(this, LEFT, RUN, distX, NODE_COORDS));
+			break;
+	case HANGRIGHT:
+		_actionsQ.push(new HangAction(this, RIGHT));
+		break;
+	case HANGLEFT:
+		_actionsQ.push(new HangAction(this, LEFT));
+		break;
+	case DROP:
+		_actionsQ.push(new DropAction(this));
 		break;
 	case HANGDROPRIGHT:
 		_actionsQ.push(new HangDropAction(this, RIGHT, false));
@@ -832,6 +887,12 @@ void DebugBot::AddActionToActionQueue(MOVEMENTACTION action, int distX, int dist
 	case JUMPUPLEFT:
 		_actionsQ.push(new JumpAction(this, LEFT, UP, distX, distY));
 		break;
+	case JUMPUPRIGHT_LEDGE:
+		_actionsQ.push(new JumpAction(this, RIGHT, UP, LEDGE, distX, distY));
+		break;
+	case JUMPUPLEFT_LEDGE:
+		_actionsQ.push(new JumpAction(this, LEFT, UP, LEDGE, distX, distY));
+		break;
 	case JUMPDOWNRIGHT:
 		_actionsQ.push(new JumpAction(this, RIGHT, DOWN, distX, distY));
 		break;
@@ -849,6 +910,12 @@ void DebugBot::AddActionToActionQueue(MOVEMENTACTION action, int distX, int dist
 		break;
 	case WALKUPLEFT:
 		_actionsQ.push(new WalkUpAction(this, LEFT));
+		break;
+	case CLIMBFROMHANG_RIGHT:
+		_actionsQ.push(new ClimbFromHangAction(this, RIGHT));
+		break;
+	case CLIMBFROMHANG_LEFT:
+		_actionsQ.push(new ClimbFromHangAction(this, LEFT));
 		break;
 		/*
 		case CLIMBUP,
@@ -907,7 +974,7 @@ void DebugBot::Update()
 	_objectManager->UpdateGameObjectLists();
 
 
-	std::cout << SpelunkerState() << std::endl;
+	//std::cout << GetSpelunkerState() << std::endl;
 
 
 
@@ -942,6 +1009,7 @@ void DebugBot::Update()
 					
 					_pathfinder->CalculatePath(_playerPositionXNode, _playerPositionYNode, target.x, target.y, NODE_COORDS);
 					CreateCommands(_pathfinder->GetPathListNode());
+
 				}
 				else
 				{

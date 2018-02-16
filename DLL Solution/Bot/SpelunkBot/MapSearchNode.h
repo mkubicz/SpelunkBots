@@ -9,10 +9,12 @@ private:
 	int _y;
 	int _gScore;
 	int _hScore;
-	int _fScore;
+	//int _fScore;
 	MapSearchNode* _parent;
 	bool _opened;
 	bool _closed;
+
+	//used in FindExplorationTargets
 	bool _visited = false;
 
 public:

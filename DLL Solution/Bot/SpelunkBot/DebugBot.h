@@ -21,7 +21,7 @@ public:
 
 	ObjectManager* GetObjectManager();
 	
-	SpState SpelunkerState();
+	//SpState SpelunkerState();
 
 private:
 	std::queue<IMovementAction*> _actionsQ;

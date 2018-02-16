@@ -135,6 +135,15 @@
     <ClInclude Include="ObjectManager.h">
       <Filter>Header Files\Bots\DebugBot\ObjectManager</Filter>
     </ClInclude>
+    <ClInclude Include="ClimbFromHangAction.h">
+      <Filter>Header Files\Bots\DebugBot\Actions</Filter>
+    </ClInclude>
+    <ClInclude Include="DropAction.h">
+      <Filter>Header Files\Bots\DebugBot\Actions</Filter>
+    </ClInclude>
+    <ClInclude Include="HangAction.h">
+      <Filter>Header Files\Bots\DebugBot\Actions</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -211,6 +220,15 @@
     </ClCompile>
     <ClCompile Include="ObjectManager.cpp">
       <Filter>Source Files\Bots\DebugBot\ObjectManager</Filter>
+    </ClCompile>
+    <ClCompile Include="ClimbFromHangAction.cpp">
+      <Filter>Source Files\Bots\DebugBot\Actions</Filter>
+    </ClCompile>
+    <ClCompile Include="HangAction.cpp">
+      <Filter>Source Files\Bots\DebugBot\Actions</Filter>
+    </ClCompile>
+    <ClCompile Include="DropAction.cpp">
+      <Filter>Source Files\Bots\DebugBot\Actions</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

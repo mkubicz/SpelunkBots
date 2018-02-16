@@ -82,6 +82,7 @@ private:
 	HMODULE spelunkbots_hModule;
 
 	void InitialiseDLLFunctions(void);
+	GetSpelunkerStatePROC GetSpelunkerStateDLL;
 
 protected:
 	double _pathCount;
@@ -116,7 +117,6 @@ protected:
 	bool _holdingItem;
 	bool _hanging;
 
-	GetSpelunkerStatePROC GetSpelunkerState;
 
 public:
 	IBot();
@@ -325,4 +325,6 @@ public:
 
 	// Used on initialising a bot and re-initialising upon entering a room
 	void InitialiseVariables(void);
+
+	SpState GetSpelunkerState();
 };

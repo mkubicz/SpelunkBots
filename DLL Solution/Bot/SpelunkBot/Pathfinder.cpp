@@ -11,6 +11,17 @@ using namespace std;
 Pathfinder::Pathfinder(IBot* bot)
 {
 	_bot = bot;
+
+	//initialize the grid
+	for (int i = 0; i < X_NODES; i++)
+	{
+		for (int j = 0; j < Y_NODES; j++)
+		{
+			_grid[i][j] = new MapSearchNode();
+			_grid[i][j]->_x = i;
+			_grid[i][j]->_y = j;
+		}
+	}
 }
 
 Pathfinder::~Pathfinder()
@@ -34,21 +45,65 @@ bool Pathfinder::Ladder(int x, int y)
 	return _bot->GetNodeState(x, y, NODE_COORDS) == spLadder;
 }
 
-
-
-vector<Node> Pathfinder::CalculateNeighboursList(Node node)
+vector<Node> Pathfinder::CalculateNeighboursHanging(Node node)
 {
+	vector<Node> neighbours;
 	int x = node.x;
 	int y = node.y;
-	vector<Node> neighbours;
 	int MAX;
+
+	//drop
+	MAX = 8; //max distance to ground tile
+	for (int i = 1; i <= MAX; i++)
+	{
+		if (Pelna(x, y + i) && y + i < Y_NODES)
+		{
+			neighbours.push_back(Node{ x, y + i - 1, DROP });
+			break;
+		}
+	}
+
+	//climb
+
+	if (Pelna(x+1, y)) neighbours.push_back(Node{ x + 1, y - 1, CLIMBFROMHANG_RIGHT });
+	if (Pelna(x - 1, y)) neighbours.push_back(Node{ x - 1, y - 1, CLIMBFROMHANG_LEFT });
+
+	//doesn't work when pathfinding!!!!!! grrrr1!!!!
+	//if (_bot->IsFacingRight()) 
+	//	neighbours.push_back(Node{ x + 1, y - 1, CLIMBFROMHANG_RIGHT });
+	//else
+	//	neighbours.push_back(Node{ x - 1, y - 1, CLIMBFROMHANG_LEFT });
+	
+
+
+	return neighbours;
+}
+
+vector<Node> Pathfinder::CalculateNeighboursClimbing(Node node)
+{
+	vector<Node> neighbours;
+	int x = node.x;
+	int y = node.y;
+	int MAX;
+
+	//TODO
+	return neighbours;
+}
+
+vector<Node> Pathfinder::CalculateNeighboursStanding(Node node)
+{
+	vector<Node> neighbours;
+	int x = node.x;
+	int y = node.y;
+	int MAX;
+
 
 	/*
 	* UP I
 	*/
 	/*
 	if (Pelna(x, y - 1) && Pusta(x, y - 2) && ((Pusta(x - 1, y) && Pusta(x - 1, y - 1) && Pusta(x - 1, y - 2)) || (Pusta(x + 1, y) && Pusta(x + 1, y - 1) && Pusta(x + 1, y - 2))))
-		neighbours.push_back(Node {x,y-2});
+	neighbours.push_back(Node {x,y-2});
 	*/
 	if (Pelna(x, y - 1) && Pusta(x, y - 2))
 	{
@@ -56,38 +111,15 @@ vector<Node> Pathfinder::CalculateNeighboursList(Node node)
 		if (Pusta(x + 1, y) && Pusta(x + 1, y - 1) && Pusta(x + 1, y - 2))
 			neighbours.push_back(Node{ x, y - 2, JUMPABOVERIGHT });
 		//left
-		if (Pusta(x - 1, y) && Pusta(x - 1, y - 1) && Pusta(x - 1, y - 2)) 
+		if (Pusta(x - 1, y) && Pusta(x - 1, y - 1) && Pusta(x - 1, y - 2))
 			neighbours.push_back(Node{ x, y - 2, JUMPABOVELEFT });
 	}
 
-	/*
-	* UP II
-	*/
-	if (Pusta(x, y - 1) && Pusta(x, y - 2))
-	{
-		//right
-		if (Pusta(x + 1, y - 2) && Pelna(x + 1, y - 1))
-		{
-			if (Pusta(x + 1, y)) 
-				neighbours.push_back(Node{ x + 1, y - 2, JUMPUPRIGHT });
-			else
-				neighbours.push_back(Node{ x + 1, y - 2, WALKUPRIGHT });
-		}
-		//left
-		if (Pusta(x - 1, y - 2) && Pelna(x - 1, y - 1))
-		{
-			if (Pusta(x - 1, y))
-				neighbours.push_back(Node{ x - 1, y - 2, JUMPUPLEFT });
-			else
-				neighbours.push_back(Node{ x - 1, y - 2, WALKUPLEFT });
-		}
-	}
-
 
 	/*
-	* UP III (max=4 - possible, max=3 - safe)
+	* UP III (max=5 - possible, max=4 - safe)
 	*/
-	MAX = 3; //safe option for now
+	MAX = 4; //safe option for now
 
 	//right
 	for (int i = 0; i <= MAX; i++)
@@ -96,8 +128,14 @@ vector<Node> Pathfinder::CalculateNeighboursList(Node node)
 		{
 			if (Pelna(x + i + 1, y - 1))
 			{
-				if (i != 0) //i==0 case is handled by UP II
-					neighbours.push_back(Node { x + i + 1, y - 2, JUMPUPRIGHT });
+				if (i == 0)
+				{
+					if (Pusta(x, y - 2)) //neighbours.push_back(Node{ x + 1, y - 2, JUMPUPRIGHT });
+						neighbours.push_back(Node{ x, y - 1, JUMPUPRIGHT_LEDGE });
+				}
+				else
+					//neighbours.push_back(Node{ x + i + 1, y - 2, JUMPUPRIGHT });
+					neighbours.push_back(Node{ x + i, y - 1, JUMPUPRIGHT_LEDGE });
 
 				break;
 			}
@@ -111,9 +149,14 @@ vector<Node> Pathfinder::CalculateNeighboursList(Node node)
 		{
 			if (Pelna(x + i - 1, y - 1))
 			{
-				if (i != 0) //i==0 case is handled by UP II
-					neighbours.push_back(Node { x + i - 1, y - 2, JUMPUPLEFT });
-
+				if (i == 0)
+				{
+					if (Pusta(x, y - 2)) //neighbours.push_back(Node{ x - 1, y - 2, JUMPUPLEFT });
+						neighbours.push_back(Node{ x, y - 1, JUMPUPLEFT_LEDGE });
+				}
+				else
+					//neighbours.push_back(Node{ x + i - 1, y - 2, JUMPUPLEFT });
+					neighbours.push_back(Node{ x + i, y - 1, JUMPUPLEFT_LEDGE });
 				break;
 			}
 		}
@@ -199,7 +242,7 @@ vector<Node> Pathfinder::CalculateNeighboursList(Node node)
 			else
 				neighbours.push_back(Node{ x + candidateXright, y, JUMPUPRIGHT });
 		}
-			
+
 	}
 
 
@@ -241,33 +284,20 @@ vector<Node> Pathfinder::CalculateNeighboursList(Node node)
 
 
 	/*
-	* DOWN hangdrop
+	* DOWN hang
 	*/
-	MAX = 9; //max distance to ground tile
 	//right
 	if (Pusta(x + 1, y) && Pusta(x + 1, y + 1))
 	{
-		for (int j = 2; j <= MAX; j++)
-		{
-			if (Pelna(x + 1, y + j) && y + j < Y_NODES)
-			{
-				neighbours.push_back(Node { x + 1, y + j - 1, HANGDROPRIGHT });
-				break;
-			}
-		}
+		if (Pelna(x + 1, y + 2)) neighbours.push_back(Node{ x + 1, y + 1, HANGDROPRIGHT });
+		else neighbours.push_back(Node{ x + 1, y + 1, HANGRIGHT });
 	}
 
 	//left
 	if (Pusta(x - 1, y) && Pusta(x - 1, y + 1))
 	{
-		for (int j = 2; j <= MAX; j++)
-		{
-			if (Pelna(x - 1, y + j) && y + j < Y_NODES)
-			{
-				neighbours.push_back(Node { x - 1, y + j - 1, HANGDROPLEFT });
-				break;
-			}
-		}
+		if (Pelna(x - 1, y + 2)) neighbours.push_back(Node{ x - 1, y + 1, HANGDROPLEFT });
+		else neighbours.push_back(Node{ x - 1, y + 1, HANGLEFT });
 	}
 
 
@@ -277,13 +307,13 @@ vector<Node> Pathfinder::CalculateNeighboursList(Node node)
 	int MAXx = 7;
 	int MAXy = 5; //only 5 because we would take damage if we jumped further
 
-	//right
+				  //right
 	if (Pusta(x + 1, y + 1))
 	{
 		for (int i = 2; i <= MAXx; i++)
 			for (int j = 1; j <= MAXy; j++)
 				if (Pelna(x + i, y + j + 1) && Pusta(x + i, y + j) && DownJumpPathClear(x, y, x + i, y + j, RIGHT))
-					neighbours.push_back(Node { x + i, y + j, JUMPDOWNRIGHT });
+					neighbours.push_back(Node{ x + i, y + j, JUMPDOWNRIGHT });
 	}
 
 	//left
@@ -292,7 +322,7 @@ vector<Node> Pathfinder::CalculateNeighboursList(Node node)
 		for (int i = 2; i <= MAXx; i++)
 			for (int j = 1; j <= MAXy; j++)
 				if (Pelna(x - i, y + j + 1) && Pusta(x - i, y + j) && DownJumpPathClear(x, y, x - i, y + j, LEFT))
-					neighbours.push_back(Node { x - i, y + j, JUMPDOWNLEFT });
+					neighbours.push_back(Node{ x - i, y + j, JUMPDOWNLEFT });
 	}
 
 
@@ -313,7 +343,7 @@ vector<Node> Pathfinder::CalculateNeighboursList(Node node)
 					if (Pelna(x + i, y + j + 1) && Pusta(x + i, y + j) && WalkOffLedgePathClear(x, y, x + i, y + j, RIGHT))
 						neighbours.push_back(Node{ x + i, y + j, WALKOFFLEDGERIGHT });
 			}
-				
+
 	}
 
 	//left
@@ -329,21 +359,6 @@ vector<Node> Pathfinder::CalculateNeighboursList(Node node)
 			}
 
 	}
-	
-
-	//delete any accidental out of bounds neighbours or neighbours in fog
-	for (int i = 0; i < neighbours.size(); i++)
-	{
-		if (neighbours[i].x <= 0 || neighbours[i].x >= X_NODES-1 ||
-			neighbours[i].y <= 0 || neighbours[i].y >= Y_NODES-1 ||
-			_bot->GetFogState(neighbours[i].x, neighbours[i].y, NODE_COORDS) == 1 ||
-			_bot->GetFogState(neighbours[i].x, neighbours[i].y+1, NODE_COORDS) == 1)
-		{
-			neighbours.erase(neighbours.begin()+i);
-			i--;
-		}
-	}
-
 
 	return neighbours;
 }
@@ -736,58 +751,92 @@ vector<Node> Pathfinder::CalculateNeighboursList(Node node)
 #pragma endregion
 
 
-bool Pathfinder::HorizontalJumpPathClear(int x, int y, int dist, bool right)
+
+vector<Node> Pathfinder::CalculateNeighboursList(Node node, SpState spstate)
 {
-	int borderY = 0;
-	if (dist <= 2) borderY = 0;
-	if (dist > 2 && dist <= 4) borderY = 1;
-	if (dist > 4) borderY = 2;
-
-	bool ok = true;
-
-	for (int i = 1; i < dist; i++)
+	vector<Node> neighbours;
+	
+	switch (spstate)
 	{
-		for (int j = 0; j <= borderY; j++)
-		{
-
-			if (right)
-			{
-				if (Pelna(x + i, y - j))
-				{
-					ok = false;
-					break;
-				}
-			}
-			else
-			{
-				if (Pelna(x - i, y - j))
-				{
-					ok = false;
-					break;
-				}
-			}
-
-		}
-
-		if (!ok) break;
+	case spHANGING:
+		neighbours = CalculateNeighboursHanging(node);
+		break;
+	case spCLIMBING:
+		neighbours = CalculateNeighboursClimbing(node);
+		break;
+	case spSTANDING:
+	default:
+		neighbours = CalculateNeighboursStanding(node);
+		break;
 	}
 
-	return ok;
+	//if (spstate == spHANGING)
+	//	neighbours = CalculateNeighboursHanging(node);
+	//else if (spstate == spCLIMBING)
+	//	neighbours = CalculateNeighboursClimbing(node);
+	//else
+	//	neighbours = CalculateNeighboursStanding(node);
+
+	//delete any accidental out of bounds neighbours or neighbours in fog
+	for (int i = 0; i < neighbours.size(); i++)
+	{
+		if (neighbours[i].x <= 0 || neighbours[i].x >= X_NODES-1 ||
+			neighbours[i].y <= 0 || neighbours[i].y >= Y_NODES-1 ||
+			_bot->GetFogState(neighbours[i].x, neighbours[i].y, NODE_COORDS) == 1 ||
+			_bot->GetFogState(neighbours[i].x, neighbours[i].y+1, NODE_COORDS) == 1)
+		{
+			neighbours.erase(neighbours.begin()+i);
+			i--;
+		}
+	}
+
+
+	return neighbours;
 }
 
 
-vector<MapSearchNode*> Pathfinder::CalculateNeighboursList(MapSearchNode* node, std::map<int, std::map<int, MapSearchNode*>> grid)
+
+vector<MapSearchNode*> Pathfinder::CalculateNeighboursList(MapSearchNode* node, SpState spstate)
 {
 	vector<MapSearchNode*> neighbours;
 
-	vector<Node> n = CalculateNeighboursList(Node{ node->_x, node->_y });
+	vector<Node> n = CalculateNeighboursList(Node{ node->_x, node->_y }, spstate);
 	for (int i = 0; i < n.size(); i++)
 	{
-		neighbours.push_back(grid[n[i].x][n[i].y]);
+		neighbours.push_back(_grid[n[i].x][n[i].y]);
 	}
 
 	return neighbours;
 }
+
+vector<MapSearchNode*> Pathfinder::CalculateNeighboursList(MapSearchNode* node)
+{
+	SpState spstate = PredictCurrentState(node->GetX(), node->GetY());
+
+	return CalculateNeighboursList(node, spstate);
+}
+
+vector<Node> Pathfinder::CalculateNeighboursList(Node node)
+{
+	SpState spstate = PredictCurrentState(node.x, node.y);
+
+	return CalculateNeighboursList(node, spstate);
+}
+
+SpState Pathfinder::PredictCurrentState(int x, int y)
+{
+	if (!_bot->IsNodePassable(x, y + 1, NODE_COORDS)) 
+		return spSTANDING;
+	else
+	{
+		if (Ladder(x, y)) return spCLIMBING;
+		else return spHANGING;
+	}
+		
+
+	return spSTANDING;
+}
+
 
 #pragma region CalculateNeighboursList on MapSearchNodes
 //vector<MapSearchNode*> Pathfinder::CalculateNeighboursList(MapSearchNode* node, std::map<int, std::map<int, MapSearchNode*>> grid)
@@ -1009,6 +1058,45 @@ vector<MapSearchNode*> Pathfinder::CalculateNeighboursList(MapSearchNode* node, 
 #pragma endregion
 
 
+bool Pathfinder::HorizontalJumpPathClear(int x, int y, int dist, bool right)
+{
+	int borderY = 0;
+	if (dist <= 2) borderY = 0;
+	if (dist > 2 && dist <= 4) borderY = 1;
+	if (dist > 4) borderY = 2;
+
+	bool ok = true;
+
+	for (int i = 1; i < dist; i++)
+	{
+		for (int j = 0; j <= borderY; j++)
+		{
+
+			if (right)
+			{
+				if (Pelna(x + i, y - j))
+				{
+					ok = false;
+					break;
+				}
+			}
+			else
+			{
+				if (Pelna(x - i, y - j))
+				{
+					ok = false;
+					break;
+				}
+			}
+
+		}
+
+		if (!ok) break;
+	}
+
+	return ok;
+}
+
 //crude; to be used by GetNeighboursList
 bool Pathfinder::DownJumpPathClear(int x1, int y1, int x2, int y2, bool right)
 {
@@ -1169,7 +1257,7 @@ void Pathfinder::NeighboursDebug(int x, int y)
 	ofstream fileStream;
 	fileStream.open(".\\Pathfinder\\neighbours.txt");
 
-	std::vector<Node> neighbours = CalculateNeighboursList(Node{x,y});
+	std::vector<Node> neighbours = CalculateNeighboursList(Node{x,y}, _bot->GetSpelunkerState());
 	
 
 	for (int i = 0; i < neighbours.size(); i++)
@@ -1199,8 +1287,8 @@ std::vector<Node> Pathfinder::GetPathListNode()
 
 bool Pathfinder::IsOutOfBounds(int x, int y)
 {
-	if (x < 0 || x > X_NODES ||
-		y < 0 || y > Y_NODES) 
+	if (x < 0 || x >= X_NODES ||
+		y < 0 || y >= Y_NODES) 
 		return true;
 	else 
 		return false;
@@ -1210,31 +1298,6 @@ bool Pathfinder::CanStandInNode(int x, int y)
 {
 	return _bot->IsNodePassable(x, y, NODE_COORDS) && !_bot->IsNodePassable(x, y + 1, NODE_COORDS);
 }
-
-//int CalculateDistanceToFog(int x, int y)
-//{
-//	//x right, y down, both
-//	for (int i = x + 1; i < X_NODES; i++)
-//	{
-//		for (int j = y + 1; j < Y_NODES; j++)
-//		{
-//
-//		}
-//	}
-//
-//	//x right
-//	for (int i = x+1; i < X_NODES; i++)
-//	{
-//
-//	}
-//
-//	//y left
-//
-//	//y right
-//	return 0;
-//}
-
-
 
 bool Pathfinder::isCloseToFog(int x, int y, int closeness)
 {
@@ -1247,6 +1310,7 @@ bool Pathfinder::isCloseToFog(int x, int y, int closeness)
 
 	return false;
 
+#pragma region prev, slower version
 	/*
 	//x right, y down, both
 	for (int xi = x + 1; xi < X_NODES && xi <= x + closeness; xi++)
@@ -1280,6 +1344,9 @@ bool Pathfinder::isCloseToFog(int x, int y, int closeness)
 	
 	return false;
 	*/
+
+#pragma endregion
+
 }
 
 bool Pathfinder::isCloseToFog(MapSearchNode *n, int closeness)
@@ -1401,35 +1468,30 @@ std::vector<Node> Pathfinder::FindExplorationTargets(double x1, double y1, doubl
 {
 	std::vector<Node> explTargets;
 
+	std::list<MapSearchNode*> visitedList;
+	list<MapSearchNode*>::iterator i;
+
 	if (usingPixelCoords)
 		ConvertToNodeCoordinates(x1, y1);
 
 	_pathList.clear();
 
-	std::map<int, std::map<int, MapSearchNode*> > grid;
-	for (int i = 0; i < X_NODES; i++)
-	{
-		for (int j = 0; j < Y_NODES; j++)
-		{
-			grid[i][j] = new MapSearchNode();
-			grid[i][j]->_x = i;
-			grid[i][j]->_y = j;
-		}
-	}
-
-	MapSearchNode* start = grid[x1][y1];
+	MapSearchNode* start = _grid[x1][y1];
 	start->_visited = true;
+	visitedList.push_back(start);
 
 	MapSearchNode* current = new MapSearchNode();
 	MapSearchNode* child = new MapSearchNode();
+	
 
 	unsigned int n = 0;
 
-	vector<MapSearchNode*> neighbours = CalculateNeighboursList(start, grid);
+	vector<MapSearchNode*> neighbours = CalculateNeighboursList(start);
 	if (!neighbours.empty())
 	{
 		current = neighbours[0];
 		current->_visited = true;
+		visitedList.push_back(current);
 		current->_parent = start;
 	}
 	else
@@ -1445,7 +1507,7 @@ std::vector<Node> Pathfinder::FindExplorationTargets(double x1, double y1, doubl
 			explTargets.push_back(toNode(current));
 		}
 
-		vector<MapSearchNode*> neighbours = CalculateNeighboursList(current, grid);
+		vector<MapSearchNode*> neighbours = CalculateNeighboursList(current);
 		
 		//no neighbours - backtracking
 		if (neighbours.empty())
@@ -1465,6 +1527,7 @@ std::vector<Node> Pathfinder::FindExplorationTargets(double x1, double y1, doubl
 				if (!neighbours[i]->_visited)
 				{
 					neighbours[i]->_visited = true;
+					visitedList.push_back(neighbours[i]);
 					neighbours[i]->_parent = current;
 					current = neighbours[i];
 					break;
@@ -1485,6 +1548,12 @@ std::vector<Node> Pathfinder::FindExplorationTargets(double x1, double y1, doubl
 		n++;
 	}
 
+	//reset
+	for (i = visitedList.begin(); i != visitedList.end(); i++)
+	{
+		(*i)->_visited = false;
+		(*i)->_parent = NULL;
+	}
 
 	return explTargets;
 
@@ -1493,6 +1562,8 @@ std::vector<Node> Pathfinder::FindExplorationTargets(double x1, double y1, doubl
 
 bool Pathfinder::CalculatePath(double x1, double y1, double x2, double y2, double usingPixelCoords)
 {
+	bool DEBUG = FALSE;
+
 	bool path_found = false;
 
 	if (usingPixelCoords)
@@ -1502,43 +1573,35 @@ bool Pathfinder::CalculatePath(double x1, double y1, double x2, double y2, doubl
 	{
 		_pathList.clear();
 
-		std::map<int, std::map<int, MapSearchNode*> > grid;
-		for (int i = 0; i < X_NODES; i++)
-		{
-			for (int j = 0; j < Y_NODES; j++)
-			{
-				grid[i][j] = new MapSearchNode();
-				grid[i][j]->_x = i;
-				grid[i][j]->_y = j;
-			}
-		}
 
 		ofstream fileStream;
-		fileStream.open(".\\Pathfinder\\level_paths.txt");
-
+		if (DEBUG) fileStream.open(".\\Pathfinder\\level_paths.txt");
 
 		// define the new nodes
 		MapSearchNode* start = new MapSearchNode();
 		start->_x = x1;
 		start->_y = y1;
 
-		fileStream << "START:" << endl;
-		fileStream << "X: ";
-		fileStream << start->_x;
-		fileStream << " Y: ";
-		fileStream << start->_y;
-		fileStream << endl;
-
 		MapSearchNode* end = new MapSearchNode();
 		end->_x = x2;
 		end->_y = y2;
 
-		fileStream << "END" << endl;
-		fileStream << "X: ";
-		fileStream << end->_x;
-		fileStream << " Y: ";
-		fileStream << end->_y;
-		fileStream << endl;
+		if (DEBUG)
+		{
+			fileStream << "START:" << endl;
+			fileStream << "X: ";
+			fileStream << start->_x;
+			fileStream << " Y: ";
+			fileStream << start->_y;
+			fileStream << endl;
+
+			fileStream << "END" << endl;
+			fileStream << "X: ";
+			fileStream << end->_x;
+			fileStream << " Y: ";
+			fileStream << end->_y;
+			fileStream << endl;
+		}
 
 		MapSearchNode* current = new MapSearchNode();
 		MapSearchNode* child = new MapSearchNode();
@@ -1563,16 +1626,19 @@ bool Pathfinder::CalculatePath(double x1, double y1, double x2, double y2, doubl
 				}
 			}
 
-			fileStream << "searching";
-			fileStream << " Current X: ";
-			fileStream << current->_x;
-			fileStream << " Current Y: ";
-			fileStream << current->_y;
+			if (DEBUG)
+			{
+				fileStream << "searching";
+				fileStream << " Current X: ";
+				fileStream << current->_x;
+				fileStream << " Current Y: ";
+				fileStream << current->_y;
+			}
 
 			// Stop if we've reached the end
 			if (current->_x == end->_x && current->_y == end->_y)
 			{
-				fileStream << endl << "end reached";
+				if (DEBUG) fileStream << endl << "end reached";
 				path_found = true;
 				break;
 			}
@@ -1587,14 +1653,14 @@ bool Pathfinder::CalculatePath(double x1, double y1, double x2, double y2, doubl
 
 
 			//Get reachable neighbours
-			std::vector<MapSearchNode*> neighbours;
+			//std::vector<MapSearchNode*> neighbours;
 
-			std::vector<Node> neighboursNode = CalculateNeighboursList(Node{current->_x, current->_y});
-			//Convert Nodes to MapSearchNodes
-			for (int i = 0; i < neighboursNode.size(); i++)
-				neighbours.push_back(grid[neighboursNode[i].x][neighboursNode[i].y]);
+			//std::vector<Node> neighboursNode = CalculateNeighboursList(Node{current->_x, current->_y});
+			////Convert Nodes to MapSearchNodes
+			//for (int i = 0; i < neighboursNode.size(); i++)
+			//	neighbours.push_back(_grid[neighboursNode[i].x][neighboursNode[i].y]);
 
-			//std::vector<MapSearchNode*> neighbours = CalculateNeighboursList(current, grid);
+			std::vector<MapSearchNode*> neighbours = CalculateNeighboursList(current);
 
 			for (int i = 0; i < neighbours.size(); i++)
 			{
@@ -1603,8 +1669,12 @@ bool Pathfinder::CalculatePath(double x1, double y1, double x2, double y2, doubl
 				// if it's closed then pass
 				if (child->_closed)
 				{
-					fileStream << "\n";
-					fileStream << "closed";
+					if (DEBUG)
+					{
+						fileStream << "\n";
+						fileStream << "closed";
+					}
+
 					continue;
 				}
 
@@ -1613,6 +1683,8 @@ bool Pathfinder::CalculatePath(double x1, double y1, double x2, double y2, doubl
 				// if it's already in the opened list
 				if (child->_opened)
 				{
+					//we can compare the G score, because the F = G+H, and H is just our distance to target prediction, 
+					//which is going to be the same because its the same node reached in 2 different ways
 					if (child->_gScore > child->GetGScore(current))
 					{
 						child->_parent = current;
@@ -1631,41 +1703,61 @@ bool Pathfinder::CalculatePath(double x1, double y1, double x2, double y2, doubl
 			}
 
 			n++;
-			fileStream << "\n";
+			if (DEBUG) fileStream << "\n";
 		}
 
-		// Reset
-		for (i = openList.begin(); i != openList.end(); i++)
-		{
-			(*i)->_opened = false;
-		}
-		for (i = closedList.begin(); i != closedList.end(); i++)
-		{
-			(*i)->_closed = false;
-		}
-		fileStream.close();
+		if (DEBUG) fileStream.close();
 
-		fileStream.open(".\\Pathfinder\\level_path.txt");
+		if (DEBUG) fileStream.open(".\\Pathfinder\\level_path.txt");
+
 		// resolve the path starting from the end point
 		while (current->_parent && current != start)
 		{
 			_pathList.push_back(current);
 			current = current->_parent;
 		}
-
 		reverse(_pathList.begin(), _pathList.end());
 
-		for (int i = 0; i < _pathList.size(); i++)
-		{
 
-			fileStream << "X ";
-			fileStream << _pathList[i]->_x;
-			fileStream << " Y ";
-			fileStream << _pathList[i]->_y;
-			fileStream << "\n";
+		// Reset
+		for (i = openList.begin(); i != openList.end(); i++)
+		{
+			(*i)->_opened = false;
+			(*i)->_hScore = 0;
+			(*i)->_gScore = 0;
+
+			//I don't have to do these two
+			(*i)->_parent = NULL;
+			//(*i)->_closed = false;
+		}
+		for (i = closedList.begin(); i != closedList.end(); i++)
+		{
+			(*i)->_closed = false;
+			(*i)->_hScore = 0;
+			(*i)->_gScore = 0;
+
+			//I don't have to do these two
+			(*i)->_parent = NULL;
+			//(*i)->_opened = false;
 		}
 
-		fileStream.close();
+
+		if (DEBUG)
+		{
+			for (int i = 0; i < _pathList.size(); i++)
+			{
+
+				fileStream << "X ";
+				fileStream << _pathList[i]->_x;
+				fileStream << " Y ";
+				fileStream << _pathList[i]->_y;
+				fileStream << "\n";
+			}
+			fileStream.close();
+		}
+
+
+
 		return path_found;
 
 		
@@ -1673,44 +1765,3 @@ bool Pathfinder::CalculatePath(double x1, double y1, double x2, double y2, doubl
 	else //we are standing on the exit
 		return true;
 }
-
-
-
-
-
-//find neighbours LR II pierwsza wersja
-/*
-switch (candidateX)
-{
-case 1:
-neighbours.push_back(grid[x + candidateX][y]);
-break;
-case 2:
-if (Pusta(x + 1, y)) neighbours.push_back(grid[x + candidateX][y]);
-break;
-case 3:
-case 4:
-bool ok = true;
-for (int i = 1; i < candidateX; i++)
-{
-for (int j = -1; j <= 0; j--)
-{
-if (Pelna(x + i, y + j)) ok = false;
-}
-}
-if (ok) neighbours.push_back(grid[x + candidateX][y]);
-break;
-case 5:
-case 6:
-bool ok = true;
-for (int i = 1; i < candidateX; i++)
-{
-for (int j = -2; j <= 0; j--)
-{
-if (Pelna(x + i, y + j)) ok = false;
-}
-}
-if (ok) neighbours.push_back(grid[x + candidateX][y]);
-break;
-}
-*/

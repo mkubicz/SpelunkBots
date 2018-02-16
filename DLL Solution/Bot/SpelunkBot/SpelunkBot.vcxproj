@@ -82,7 +82,10 @@
   <ItemGroup>
     <ClInclude Include="BasicBotExampleOne.h" />
     <ClInclude Include="CentralizeAction.h" />
+    <ClInclude Include="ClimbFromHangAction.h" />
     <ClInclude Include="DebugBot.h" />
+    <ClInclude Include="DropAction.h" />
+    <ClInclude Include="HangAction.h" />
     <ClInclude Include="HangDropAction.h" />
     <ClInclude Include="IMovementAction.h" />
     <ClInclude Include="JordanBot.h" />
@@ -109,7 +112,10 @@
   <ItemGroup>
     <ClCompile Include="BasicBotExampleOne.cpp" />
     <ClCompile Include="CentralizeAction.cpp" />
+    <ClCompile Include="ClimbFromHangAction.cpp" />
     <ClCompile Include="DebugBot.cpp" />
+    <ClCompile Include="DropAction.cpp" />
+    <ClCompile Include="HangAction.cpp" />
     <ClCompile Include="HangDropAction.cpp" />
     <ClCompile Include="IMovementAction.cpp" />
     <ClCompile Include="JordanBot.cpp" />
