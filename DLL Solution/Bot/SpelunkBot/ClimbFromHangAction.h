@@ -4,11 +4,10 @@
 class ClimbFromHangAction : public IMovementAction
 {
 private:
-	bool _goingRight;
 	bool _jumped;
 	int _climbTimer;
 
 public:
-	ClimbFromHangAction(IBot *bot, bool goingRight);
+	ClimbFromHangAction(IBot *bot, DIRECTIONX directionX);
 	ordersStruct GetOrders();
 };

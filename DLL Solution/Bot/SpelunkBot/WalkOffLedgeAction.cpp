@@ -2,17 +2,21 @@
 #include "WalkOffLedgeAction.h"
 
 
-WalkOffLedgeAction::WalkOffLedgeAction(IBot * bot, bool goingRight, int distX, int distY)
+WalkOffLedgeAction::WalkOffLedgeAction(IBot * bot, int distX, int distY)
 	: IMovementAction(bot)
 {
-	_goingRight = goingRight;
+	if (_distX < 0) _directionX = xLEFT;
+	else if (_distX == 0) _directionX = xNONE;
+	else _directionX = xRIGHT;
+
+	if (_distY < 0) _directionY = yUP;
+	else if (_distY == 0) _directionY = yNONE;
+	else _directionY = yDOWN;
+
 	_distX = distX;
 	_distY = distY;
 
-	if (_goingRight)
-		_actionType = WALKOFFLEDGERIGHT;
-	else
-		_actionType = WALKOFFLEDGELEFT;
+	_actionType = WALKOFFLEDGE;
 
 	_running = false;
 	if (abs(distX) == 3 && distY == 1) _running = true;
@@ -32,12 +36,11 @@ ordersStruct WalkOffLedgeAction::GetOrders()
 	if (!_actionInProgress)
 	{
 		int nodenr = (int)_bot->GetPlayerPositionXNode();
-		if (!_goingRight) _distX = -_distX;
 
 		_targetX = (nodenr + _distX) * PIXELS_IN_NODE + (PIXELS_IN_NODE / 2);
 		_targetY = playerPosY + (_distY * PIXELS_IN_NODE);
 		//_targetXSide = _goingRight ? (nodenr + _distX) * PIXELS_IN_NODE : (nodenr + 1 + _distX) * PIXELS_IN_NODE;
-		_startPosXside = _goingRight ? (nodenr * PIXELS_IN_NODE) + PIXELS_IN_NODE : (nodenr * PIXELS_IN_NODE);
+		_startPosXside = _directionX == xRIGHT ? (nodenr * PIXELS_IN_NODE) + PIXELS_IN_NODE : (nodenr * PIXELS_IN_NODE);
 		//_startPosXmid = (nodenr * PIXELS_IN_NODE) + (PIXELS_IN_NODE / 2);
 
 		_actionInProgress = true;
@@ -48,14 +51,14 @@ ordersStruct WalkOffLedgeAction::GetOrders()
 	switch (_state)
 	{
 		case WALKING:
-			_goingRight ? orders.goRight = true : orders.goLeft = true;
+			_directionX == xRIGHT ? orders.goRight = true : orders.goLeft = true;
 
-			if (WentThrough(_goingRight, playerPosX, _startPosXside))
+			if (WentThrough(playerPosX, _startPosXside, _directionX))
 				_state = FALLING;
 
 			break;
 		case FALLING:
-			_goingRight ? orders.goRight = true : orders.goLeft = true;
+			_directionX == xRIGHT ? orders.goRight = true : orders.goLeft = true;
 
 			if (closeToTargetFall(playerPosX, _targetX, _running, _distY))
 				_state = FREEFALLING;

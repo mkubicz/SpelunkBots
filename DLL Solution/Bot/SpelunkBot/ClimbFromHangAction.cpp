@@ -1,11 +1,10 @@
 #include "stdafx.h"
-#include "JumpAction.h"
 #include "ClimbFromHangAction.h"
 
-ClimbFromHangAction::ClimbFromHangAction(IBot * bot, bool goingRight)
+ClimbFromHangAction::ClimbFromHangAction(IBot * bot, DIRECTIONX directionX)
 	: IMovementAction(bot)
 {
-	_goingRight = goingRight;
+	_directionX = directionX;
 	_jumped = false;
 	_climbTimer = 4;
 }
@@ -19,7 +18,7 @@ ordersStruct ClimbFromHangAction::GetOrders()
 	if (!_actionInProgress)
 	{
 		_targetX = (int)_bot->GetPlayerPositionXNode() * PIXELS_IN_NODE + PIXELS_IN_NODE/2;
-		_goingRight ? _targetX += PIXELS_IN_NODE : _targetX -= PIXELS_IN_NODE;
+		_directionX == xRIGHT ? _targetX += PIXELS_IN_NODE : _targetX -= PIXELS_IN_NODE;
 		_targetY = ((int)_bot->GetPlayerPositionYNode() - 1) * PIXELS_IN_NODE + PIXELS_IN_NODE / 2;
 
 		_actionInProgress = true;
@@ -35,7 +34,7 @@ ordersStruct ClimbFromHangAction::GetOrders()
 		if (_climbTimer > 0)
 		{
 			_climbTimer -= 1;
-			_goingRight ? orders.goRight = true : orders.goLeft = true;
+			_directionX == xRIGHT ? orders.goRight = true : orders.goLeft = true;
 		}
 	}
 

@@ -14,8 +14,12 @@ ordersStruct DropAction::GetOrders()
 	{
 		orders.duck = true;
 		orders.jump = true;
+
+		//if you are right above ground don't jump; instead walk off
+		if (!_bot->IsNodePassable(_bot->GetPlayerPositionXNode(), _bot->GetPlayerPositionYNode() + 1, NODE_COORDS))
+			orders.jump = false;
 	}
-	if (_bot->GetSpelunkerState() == spSTANDING)
+	if (_bot->GetSpelunkerState() == spSTANDING || _bot->GetSpelunkerState() == spDUCKING)
 		_actionDone = true;
 
 	return orders;

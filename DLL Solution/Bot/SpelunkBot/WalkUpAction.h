@@ -10,7 +10,7 @@ private:
 	bool _finished;
 
 public:
-	WalkUpAction(IBot *bot, bool goingRight);
+	WalkUpAction(IBot *bot, DIRECTIONX directionX);
 	~WalkUpAction() {};
 
 	ordersStruct GetOrders() override;

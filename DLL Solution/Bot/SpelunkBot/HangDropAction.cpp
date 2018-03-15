@@ -1,15 +1,11 @@
 #include "stdafx.h"
 #include "HangDropAction.h";
 
-HangDropAction::HangDropAction(IBot* bot, bool goingRight, bool lookDown)
+HangDropAction::HangDropAction(IBot* bot, DIRECTIONX directionX, bool lookDown)
 	: IMovementAction(bot)
 {
-	_goingRight = goingRight;
-
-	if (_goingRight)
-		_actionType = HANGDROPRIGHT;
-	else
-		_actionType = HANGDROPLEFT;
+	_directionX = directionX;
+	_actionType = HANGDROP;
 
 	_actionInProgress = false;
 	_lookDown = lookDown;
@@ -17,6 +13,11 @@ HangDropAction::HangDropAction(IBot* bot, bool goingRight, bool lookDown)
 	_actionDone = false;
 	_hanging = false;
 	_state = WALKING;
+}
+
+HangDropAction::HangDropAction(IBot* bot, DIRECTIONX directionX)
+	: HangDropAction(bot, directionX, false)
+{
 }
 
 
@@ -30,11 +31,11 @@ ordersStruct HangDropAction::GetOrders()
 	{
 		int nodeXnr = (int)_bot->GetPlayerPositionXNode();
 		int nodeYnr = (int)_bot->GetPlayerPositionYNode();
-		_targetX = _goingRight ? (nodeXnr + 1) * PIXELS_IN_NODE : (nodeXnr * PIXELS_IN_NODE) - 1;
+		_targetX = _directionX == xRIGHT ? (nodeXnr + 1) * PIXELS_IN_NODE : (nodeXnr * PIXELS_IN_NODE) - 1;
 		_targetYHang = playerPosY + PIXELS_IN_NODE;
 		
 		
-		int dropX = _goingRight ? playerPosX + PIXELS_IN_NODE : playerPosX - PIXELS_IN_NODE;
+		int dropX = _directionX == xRIGHT ? playerPosX + PIXELS_IN_NODE : playerPosX - PIXELS_IN_NODE;
 		for (int i = 2; i <= Y_NODES; i++) //if over 8, the bot will take damage
 		{
 			if (!_bot->IsNodePassable(dropX, (playerPosY + i*PIXELS_IN_NODE), PIXEL_COORDS))
@@ -55,12 +56,12 @@ ordersStruct HangDropAction::GetOrders()
 	switch (_state)
 	{
 		case WALKING:
-			if (_goingRight && _targetX - playerPosX > 0) orders.goRight = true;
-			if (!_goingRight && playerPosX - _targetX > 0) orders.goLeft = true;
+			if (_directionX == xRIGHT && _targetX - playerPosX > 0) orders.goRight = true;
+			if (_directionX == xLEFT && playerPosX - _targetX > 0) orders.goLeft = true;
 			if (closeToTarget(playerPosX, _targetX)) orders.duck = true;
 			
 			//if (playerPosY == _targetYHang) _state = HANGING;
-			if (_bot->GetSpelunkerState() == spHANGING) _state = HANGING;
+			if (_bot->GetSpelunkerState() == spHANGING || _bot->GetSpelunkerState() == spCLIMBING) _state = HANGING;
 			break;
 		case HANGING:
 			if (_lookDownTimer != 0)

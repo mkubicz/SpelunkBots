@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "Node.h"
 #include "Utilities.h"
 
 bool CloseToZero(double x)
@@ -77,11 +78,84 @@ bool closeToTargetFall(int playerPositionX, int targetPositionX, bool running, i
 
 }
 
-
-bool WentThrough(bool goingRight, int x1, int x2)
+bool closeToTargetFallToLadder(int playerPositionX, int targetPositionX, bool running, int distX, int distY)
 {
-	if (goingRight) return x1 >= x2;
-	else return x2 >= x1;
+	if (distY <= 0) //jumpup or jumpflat
+	{
+		if (running) return abs(playerPositionX - targetPositionX) <= PIXELS_IN_NODE * 1.5;
+		else return closeToTarget(playerPositionX, targetPositionX);
+	}
+	else
+	{ //jumpdown
+		if (running)
+		{
+			if ((distX == 4) && (distY == 5))
+				return abs(playerPositionX - targetPositionX) <= 28;
+
+			if (distX == 5 && (distY == 2 || distY == 3))
+				return abs(playerPositionX - targetPositionX) <= 24;
+
+			if ((distX == 6) && (distY == 5))
+				return abs(playerPositionX - targetPositionX) <= 26;
+
+			if ((distX == 7 || distX == 6) && (distY == 2 || distY == 3))
+				return abs(playerPositionX - targetPositionX) <= 20;
+			else
+				if (running) return abs(playerPositionX - targetPositionX) <= 28;
+		}
+		else
+		{
+			//return abs(playerPositionX - targetPositionX) <= 12;
+			if (distY > distX)
+				return abs(playerPositionX - targetPositionX) <= 14;
+			else
+				return abs(playerPositionX - targetPositionX) <= 12;
+		}
+	}
+
 }
 
 
+
+bool WentThrough(int x1, int x2, DIRECTIONX direction)
+{
+	//changed from >= to >
+	if (direction == xRIGHT) return x1 > x2;
+	else return x2 > x1;
+}
+
+Node CalculateTargetNode(int playerPosXNode, int playerPosYNode, int distX, int distY)
+{
+	Node targetNode(playerPosXNode + distX, playerPosYNode + distY);
+
+	return targetNode;
+}
+
+int MiddleXPixel(Node node)
+{
+	return ConvertToPixelCoordinates(node.GetX()) + 8;
+}
+
+int MiddleYPixel(Node node)
+{
+	return ConvertToPixelCoordinates(node.GetY()) + 8;
+}
+
+int EdgeOfNodeX(int nrOfNode, DIRECTIONX direction)
+{
+	if (direction == xRIGHT)
+		return (nrOfNode * PIXELS_IN_NODE) + PIXELS_IN_NODE;
+	else
+		return (nrOfNode * PIXELS_IN_NODE);
+}
+
+int CenterOfNode(int nrOfNode)
+{
+	return (nrOfNode + 0.5) * 16;
+}
+
+bool WithinRangeFromTarget(int posPixel, int targetPixel, int pixelRange)
+{
+	if (abs(targetPixel - posPixel) <= pixelRange) return true;
+	else return false;
+}

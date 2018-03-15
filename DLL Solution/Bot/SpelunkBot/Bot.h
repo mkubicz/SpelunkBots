@@ -6,7 +6,7 @@
 // defined with this macro as being exported.
 #pragma once
 
-#include "stdafx.h"
+//#include "stdafx.h"
 
 #ifdef SPELUNKBOT_EXPORTS
 #define SPELUNKBOT_API extern "C" __declspec(dllexport)

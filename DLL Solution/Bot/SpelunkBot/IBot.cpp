@@ -45,6 +45,8 @@ void IBot::InitialiseVariables()
 	_itemp = false;
 	_hanging = false;
 	_isHanging = false;
+	
+	_hasMomentum = false;
 }
 
 SpState IBot::GetSpelunkerState()

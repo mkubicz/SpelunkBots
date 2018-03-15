@@ -199,3 +199,5 @@ FakesAssemblies/
 Performance/
 *.lvl
 *.txt
+DLL Solution/Bot/SpelunkBot/JumpActionStary.h
+DLL Solution/Bot/SpelunkBot/JumpActionStary.cpp

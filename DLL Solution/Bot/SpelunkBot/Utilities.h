@@ -1,5 +1,10 @@
 #pragma once
 
+//forward declaration
+class Node;
+enum DIRECTIONX;
+
+
 bool CloseToZero(double x);
 
 //make them return values maybe
@@ -16,13 +21,28 @@ bool IsBotAgainstTheWall(int playerPositionX, bool goingRight);
 bool closeToTarget(int playerPositionX, int targetPositionX);
 bool closeToTargetFall(int playerPosX, int targetPosX, bool running, int distY);
 
-bool WentThrough(bool goingRight, int x1, int x2);
+bool closeToTargetFallToLadder(int playerPositionX, int targetPositionX, bool running, int distX, int distY);
 
-struct Node
-{
-	int x;
-	int y;
 
-	int actionToReach;
 
-};
+bool WentThrough(int x1, int x2, DIRECTIONX direction);
+
+
+
+//struct Node
+//{
+//	int x;
+//	int y;
+//
+//	int actionToReach;
+//
+//};
+
+Node CalculateTargetNode(int playerPosXNode, int playerPosYNode, int distX, int distY);
+
+int MiddleXPixel(Node node);
+int MiddleYPixel(Node node);
+int EdgeOfNodeX(int nrOfNode, DIRECTIONX direction);
+int CenterOfNode(int nrOfNode);
+
+bool WithinRangeFromTarget(int posPixel, int targetPixel, int pixelRange);

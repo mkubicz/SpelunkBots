@@ -1,3 +1,4 @@
+#pragma once
 
 class MapSearchNode
 {
@@ -11,6 +12,12 @@ private:
 	int _hScore;
 	//int _fScore;
 	MapSearchNode* _parent;
+	MOVEMENTACTION _actionToReach;
+	MOVEMENTACTION _actionToReachCandidate;
+
+	//JUMP_TARGET _moveTarget;
+	//JUMP_TARGET _moveTargetCandidate;
+
 	bool _opened;
 	bool _closed;
 
@@ -23,6 +30,7 @@ public:
 	double GetGScore(MapSearchNode *p);
 	double GetHScore(MapSearchNode *p);
 	double GetFScore();
+	MOVEMENTACTION GetActionToReach();
 
 	void ComputeScores(MapSearchNode * end);
 }; 

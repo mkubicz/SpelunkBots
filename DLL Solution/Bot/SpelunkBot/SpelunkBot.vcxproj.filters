@@ -9,10 +9,6 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
     <Filter Include="Header Files\Bots">
       <UniqueIdentifier>{212c05ef-9411-413f-b618-17eee0d2515e}</UniqueIdentifier>
     </Filter>
@@ -54,6 +50,13 @@
     </Filter>
     <Filter Include="Header Files\Bots\DebugBot\ObjectManager">
       <UniqueIdentifier>{b10e98cb-db2e-40a9-a0ff-acdc2ddcda26}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Archive">
+      <UniqueIdentifier>{47ec7097-ce14-4c33-bdd2-dd2cfa171c33}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -120,9 +123,6 @@
     <ClInclude Include="JumpAboveAction.h">
       <Filter>Header Files\Bots\DebugBot\Actions</Filter>
     </ClInclude>
-    <ClInclude Include="JumpAction.h">
-      <Filter>Header Files\Bots\DebugBot\Actions</Filter>
-    </ClInclude>
     <ClInclude Include="MapSearchNode.h">
       <Filter>Header Files\Bots\DebugBot\Pathfinding</Filter>
     </ClInclude>
@@ -143,6 +143,24 @@
     </ClInclude>
     <ClInclude Include="HangAction.h">
       <Filter>Header Files\Bots\DebugBot\Actions</Filter>
+    </ClInclude>
+    <ClInclude Include="JumpFromLadderAction.h">
+      <Filter>Header Files\Bots\DebugBot\Actions</Filter>
+    </ClInclude>
+    <ClInclude Include="ClimbAction.h">
+      <Filter>Header Files\Bots\DebugBot\Actions</Filter>
+    </ClInclude>
+    <ClInclude Include="Node.h">
+      <Filter>Header Files\Bots\DebugBot</Filter>
+    </ClInclude>
+    <ClInclude Include="JumpAction.h">
+      <Filter>Header Files\Bots\DebugBot\Actions</Filter>
+    </ClInclude>
+    <ClInclude Include="JumpToLadderAction.h">
+      <Filter>Archive</Filter>
+    </ClInclude>
+    <ClInclude Include="JumpActionStary.h">
+      <Filter>Archive</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -206,9 +224,6 @@
     <ClCompile Include="JumpAboveAction.cpp">
       <Filter>Source Files\Bots\DebugBot\Actions</Filter>
     </ClCompile>
-    <ClCompile Include="JumpAction.cpp">
-      <Filter>Source Files\Bots\DebugBot\Actions</Filter>
-    </ClCompile>
     <ClCompile Include="MapSearchNode.cpp">
       <Filter>Source Files\Bots\DebugBot\Pathfinder</Filter>
     </ClCompile>
@@ -229,6 +244,24 @@
     </ClCompile>
     <ClCompile Include="DropAction.cpp">
       <Filter>Source Files\Bots\DebugBot\Actions</Filter>
+    </ClCompile>
+    <ClCompile Include="ClimbAction.cpp">
+      <Filter>Source Files\Bots\DebugBot\Actions</Filter>
+    </ClCompile>
+    <ClCompile Include="Node.cpp">
+      <Filter>Source Files\Bots\DebugBot</Filter>
+    </ClCompile>
+    <ClCompile Include="JumpAction.cpp">
+      <Filter>Source Files\Bots\DebugBot\Actions</Filter>
+    </ClCompile>
+    <ClCompile Include="JumpFromLadderAction.cpp">
+      <Filter>Source Files\Bots\DebugBot\Actions</Filter>
+    </ClCompile>
+    <ClCompile Include="JumpToLadderAction.cpp">
+      <Filter>Archive</Filter>
+    </ClCompile>
+    <ClCompile Include="JumpActionStary.cpp">
+      <Filter>Archive</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

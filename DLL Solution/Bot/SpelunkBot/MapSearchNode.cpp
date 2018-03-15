@@ -36,6 +36,11 @@ double MapSearchNode::GetFScore()
 	return _gScore + _hScore;
 }
 
+MOVEMENTACTION MapSearchNode::GetActionToReach()
+{
+	return _actionToReach;
+}
+
 void MapSearchNode::ComputeScores(MapSearchNode * end)
 {
 	_gScore = GetGScore(_parent);

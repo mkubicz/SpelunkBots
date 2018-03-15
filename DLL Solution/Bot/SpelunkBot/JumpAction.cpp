@@ -1,175 +1,423 @@
 #include "stdafx.h"
 #include "JumpAction.h"
 
-JumpAction::JumpAction(IBot * bot, bool goingRight, bool goingUp, JUMP_TARGET target, int distX, int distY)
+JumpAction::JumpAction(IBot * bot, JUMP_TARGET target, int distX, int distY)
 	: IMovementAction(bot)
 {
-	_goingRight = goingRight;
-	_goingUp = goingUp;
 	_distX = distX;
 	_distY = distY;
-	_previousPosX = (int)_bot->GetPlayerPositionX();
-	_previousPosY = (int)_bot->GetPlayerPositionY();
-	_climbTimer = 4;
-	_hangTimer = 2;
 	_jumpTarget = target;
 
-	SetActionType();
+	_actionType = JUMP;
 
-	//if target is a ledge, bot has to jump a bit further than normally, thus we increase distances 
-	//(simpler than making a specialized case for those jumps)
+	//state is set in first call of GetOrders
+	//_state = WALKING;
+
+	if (_distX < 0) _directionX = xLEFT;
+	else if (_distX == 0) _directionX = xNONE;
+	else _directionX = xRIGHT;
+
+	if (_distY < 0) _directionY = yUP;
+	else if (_distY == 0) _directionY = yNONE;
+	else _directionY = yDOWN;
+
+	SetRunning();
+	SetTimers();
+	SetMovementRange();
+}
+
+JumpAction::JumpAction(IBot * bot, int distX, int distY)
+	: JumpAction(bot, GROUND, distX, distY)
+{
+}
+
+void JumpAction::SetRunning()
+{
+	if (_distY >= 0)
+	{
+		if (abs(_distX) > 4)
+			_running = true;
+		else
+			_running = false;
+	}
+	else
+	{
+		if (abs(_distX) > 3)
+			_running = true;
+		else
+			_running = false;
+	}
+
+	if (abs(_distX) == 3 && _distY == -1 && _jumpTarget == LEDGE)
+		_running = true;
+}
+
+void JumpAction::SetTimers()
+{
+	//general jumpTimer values
+	_jumpTimer = 3;
+
+	if (abs(_distX) >= 2)
+		_jumpTimer = 5;
+
+	if (_jumpTarget == LEDGE || _jumpTarget == LADDER)
+		_jumpTimer += 3;
+
+	if (_directionX == xNONE && _directionY == yUP)
+	{
+		if (_distY == -1) _jumpTimer = 1;
+		else _jumpTimer = 3;
+	}
+
+	//exceptions from general values
 	if (_jumpTarget == LEDGE)
 	{
-		_distY += 1;
-		_distX += 1;
-	}
-
-
-	_smljmp_backedUp = false;
-	if (_distX == 1)
-		_state = SMALLJUMP;
-	else
-		_state = WALKING;
-
-	_running = abs(_distX) > 3 && !(abs(_distX) == 4 && _distY == 0);
-
-	if (_state == SMALLJUMP)
-	{
-		if (_distY == 2) _jumpTimer = 3;
-		else _jumpTimer = 1;
+		if (abs(_distX) == 0 && _distY == -1)
+			_jumpTimer = 3;
 	}
 	else
 	{
-		if (_distX <= 2) _jumpTimer = 1;
-		if (_distX > 2 && _distX <= 5) _jumpTimer = 3;
-		if (_distX > 5) _jumpTimer = 6;
+		switch (_distY)
+		{
+		case -1:
+			if (abs(_distX) == 1 || abs(_distX) == 2)
+				_jumpTimer = 1;
+			break;
+		case 0:
+			if (abs(_distX) == 1)
+				_jumpTimer = 1;
+			break;
+		case 4:
+			if (abs(_distX) == 5)
+				_jumpTimer = 1;
+			if (abs(_distX) == 6)
+				_jumpTimer = 1;
+			break;
+		case 5:
+			if (abs(_distX) == 3)
+				_jumpTimer = 1;
+			if (abs(_distX) == 5)
+				_jumpTimer = 10;
+			if (abs(_distX) == 7)
+				_jumpTimer = 3;
+			if (abs(_distX) == 8)
+				_jumpTimer = 3;
+			break;
+		default:
+			break;
+		}
+	}
+
+	//setting delay timers
+	_dirDelayTimer = 0;
+
+	if (abs(_distX) == 5 && _distY == 5)
+		_dirDelayTimer = 5;
+
+}
+
+void JumpAction::SetMovementRange()
+{
+	if (_running)
+	{
+		_moveRange = 16;
+
+		switch (abs(_distX))
+		{
+		case 4:
+			if (_distY == -1)
+				_moveRange = 24;
+			break;
+		case 5:
+			if (_distY == 0 || _distY == 1 || _distY == 2)
+				_moveRange = 22;
+			if (_distY == 3)
+				_moveRange = 24;
+			if (_distY == 4)
+				_moveRange = 26;
+			if (_distY == 5)
+				_moveRange = 24;
+			break;
+		case 6:
+			if (_distY == 1 || _distY == 2 || _distY == 3)
+				_moveRange = 22;
+			if (_distY == 4)
+				_moveRange = 24;
+			if (_distY == 5)
+				_moveRange = 24;
+			break;
+		case 7:
+			if (_distY == 2 || _distY == 3)
+				_moveRange = 18;
+			if (_distY == 4 || _distY == 5)
+				_moveRange = 24;
+			break;
+		case 8:
+			if (_distY == 1)
+				_moveRange = 4;
+			if (_distY == 2)
+				_moveRange = 16;
+			if (_distY == 3)
+				_moveRange = 16;
+			if (_distY == 4)
+				_moveRange = 26;
+			if (_distY == 5)
+				_moveRange = 22;
+			break;
+		default:
+			break;
+		}
+	}
+	else
+	{
+		_moveRange = 8;
+
+		switch (abs(_distX))
+		{
+		case 2:
+			if (_distY == 0)
+				_moveRange = 10;
+			if (_distY == 1 || _distY == 2 || _distY == 3 || _distY == 4 || _distY == 5)
+				_moveRange = 14;
+			break;
+		case 3:
+			if (_distY == 0 || _distY == 1 || _distY == 2 || _distY == 3 || _distY == 4)
+				_moveRange = 10;
+			if (_distY == 5)
+				_moveRange = 13;
+			break;
+		case 4:
+			if (_distY == 0)
+				_moveRange = 4;
+			if (_distY == 4 || _distY == 5)
+				_moveRange = 12;
+			break;
+		default:
+			break;
+		}
+	}
+}
+
+void JumpAction::ModifyMoveRangeIfNeeded(int firstJumpPosX)
+{
+	//if (abs(_distX) == 5 && _distY == 5)
+	//{
+	//	if (abs(_startNodeEdge - firstJumpPosX) == 1)
+	//		_moveRange -= 2;
+	//	if (abs(_startNodeEdge - firstJumpPosX) == 2)
+	//		_jumpTimer = 3;
+	//	if (abs(_startNodeEdge - firstJumpPosX) == 6)
+	//		_jumpTimer = 3;
+	//}
+}
+
+void JumpAction::MoveToTarget(ordersStruct *orders)
+{
+	int playerPosX = (int)_bot->GetPlayerPositionX();
+
+	if (!WithinRangeFromTarget(playerPosX, MiddleXPixel(_targetNode), _moveRange)
+		|| _jumpTarget == LEDGE)
+	{
+		if (_directionX == xRIGHT) orders->goRight = true;
+		if (_directionX == xLEFT) orders->goLeft = true;
+	}
+}
+
+void JumpAction::Centralize(ordersStruct * orders)
+{
+	int playerPosX = (int)_bot->GetPlayerPositionX();
+
+	if (_centralizeBreakTimer == 0 && _centralizeMoveTimer == 0)
+	{
+		if (playerPosX < _startNodeCenter)
+			_centralizeDir = xRIGHT;
+		if (playerPosX > _startNodeCenter)
+			_centralizeDir = xLEFT;
+
+		_centralizeMoveTimer = 3;
+
+		if (playerPosX == _startNodeCenter)
+		{
+			_state = WALKING;
+		}
+
+		return;
 	}
 
 
-
-}
-
-JumpAction::JumpAction(IBot * bot, bool goingRight, bool goingUp, int distX, int distY)
-	: JumpAction(bot, goingRight, goingUp, GROUND, distX, distY)
-{
-}
-
-
-void JumpAction::SetActionType()
-{
-	if (_goingRight)
-		if (_goingUp)
-			_actionType = JUMPUPRIGHT;
+	if (_centralizeMoveTimer != 0)
+	{
+		if (_centralizeDir == xRIGHT)
+			orders->goRight = true;
 		else
-			_actionType = JUMPDOWNRIGHT;
-	else
-		if (_goingUp)
-			_actionType = JUMPUPLEFT;
-		else
-			_actionType = JUMPDOWNLEFT;
+			orders->goLeft = true;
+
+		_centralizeMoveTimer--;
+
+		if (_centralizeMoveTimer == 0)
+		{
+			if (playerPosX == _startNodeCenter)
+				_centralizeBreakTimer = 6;
+			else
+				_centralizeBreakTimer = 2;
+		}
+
+		return;
+	}
+
+	if (_centralizeBreakTimer != 0)
+	{
+		_centralizeBreakTimer--;
+		return;
+	}
 }
 
 ordersStruct JumpAction::GetOrders()
 {
-	int distToTargetY;
+	ordersStruct orders;
 	int playerPosX = (int)_bot->GetPlayerPositionX();
 	int playerPosY = (int)_bot->GetPlayerPositionY();
-	ordersStruct orders;
 
 	if (!_actionInProgress)
 	{
-		int nodenr = (int)_bot->GetPlayerPositionXNode();
-		if (_goingUp) _distY = -_distY;
-		if (!_goingRight) _distX = -_distX;
+		_targetNode = CalculateTargetNode((int)_bot->GetPlayerPositionXNode(), (int)_bot->GetPlayerPositionYNode(), _distX, _distY);
+		_startNodeCenter = CenterOfNode((int)_bot->GetPlayerPositionXNode());
 
-		_targetX = (nodenr + _distX) * PIXELS_IN_NODE + (PIXELS_IN_NODE / 2);
-		_targetY = playerPosY + (_distY * PIXELS_IN_NODE);
-		_targetXSide = _goingRight ? (nodenr + _distX) * PIXELS_IN_NODE : (nodenr + 1 + _distX) * PIXELS_IN_NODE;
-		_startPosXside = _goingRight ? (nodenr * PIXELS_IN_NODE) + PIXELS_IN_NODE : (nodenr * PIXELS_IN_NODE);
-		_startPosXmid = (nodenr * PIXELS_IN_NODE) + (PIXELS_IN_NODE / 2);
+		//makes the bot grab the ledge even when distX=0
+		//priority - right
+		if (_distX == 0 && _jumpTarget == LEDGE)
+		{
+			if (!_bot->IsNodePassable(_targetNode.GetX() + 1, _targetNode.GetY(), NODE_COORDS))
+				_directionX = xRIGHT;
+			else if (!_bot->IsNodePassable(_targetNode.GetX() - 1, _targetNode.GetY(), NODE_COORDS))
+				_directionX = xLEFT;
+		}
+
+		//setting the initial state
+		if (playerPosX != _startNodeCenter && _jumpTarget == LADDER && _distY > 3)
+			_state = CENTRALIZING;
+		else
+			_state = WALKING;
+
+		if (_directionX == xNONE && _directionY == yUP && _jumpTarget == LADDER)
+			_state = JUMPING;
+
+
+		//calculating the threshold; after crossing it bot will jump
+		if (_distX == 1 || (_distX == 0 && _jumpTarget == LEDGE))
+		{
+			_jumpThreshold = _startNodeCenter;
+			if (_directionX == xRIGHT)
+				_jumpThreshold -= 4;
+			else
+				_jumpThreshold += 4;
+		}
+		else
+		{
+			_jumpThreshold = EdgeOfNodeX((int)_bot->GetPlayerPositionXNode(), _directionX);
+			//makes the bot jump from the furthest point of a ledge, so he can jump out of narrow tunnels (when there is a full tile above his head)
+			if (_directionX == xRIGHT)
+				_jumpThreshold += 1;
+			else
+				_jumpThreshold -= 1;
+		}
+
+
 
 		_actionInProgress = true;
 	}
 
 
-	if (_jumpTarget == LADDER) orders.lookUp = true;
 
+	if (_state != CLIMBING &&
+		_jumpTarget == LADDER &&
+		ShouldTryToGrabLadder(_targetNode))
+		orders.lookUp = true;
 
-	distToTargetY = ConvertToNodeCoordinates(abs(playerPosY - _targetY));
 
 	switch (_state)
 	{
-		case SMALLJUMP:
-			//only when x=1
-			
-			//back up a little bit
-			if (!_smljmp_backedUp)
-			{
-				(!_goingRight) ? orders.goRight = true : orders.goLeft = true;
-				if (WentThrough(!_goingRight, playerPosX, _startPosXmid))
-				{
-					_smljmp_backedUp = true;
-				}
-			}
-			else
-			{
-				orders.jump = true;
-				_state = JUMPING;
-				//orders.jump = true;
-				//_goingRight ? orders.goRight = true : orders.goLeft = true;
-			}
+	case CENTRALIZING:
+		Centralize(&orders);
 
-			break;
-		case WALKING:
-			//walking/running to the edge of node and jumping
-			if (_running) orders.run = true;
-			_goingRight ? orders.goRight = true : orders.goLeft = true;
+		break;
+	case WALKING:
+		if (_running) orders.run = true;
+		_directionX == xRIGHT ? orders.goRight = true : orders.goLeft = true;
 
-			if (WentThrough(_goingRight, playerPosX, _startPosXside))
-			{
-				orders.jump = true;
-				_state = JUMPING;
-			}
-			
-			break;
-		case JUMPING:
-			//holding the jump button for a few frames and moving closer to target
-			_goingRight ? orders.goRight = true : orders.goLeft = true;
-			if (_jumpTimer > 0)
-			{
-				orders.jump = true;
-				_jumpTimer -= 1;
-			}
+		if (WentThrough(playerPosX, _jumpThreshold, _directionX))
+		{
+			//ModifyMoveRangeIfNeeded(playerPosX);
 
-			//if bot is below the target the falling state should not be triggered
-			if (playerPosY < (_targetY + 8))
-			{
-				//if bot is close to target, trigger free falling
-				if (closeToTargetFall(playerPosX, _targetX, _running, _distY))
-				{
-					_state = FALLING;
-				}
-			}
+			orders.jump = true;
+			_state = JUMPING;
+		}
 
-			break;
-		case FALLING:
-			//falling free
-			if (closeToTarget(playerPosX, _targetX) && _targetY == playerPosY) _actionDone = true;
+		break;
+	case JUMPING:
+		if (_dirDelayTimer == 0)
+			MoveToTarget(&orders);
+		else
+			_dirDelayTimer -= 1;
 
-			break;
-		default:
-			break;
+		if (_jumpTimer > 0)
+		{
+			orders.jump = true;
+			_jumpTimer -= 1;
+
+		}
+		else
+		{
+			_state = FALLING;
+		}
+
+		break;
+	case FALLING:
+
+		if (_dirDelayTimer == 0)
+			MoveToTarget(&orders);
+		else
+			_dirDelayTimer -= 1;
+
+
+		if (_bot->GetSpelunkerState() == spCLIMBING)
+			_state = CLIMBING;
+
+		break;
+	case CLIMBING:
+		if (playerPosY != MiddleYPixel(_targetNode))
+		{
+			if (playerPosY > MiddleYPixel(_targetNode))
+				orders.lookUp = true;
+			if (playerPosY < MiddleYPixel(_targetNode))
+				orders.duck = true;
+		}
+
+		//prevents the bot from walking off the ladder accidentally
+		if (!_bot->IsNodePassable(_targetNode.GetX(), _targetNode.GetY() + 1, NODE_COORDS) && closeToTarget(playerPosY, MiddleYPixel(_targetNode)))
+			_actionDone = true;
+
+		break;
 	}
 
 
-	if ((closeToTarget(playerPosX, _targetX) && _targetY == playerPosY) || _bot->GetSpelunkerState() == spHANGING) _actionDone = true;
 
-	if (_jumpTarget == LADDER && abs(playerPosX - _targetX) <= 2 && (_targetY-8 < playerPosY && _targetY + 24 > playerPosY)) 
-		_actionDone = true;
-	
+	switch (_jumpTarget)
+	{
+	case GROUND:
+		if (_bot->GetSpelunkerState() == spSTANDING && closeToTarget(playerPosX, MiddleXPixel(_targetNode)))
+			_actionDone = true;
+		break;
+	case LADDER:
+		if (_bot->GetSpelunkerState() == spCLIMBING && playerPosY == MiddleYPixel(_targetNode) && playerPosX == MiddleXPixel(_targetNode))
+			_actionDone = true;
+		break;
+	case LEDGE:
+		if (_bot->GetSpelunkerState() == spHANGING && playerPosY == MiddleYPixel(_targetNode))
+			_actionDone = true;
+		break;
+	}
 
-	_previousPosX = playerPosX;
-	_previousPosY = playerPosY;
 
 	return orders;
 }

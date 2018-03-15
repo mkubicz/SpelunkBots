@@ -12,7 +12,8 @@ private:
 	enum STATE { WALKING, HANGING, FALLING };
 	STATE _state;
 public:
-	HangDropAction(IBot *bot, bool goingRight, bool lookDown);
+	HangDropAction(IBot *bot, DIRECTIONX directionX, bool lookDown);
+	HangDropAction(IBot * bot, DIRECTIONX directionX);
 	~HangDropAction() {};
 
 	ordersStruct GetOrders() override;

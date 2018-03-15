@@ -1,10 +1,10 @@
 #include "stdafx.h"
 #include "HangAction.h"
 
-HangAction::HangAction(IBot* bot, bool goingRight)
+HangAction::HangAction(IBot* bot, DIRECTIONX directionX)
 	: IMovementAction(bot)
 {
-	_goingRight = goingRight;
+	_directionX = directionX;
 }
 
 ordersStruct HangAction::GetOrders()
@@ -14,7 +14,7 @@ ordersStruct HangAction::GetOrders()
 	if (_bot->GetSpelunkerState() != spHANGING && _bot->GetSpelunkerState() != spCLIMBING)
 	{
 		orders.duck = true;
-		_goingRight ? orders.goRight = true : orders.goLeft = true;
+		_directionX == xRIGHT ? orders.goRight = true : orders.goLeft = true;
 	}
 	else
 		_actionDone = true;

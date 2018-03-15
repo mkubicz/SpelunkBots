@@ -4,7 +4,7 @@
 class HangAction : public IMovementAction
 {
 public:
-	HangAction(IBot* bot, bool goingRight);
+	HangAction(IBot* bot, DIRECTIONX directionX);
 	~HangAction() {};
 	ordersStruct GetOrders() override;
 

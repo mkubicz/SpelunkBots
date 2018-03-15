@@ -1,12 +1,12 @@
 #include "stdafx.h"
 #include "WalkUpAction.h"
 
-WalkUpAction::WalkUpAction(IBot *bot, bool goingRight)
+WalkUpAction::WalkUpAction(IBot *bot, DIRECTIONX directionX)
 	: IMovementAction(bot)
 {
-	goingRight ? _actionType = WALKUPRIGHT : _actionType = WALKUPLEFT;
+	_actionType = WALKUP;
+	_directionX = directionX;
 
-	_goingRight = goingRight;
 	_actionInProgress = false;
 	_againstTheWall = false;
 
@@ -33,7 +33,7 @@ ordersStruct WalkUpAction::GetOrders()
 		if (!_actionInProgress)
 		{
 			//int nodenr = (int)_bot->GetPlayerPositionXNode() + 1;
-			int nodenr = _goingRight ? (int)_bot->GetPlayerPositionXNode() + 1 : (int)_bot->GetPlayerPositionXNode() - 1;
+			int nodenr = _directionX == xRIGHT ? (int)_bot->GetPlayerPositionXNode() + 1 : (int)_bot->GetPlayerPositionXNode() - 1;
 			_targetX = (nodenr * PIXELS_IN_NODE) + (PIXELS_IN_NODE / 2);
 
 			//check if need to go 1 node up or 2 nodes up
@@ -49,8 +49,8 @@ ordersStruct WalkUpAction::GetOrders()
 		//second - hug the wall
 		if (!_againstTheWall)
 		{
-			_goingRight ? orders.goRight = true : orders.goLeft = true;
-			if (IsBotAgainstTheWall(_bot->GetPlayerPositionX(), _goingRight)) _againstTheWall = true;
+			_directionX == xRIGHT ? orders.goRight = true : orders.goLeft = true;
+			if (IsBotAgainstTheWall(_bot->GetPlayerPositionX(), _directionX == xRIGHT)) _againstTheWall = true;
 		}
 		else
 		{
@@ -60,7 +60,7 @@ ordersStruct WalkUpAction::GetOrders()
 				orders.jump = true;
 			}
 			if (!closeToTarget(_bot->GetPlayerPositionX(), _targetX))
-				_goingRight ? orders.goRight = true : orders.goLeft = true;
+				_directionX == xRIGHT ? orders.goRight = true : orders.goLeft = true;
 
 
 			if (_bot->GetPlayerPositionY() <= _targetY && closeToTarget(_bot->GetPlayerPositionX(), _targetX) && _previousPosX != _bot->GetPlayerPositionX())

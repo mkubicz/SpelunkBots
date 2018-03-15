@@ -19,5 +19,5 @@ private:
 
 public:
 	ordersStruct GetOrders();
-	WalkOffLedgeAction(IBot * bot, bool goingRight, int distX, int distY);
+	WalkOffLedgeAction(IBot * bot, int distX, int distY);
 };

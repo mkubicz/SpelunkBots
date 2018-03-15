@@ -1,6 +1,9 @@
 #pragma once
-#include "stdafx.h"
+//#include "stdafx.h"
+
+//teoretycznie mo¿na zrobiæ forward declaration zamiast include
 #include "IBot.h"
+#include "Node.h"
 
 struct ordersStruct
 {
@@ -26,9 +29,14 @@ protected:
 	MOVEMENTACTION _actionType;
 	bool _actionDone;	
 	bool _actionInProgress;
-	bool _goingRight;
+	//bool _goingRight;
+	//bool _goingUp;
+	DIRECTIONX _directionX;
+	DIRECTIONY _directionY;
+	//bool _running;
 	int _targetX;
 	int _targetY;
+	bool ShouldTryToGrabLadder(Node target);
 
 public:
 	IMovementAction(IBot* bot);
@@ -37,6 +45,9 @@ public:
 	MOVEMENTACTION ActionType();
 	bool ActionDone();
 
+	//bool IsRunning();
+	DIRECTIONX GetDirectionX();
+	DIRECTIONY GetDirectionY();
 	
 	virtual ordersStruct GetOrders() =0;
 

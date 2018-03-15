@@ -1,12 +1,12 @@
 #include "stdafx.h"
 #include "JumpAboveAction.h"
 
-JumpAboveAction::JumpAboveAction(IBot* bot, bool goingRight)
+JumpAboveAction::JumpAboveAction(IBot* bot, DIRECTIONX directionX)
 	: IMovementAction(bot)
 {
-	_goingRight = goingRight;
+	_directionX = directionX;
 
-	if (_goingRight)
+	if (_directionX == xRIGHT)
 		_actionType = JUMPABOVERIGHT;
 	else
 		_actionType = JUMPABOVELEFT;
@@ -28,12 +28,12 @@ ordersStruct JumpAboveAction::GetOrders()
 		_targetX = nodenr * PIXELS_IN_NODE + (PIXELS_IN_NODE / 2);
 		_targetY = playerPosY - (PIXELS_IN_NODE * 2);
 
-		_targetXside = _goingRight ? _targetX + (PIXELS_IN_NODE / 2) : _targetX - (PIXELS_IN_NODE / 2);
+		_targetXside = _directionX == xRIGHT ? _targetX + (PIXELS_IN_NODE / 2) : _targetX - (PIXELS_IN_NODE / 2);
 
 		_actionInProgress = true;
 	}
 
-	if (_goingRight)
+	if (_directionX == xRIGHT)
 	{
 		if (playerPosX <= _targetXside && playerPosY == _startingPosY) orders.goRight = true;
 		else

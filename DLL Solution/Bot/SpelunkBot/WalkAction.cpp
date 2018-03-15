@@ -2,24 +2,45 @@
 #include "WalkAction.h"
 #include "Utilities.h"
 
-WalkAction::WalkAction(IBot *bot, bool goingRight, double distance, bool usingPixelCoords)
-	: WalkAction(bot, goingRight, false, distance, usingPixelCoords)
-{}
+//WalkAction::WalkAction(IBot *bot, bool goingRight, double distance, bool usingPixelCoords)
+//	: WalkAction(bot, goingRight, false, distance, usingPixelCoords)
+//{}
+//
+//WalkAction::WalkAction(IBot *bot, bool goingRight, bool pressRun, double distance, bool usingPixelCoords)
+//	: IMovementAction(bot)
+//{
+//	if (goingRight) 
+//		_actionType = WALKRIGHT;
+//	else
+//		_actionType = WALKLEFT;
+//
+//
+//	_actionDone = false;
+//	_actionInProgress = false;
+//	_usingPixelCoords = usingPixelCoords;
+//	_goingRight = goingRight;
+//	_running = pressRun;
+//	_distance = distance;
+//}
 
-WalkAction::WalkAction(IBot *bot, bool goingRight, bool pressRun, double distance, bool usingPixelCoords)
+WalkAction::WalkAction(IBot * bot, int distance)
+	: WalkAction(bot, distance, false)
+{
+}
+
+WalkAction::WalkAction(IBot * bot, int distance, bool run)
 	: IMovementAction(bot)
 {
-	if (goingRight) 
-		_actionType = WALKRIGHT;
-	else
-		_actionType = WALKLEFT;
-
-	_actionDone = false;
-	_actionInProgress = false;
-	_usingPixelCoords = usingPixelCoords;
-	_goingRight = goingRight;
-	_pressRun = pressRun;
+	_actionType = WALK;
+	_running = run;
 	_distance = distance;
+
+	if (_distance > 0) _directionX = xRIGHT;
+	if (_distance < 0) _directionX = xLEFT;
+	
+
+	//_goingRight = _distance > 0 ? true : false;
+
 }
 
 void WalkAction::AddDistance(int distance)
@@ -29,12 +50,11 @@ void WalkAction::AddDistance(int distance)
 
 ordersStruct WalkAction::GetOrders()
 {
+	ordersStruct orders;
+
 	//if first time getting orders - set target to walk to
 	if (!_actionInProgress)
 	{
-		if (_usingPixelCoords) _distance = ConvertToNodeCoordinates(_distance);
-		if (!_goingRight) _distance = -_distance;
-
 		int nodenr = (int)_bot->GetPlayerPositionXNode();
 
 		//target calculated from center of current node
@@ -43,61 +63,15 @@ ordersStruct WalkAction::GetOrders()
 		_actionInProgress = true;
 	}
 
-	ordersStruct orders;
+	orders.run = _running;
 
-	if (closeToTarget(_bot->GetPlayerPositionX(), _targetX)) //TODO if running, close to target function should be different
-	{
-		_goingRight ? orders.goRight = false : orders.goLeft = false;
+	_directionX == xRIGHT ? orders.goRight = true : orders.goLeft = true;
+
+	//_goingRight ? orders.goRight = true : orders.goLeft = true;
+
+	if (closeToTarget(_bot->GetPlayerPositionX(), _targetX))
 		_actionDone = true;
-	}
-	else
-	{
-		_goingRight ? orders.goRight = true : orders.goLeft = true;
-		_actionDone = false;
-	}
 
-
-	orders.run = _pressRun;
 
 	return orders;
 }
-
-
-/*
-ordersStruct WalkAction::GetOrders()
-{
-	//if first time getting orders - set target to walk to
-	if (!_actionInProgress)
-	{
-		if (!_goingRight) _distance = -_distance;
-
-		if (_usingPixelCoords)
-		{
-			_targetPositionXNode = _bot->GetPlayerPositionX() + _distance;
-			ConvertToNodeCoordinates(_targetPositionXNode); //TODO test
-		}
-		else
-		{
-			_targetPositionXNode = _bot->GetPlayerPositionXNode() + _distance;
-		}
-		_actionInProgress = true;
-	}
-
-	ordersStruct orders;
-	
-	if (CloseToZero(abs(_bot->GetPlayerPositionXNode() - _targetPositionXNode)))
-	//if (abs(_bot->GetPlayerPositionXNode() - _targetPositionXNode) == 0.3)
-	{
-		_goingRight ? orders.goRight = false : orders.goLeft = false;
-		_actionDone = true;
-	}
-	else
-	{
-		_goingRight ? orders.goRight = true : orders.goLeft = true;
-		_actionDone = false;
-	}
-	
-
-	return orders;
-}
-*/

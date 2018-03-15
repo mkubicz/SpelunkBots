@@ -9,7 +9,7 @@ private:
 	int _startingPosY;
 	enum STATES {WALKING, JUMPING, HANGING};
 public:
-	JumpAboveAction(IBot *bot, bool goingRight);
+	JumpAboveAction(IBot *bot, DIRECTIONX directionX);
 	~JumpAboveAction() {};
 
 	ordersStruct GetOrders() override;

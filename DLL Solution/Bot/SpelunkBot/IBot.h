@@ -117,6 +117,7 @@ protected:
 	bool _holdingItem;
 	bool _hanging;
 
+	bool _hasMomentum;
 
 public:
 	IBot();
@@ -315,6 +316,11 @@ public:
 	inline double GetPlayerPositionYNode(void)
 	{
 		return _playerPositionYNode;
+	}
+
+	inline bool HasMomentum()
+	{
+		return _hasMomentum;
 	}
 
 	virtual void Update() = 0;

@@ -26,6 +26,20 @@ Pathfinder::Pathfinder(IBot* bot)
 
 Pathfinder::~Pathfinder()
 {
+	for (int i = 0; i < X_NODES; i++)
+	{
+		for (int j = 0; j < Y_NODES; j++)
+		{
+			delete _grid[i][j];
+		}
+	}
+
+	//pathlist contains pointers to nodes from _grid, which we already deleted
+	//for (int i = 0; i < _pathList.size(); i++)
+	//{
+	//	delete (_pathList[i]);
+	//}
+	_pathList.clear();
 }
 
 
@@ -45,11 +59,74 @@ bool Pathfinder::Ladder(int x, int y)
 	return _bot->GetNodeState(x, y, NODE_COORDS) == spLadder;
 }
 
+
+void Pathfinder::AddNeighboursLR(int x, int y, bool right, std::vector<Node> *neighbours)
+{
+	int MAX = 7; //maximum travel distance
+	int borderY = 0;
+	int okDist = 0;
+	bool ok = true;
+
+	for (int i = 1; i < MAX; i++)
+	{
+		if (i <= 2) borderY = 0;
+		if (i > 2 && i <= 4) borderY = 1;
+		if (i > 4) borderY = 2;
+
+		for (int j = 0; j <= borderY; j++)
+		{
+			if (right)
+			{
+				if (Pelna(x + i, y - j)) ok = false;
+			}
+			else
+				if (Pelna(x - i, y - j)) ok = false;
+		}
+
+		if (!ok) break;
+
+		okDist = i;
+	}
+
+	int candidateX;
+
+	for (int i = 0; i <= okDist; i++)
+	{
+		MOVEMENTACTION action;
+		right ? candidateX = i + 1 : candidateX = -i - 1;
+
+		if (abs(candidateX) != 1 && Ladder(x + candidateX, y))
+		{
+			neighbours->push_back(Node{ x + candidateX, y, JUMP, LADDER });
+		}
+
+		if (Pelna(x + candidateX, y + 1) && Pusta(x + candidateX, y))
+		{
+			if (abs(candidateX) == 1)
+			{
+				neighbours->push_back(Node{ x + candidateX, y, WALK });
+			}
+			else if (abs(candidateX) == 2)
+			{
+				neighbours->push_back(Node{ x + candidateX, y, WALK });
+			}
+			else
+			{
+				if (abs(candidateX) == 7)
+					neighbours->push_back(Node{ x + candidateX, y, JUMP, LEDGE });
+				else
+					neighbours->push_back(Node{ x + candidateX, y, JUMP, GROUND });
+			}
+			break;
+		}
+	}
+}
+
 vector<Node> Pathfinder::CalculateNeighboursHanging(Node node)
 {
 	vector<Node> neighbours;
-	int x = node.x;
-	int y = node.y;
+	int x = node.GetX();
+	int y = node.GetY();
 	int MAX;
 
 	//drop
@@ -64,16 +141,8 @@ vector<Node> Pathfinder::CalculateNeighboursHanging(Node node)
 	}
 
 	//climb
-
-	if (Pelna(x+1, y)) neighbours.push_back(Node{ x + 1, y - 1, CLIMBFROMHANG_RIGHT });
-	if (Pelna(x - 1, y)) neighbours.push_back(Node{ x - 1, y - 1, CLIMBFROMHANG_LEFT });
-
-	//doesn't work when pathfinding!!!!!! grrrr1!!!!
-	//if (_bot->IsFacingRight()) 
-	//	neighbours.push_back(Node{ x + 1, y - 1, CLIMBFROMHANG_RIGHT });
-	//else
-	//	neighbours.push_back(Node{ x - 1, y - 1, CLIMBFROMHANG_LEFT });
-	
+	if (Pelna(x + 1, y)) neighbours.push_back(Node{ x + 1, y - 1, CLIMBFROMHANG });
+	if (Pelna(x - 1, y)) neighbours.push_back(Node{ x - 1, y - 1, CLIMBFROMHANG });
 
 
 	return neighbours;
@@ -82,29 +151,310 @@ vector<Node> Pathfinder::CalculateNeighboursHanging(Node node)
 vector<Node> Pathfinder::CalculateNeighboursClimbing(Node node)
 {
 	vector<Node> neighbours;
-	int x = node.x;
-	int y = node.y;
-	int MAX;
+	int x = node.GetX();
+	int y = node.GetY();
+	int MAX, MAXx, MAXy;
 
-	//TODO
+	//climb
+	if (Ladder(x, y - 1))
+		neighbours.push_back(Node{ x, y - 1, CLIMB, LADDER });
+	if (Ladder(x, y + 1))
+	{
+		if (Pelna(x, y + 2))
+			neighbours.push_back(Node{ x, y + 1, CLIMB, GROUND });
+		else
+			neighbours.push_back(Node{ x, y + 1, CLIMB, LADDER });
+	}
+
+	//drop
+	MAX = 8; //max distance to ground tile
+	for (int i = 1; i <= MAX; i++)
+	{
+		if (Pelna(x, y + i) && y + i < Y_NODES)
+		{
+			neighbours.push_back(Node{ x, y + i - 1, DROP });
+			break;
+		}
+	}
+
+	//jump y=-2
+	//right
+	if (Pusta(x, y - 1) && Pusta(x, y - 2) && Pusta(x + 1, y - 2) && Pelna(x + 1, y - 1))
+		neighbours.push_back(Node{ x, y - 1, JUMPFROMLADDER, LEDGE });
+	if (Pusta(x, y - 1) && Pusta(x + 1, y) && Pusta(x + 1, y - 1) && Pusta(x + 1, y - 2) &&
+		Pusta(x + 2, y - 2) && Pelna(x + 2, y - 1))
+		neighbours.push_back(Node{ x + 1, y - 1, JUMPFROMLADDER, LEDGE });
+
+	//left
+	if (Pusta(x, y - 1) && Pusta(x, y - 2) && Pusta(x - 1, y - 2) && Pelna(x - 1, y - 1))
+		neighbours.push_back(Node{ x, y - 1, JUMPFROMLADDER, LEDGE });
+	if (Pusta(x, y - 1) && Pusta(x - 1, y) && Pusta(x - 1, y - 1) && Pusta(x - 1, y - 2) &&
+		Pusta(x - 2, y - 2) && Pelna(x - 2, y - 1))
+		neighbours.push_back(Node{ x - 1, y - 1, JUMPFROMLADDER, LEDGE });
+
+	//jump y=-1
+	//right
+	int safedist = 3;
+	for (int i = 0; i <= 3; i++)
+	{
+		if (Pelna(x + i, y - 1))
+		{
+			safedist = i - 1;
+			break;
+		}
+	}
+
+	for (int i = 1; i <= safedist; i++)
+	{
+		if (Pelna(x + i, y) && Pusta(x + i, y - 1))
+		{
+			if (i == 1 || i == 2) neighbours.push_back(Node{ x + i, y - 1, JUMPFROMLADDER, GROUND });
+			if (i == 3) neighbours.push_back(Node{ x + i - 1, y, JUMPFROMLADDER, LEDGE });
+			break;
+		}
+		else if (Ladder(x + i, y - 1) && i != 3)
+		{
+			neighbours.push_back(Node{ x + i, y - 1, JUMPFROMLADDER, LADDER });
+		}
+
+	}
+
+	//jump y=-1
+	//left
+	safedist = 3;
+	for (int i = 0; i <= 3; i++)
+	{
+		if (Pelna(x - i, y - 1))
+		{
+			safedist = i - 1;
+			break;
+		}
+	}
+
+	for (int i = 1; i <= safedist; i++)
+	{
+		if (Pelna(x - i, y) && Pusta(x - i, y - 1))
+		{
+			if (i == 1 || i == 2) neighbours.push_back(Node{ x - i, y - 1, JUMPFROMLADDER, GROUND });
+			if (i == 3) neighbours.push_back(Node{ x - i + 1, y, JUMPFROMLADDER, LEDGE });
+			break;
+		}
+		else if (Ladder(x - i, y - 1) && i != 3)
+		{
+			neighbours.push_back(Node{ x - i, y - 1, JUMPFROMLADDER, LADDER });
+		}
+
+	}
+
+
+	MAXx = 3;
+	MAXy = 5;
+	//jump y=0..5
+	//right
+	for (int i = 1; i <= MAXx; i++)
+	{
+		for (int j = 0; j <= MAXy; j++)
+		{
+			if (Pelna(x + i, y + j + 1) && Pusta(x + i, y + j) && DownJumpPathClear(x, y, x + i, y + j, xRIGHT))
+				neighbours.push_back(Node{ x + i, y + j, JUMPFROMLADDER, GROUND });
+			else if (Ladder(x + i, y + j) && DownJumpPathClear(x, y, x + i, y + j, xRIGHT))
+				neighbours.push_back(Node{ x + i, y + j, JUMPFROMLADDER, LADDER });
+		}
+
+	}
+
+	//jump y=0..5
+	//left
+	for (int i = 1; i <= MAXx; i++)
+		for (int j = 0; j <= MAXy; j++)
+		{
+			if (Pelna(x - i, y + j + 1) && Pusta(x - i, y + j) && DownJumpPathClear(x, y, x - i, y + j, xLEFT))
+				neighbours.push_back(Node{ x - i, y + j, JUMPFROMLADDER, GROUND });
+			else if (Ladder(x - i, y + j) && DownJumpPathClear(x, y, x - i, y + j, xLEFT))
+				neighbours.push_back(Node{ x - i, y + j, JUMPFROMLADDER, LADDER });
+		}
+
+
+	return neighbours;
+}
+
+std::vector<Node> Pathfinder::CalculateNeighboursClimbingWithMomentum(Node node)
+{
+	std::vector<Node> neighbours;
+	int x = node.GetX();
+	int y = node.GetY();
+	int MAX, MAXx, MAXy;
+
+	//climb
+	if (Ladder(x, y - 1))
+		neighbours.push_back(Node{ x, y - 1, CLIMB, LADDER });
+	if (Ladder(x, y + 1))
+	{
+		if (Pelna(x, y + 2))
+			neighbours.push_back(Node{ x, y + 1, CLIMB, GROUND });
+		else
+			neighbours.push_back(Node{ x, y + 1, CLIMB, LADDER });
+	}
+	
+
+	//drop
+	MAX = 8; //max distance to ground tile
+	for (int i = 1; i <= MAX; i++)
+	{
+		if (Pelna(x, y + i) && y + i < Y_NODES)
+		{
+			neighbours.push_back(Node{ x, y + i - 1, DROP });
+			break;
+		}
+	}
+
+
+	//jump y=-2
+	//right
+	if (Pusta(x, y - 1) && Pusta(x, y - 2) && Pusta(x + 1, y - 2) && Pelna(x + 1, y - 1))
+		neighbours.push_back(Node{ x, y - 1, JUMPFROMLADDER, LEDGE });
+	if (Pusta(x, y - 1) && Pusta(x + 1, y) && Pusta(x + 1, y - 1) && Pusta(x + 1, y - 2) &&
+		Pusta(x + 2, y - 2) && Pelna(x + 2, y - 1))
+		neighbours.push_back(Node{ x + 1, y - 1, JUMPFROMLADDER, LEDGE });
+	if (Pusta(x, y - 1) && Pusta(x + 1, y) && Pusta(x + 1, y - 1) && Pusta(x + 2, y - 1) &&
+		Pusta(x + 2, y - 2) && Pusta(x + 3, y - 2) && Pelna(x + 3, y - 1))
+		neighbours.push_back(Node{ x + 2, y - 1, JUMPFROMLADDER, LEDGE });
+
+	//left
+	if (Pusta(x, y - 1) && Pusta(x, y - 2) && Pusta(x - 1, y - 2) && Pelna(x - 1, y - 1))
+		neighbours.push_back(Node{ x, y - 1, JUMPFROMLADDER, LEDGE });
+	if (Pusta(x, y - 1) && Pusta(x - 1, y) && Pusta(x - 1, y - 1) && Pusta(x - 1, y - 2) &&
+		Pusta(x - 2, y - 2) && Pelna(x - 2, y - 1))
+		neighbours.push_back(Node{ x - 1, y - 1, JUMPFROMLADDER, LEDGE });
+	if (Pusta(x, y - 1) && Pusta(x - 1, y) && Pusta(x - 1, y - 1) && Pusta(x - 2, y - 1) &&
+		Pusta(x - 2, y - 2) && Pusta(x - 3, y - 2) && Pelna(x - 3, y - 1))
+		neighbours.push_back(Node{ x - 2, y - 1, JUMPFROMLADDER, LEDGE });
+
+
+	//jump y=-1
+	MAX = 5;
+
+	//right
+	int safedist = MAX;
+	for (int i = 0; i <= MAX; i++)
+	{
+		if (Pelna(x + i, y - 1))
+		{
+			safedist = i - 1;
+			break;
+		}
+	}
+
+	bool roof = false;
+	for (int i = 1; i < MAX; i++)
+		if (Pelna(x + i, y - 2))
+		{
+			roof = true;
+			break;
+		}
+
+	for (int i = 1; i <= safedist; i++)
+	{
+		if (Pelna(x + i, y))
+		{
+			if (i == 5 || (i == 4 && roof))
+				neighbours.push_back(Node{ x + i - 1, y, JUMPFROMLADDER, LEDGE });
+			else 
+				neighbours.push_back(Node{ x + i, y - 1, JUMPFROMLADDER, GROUND });
+
+			break;
+		}
+		else if (Ladder(x + i, y - 1))
+		{
+			if (i == 5 || (i == 4 && roof)) 
+				continue;
+			else
+				neighbours.push_back(Node{ x + i, y - 1, JUMPFROMLADDER, LADDER });
+		}
+	}
+
+	//left
+	safedist = MAX;
+	for (int i = 0; i <= MAX; i++)
+	{
+		if (Pelna(x - i, y - 1))
+		{
+			safedist = i - 1;
+			break;
+		}
+	}
+
+	roof = false;
+	for (int i = 1; i < MAX; i++)
+		if (Pelna(x - i, y - 2))
+		{
+			roof = true;
+			break;
+		}
+
+	for (int i = 1; i <= safedist; i++)
+	{
+		if (Pelna(x - i, y))
+		{
+			if (i == 5 || (i == 4 && roof))
+				neighbours.push_back(Node{ x - i - 1, y, JUMPFROMLADDER, LEDGE });
+			else
+				neighbours.push_back(Node{ x - i, y - 1, JUMPFROMLADDER, GROUND });
+
+			break;
+		}
+		else if (Ladder(x - i, y - 1))
+		{
+			if (i == 5 || (i == 4 && roof))
+				continue;
+			else
+				neighbours.push_back(Node{ x - i, y - 1, JUMPFROMLADDER, LADDER });
+		}
+	}
+
+
+	//DOWN jump
+	//y=0..5
+	MAXx = 5; //6 possible, but we take 5 just to be sure
+	MAXy = 5; //only 5 because we would take damage if we jumped further
+	MOVEMENTACTION action;
+
+	//right
+	for (int i = 1; i <= MAXx; i++)
+		for (int j = 0; j <= MAXy; j++)
+		{
+			if (Pelna(x + i, y + j + 1) && Pusta(x + i, y + j) && DownJumpPathClear(x, y, x + i, y + j, xRIGHT))
+				neighbours.push_back(Node{ x + i, y + j, JUMPFROMLADDER, GROUND });
+			else if (Ladder(x + i, y + j) && DownJumpPathClear(x, y, x + i, y + j, xRIGHT))
+				neighbours.push_back(Node{ x + i, y + j, JUMPFROMLADDER, LADDER });
+		}
+
+	//left
+	for (int i = 1; i <= MAXx; i++)
+		for (int j = 0; j <= MAXy; j++)
+		{
+			if (Pelna(x - i, y + j + 1) && Pusta(x - i, y + j) && DownJumpPathClear(x, y, x - i, y + j, xLEFT))
+				neighbours.push_back(Node{ x - i, y + j, JUMPFROMLADDER, GROUND });
+			else if (Ladder(x - i, y + j) && DownJumpPathClear(x, y, x - i, y + j, xLEFT))
+				neighbours.push_back(Node{ x - i, y + j, JUMPFROMLADDER, LADDER });
+		}
+
+
 	return neighbours;
 }
 
 vector<Node> Pathfinder::CalculateNeighboursStanding(Node node)
 {
 	vector<Node> neighbours;
-	int x = node.x;
-	int y = node.y;
+	int x = node.GetX();
+	int y = node.GetY();
 	int MAX;
 
 
 	/*
 	* UP I
 	*/
-	/*
-	if (Pelna(x, y - 1) && Pusta(x, y - 2) && ((Pusta(x - 1, y) && Pusta(x - 1, y - 1) && Pusta(x - 1, y - 2)) || (Pusta(x + 1, y) && Pusta(x + 1, y - 1) && Pusta(x + 1, y - 2))))
-	neighbours.push_back(Node {x,y-2});
-	*/
+
 	if (Pelna(x, y - 1) && Pusta(x, y - 2))
 	{
 		//right
@@ -115,48 +465,83 @@ vector<Node> Pathfinder::CalculateNeighboursStanding(Node node)
 			neighbours.push_back(Node{ x, y - 2, JUMPABOVELEFT });
 	}
 
+	//LADDER UP
+	if (Ladder(x, y - 1))
+	{
+		if (Ladder(x, y))
+			neighbours.push_back(Node{ x, y - 1, CLIMB, LADDER });
+		else
+			neighbours.push_back(Node{ x, y - 1, JUMP, LADDER });
+	}
+	else if (Ladder(x, y - 2))
+		neighbours.push_back(Node{ x, y - 2, JUMP, LADDER });
+
 
 	/*
 	* UP III (max=5 - possible, max=4 - safe)
 	*/
-	MAX = 4; //safe option for now
+	MAX = 6; //max travel distance (counting to ground not to ledge)
 
 	//right
-	for (int i = 0; i <= MAX; i++)
+	int maxUpIII = MAX - 1;
+	for (int i = 0; i <= maxUpIII; i++)
 	{
 		if (Pusta(x + i, y) && Pusta(x + i, y - 1) && Pusta(x + i + 1, y - 2))
 		{
+			//if (i != 0) 
+			//{
+			//	if (Ladder(x + i, y - 1))
+			//		neighbours.push_back(Node{ x + i, y - 1, JUMPUPRIGHT_LADDER });
+			//	else if (Ladder(x + i, y - 2))
+			//		neighbours.push_back(Node{ x + i, y - 2, JUMPUPRIGHT_LADDER });
+			//}
+
+			if (i != 0 && Ladder(x + i, y - 2))
+				neighbours.push_back(Node{ x + i, y - 2, JUMP, LADDER });
+
 			if (Pelna(x + i + 1, y - 1))
 			{
 				if (i == 0)
 				{
 					if (Pusta(x, y - 2)) //neighbours.push_back(Node{ x + 1, y - 2, JUMPUPRIGHT });
-						neighbours.push_back(Node{ x, y - 1, JUMPUPRIGHT_LEDGE });
+						neighbours.push_back(Node{ x + i, y - 1, JUMP, LEDGE });
 				}
 				else
 					//neighbours.push_back(Node{ x + i + 1, y - 2, JUMPUPRIGHT });
-					neighbours.push_back(Node{ x + i, y - 1, JUMPUPRIGHT_LEDGE });
+					neighbours.push_back(Node{ x + i, y - 1, JUMP, LEDGE });
 
 				break;
 			}
+
 		}
 		else break;
 	}
 	//left
-	for (int i = 0; i >= -MAX; i--)
+	for (int i = 0; i >= -maxUpIII; i--)
 	{
 		if (Pusta(x + i, y) && Pusta(x + i, y - 1) && Pusta(x + i - 1, y - 2))
 		{
+			//if (i != 0)
+			//{
+			//	if (Ladder(x + i, y - 1))
+			//		neighbours.push_back(Node{ x + i, y - 1, JUMPUPLEFT_LADDER });
+			//	else if (Ladder(x + i, y - 2))
+			//		neighbours.push_back(Node{ x + i, y - 2, JUMPUPLEFT_LADDER });
+			//}
+
+			if (i != 0 && Ladder(x + i, y - 2))
+				neighbours.push_back(Node{ x + i, y - 2, JUMP, LADDER });
+
 			if (Pelna(x + i - 1, y - 1))
 			{
 				if (i == 0)
 				{
 					if (Pusta(x, y - 2)) //neighbours.push_back(Node{ x - 1, y - 2, JUMPUPLEFT });
-						neighbours.push_back(Node{ x, y - 1, JUMPUPLEFT_LEDGE });
+						neighbours.push_back(Node{ x, y - 1, JUMP, LEDGE });
 				}
 				else
 					//neighbours.push_back(Node{ x + i - 1, y - 2, JUMPUPLEFT });
-					neighbours.push_back(Node{ x + i, y - 1, JUMPUPLEFT_LEDGE });
+					neighbours.push_back(Node{ x + i, y - 1, JUMP, LEDGE });
 				break;
 			}
 		}
@@ -167,18 +552,25 @@ vector<Node> Pathfinder::CalculateNeighboursStanding(Node node)
 	/*
 	* UP IV  (max=5 - possible, max=4 - safe)
 	*/
-	MAX = 4;
+	MAX = 6; //max travel distance
+
 	//right
-	for (int i = 0; i <= MAX; i++)
+	int maxUpVI = MAX;
+	for (int i = 0; i <= maxUpVI; i++)
 	{
 		if (Pusta(x + i, y) && Pusta(x + i, y - 1) && Pusta(x + i + 1, y - 1) && (i <= 1 || Pusta(x + i, y - 2)))
 		{
+			if (Ladder(x + i + 1, y - 1))
+				neighbours.push_back(Node{ x + i + 1, y - 1, JUMP, LADDER });
+
 			if (Pelna(x + i + 1, y))
 			{
 				if (i == 0)
-					neighbours.push_back(Node{ x + i + 1, y - 1, WALKUPRIGHT });
+					neighbours.push_back(Node{ x + i + 1, y - 1, WALKUP});
+				else if (i == MAX && Pusta(x + i, y+1))
+					neighbours.push_back(Node{ x + i, y, JUMP, LEDGE });
 				else
-					neighbours.push_back(Node{ x + i + 1, y - 1, JUMPUPRIGHT });
+					neighbours.push_back(Node{ x + i + 1, y - 1, JUMP });
 				break;
 			}
 		}
@@ -186,16 +578,21 @@ vector<Node> Pathfinder::CalculateNeighboursStanding(Node node)
 	}
 
 	//left
-	for (int i = 0; i >= -MAX; i--)
+	for (int i = 0; i >= -maxUpVI; i--)
 	{
 		if (Pusta(x + i, y) && Pusta(x + i, y - 1) && Pusta(x + i - 1, y - 1) && (i <= 1 || Pusta(x + i, y - 2)))
 		{
+			if (Ladder(x + i - 1, y - 1))
+				neighbours.push_back(Node{ x + i - 1, y - 1, JUMP, LADDER });
+
 			if (Pelna(x + i - 1, y))
 			{
 				if (i == 0)
-					neighbours.push_back(Node{ x + i - 1, y - 1, WALKUPLEFT });
+					neighbours.push_back(Node{ x + i - 1, y - 1, WALKUP });
+				else if (i == -MAX && Pusta(x + i, y + 1))
+					neighbours.push_back(Node{ x + i, y, JUMP, LEDGE });
 				else
-					neighbours.push_back(Node{ x + i - 1, y - 1, JUMPUPLEFT });
+					neighbours.push_back(Node{ x + i - 1, y - 1, JUMP });
 				break;
 			}
 		}
@@ -206,81 +603,9 @@ vector<Node> Pathfinder::CalculateNeighboursStanding(Node node)
 	/*
 	* L/R I i II
 	*/
-	MAX = 6;
 
-	//right
-	int candidateXright = 0;
-
-	for (int i = 1; i <= MAX; i++)
-		if (Pelna(x + i, y + 1) && Pusta(x + i, y))
-		{
-			candidateXright = i;
-			break;
-		}
-
-	if (candidateXright != 0)
-	{
-		int borderY = 0;
-		if (candidateXright <= 2) borderY = 0;
-		if (candidateXright > 2 && candidateXright <= 4) borderY = 1;
-		if (candidateXright > 4) borderY = 2;
-
-		bool ok = true;
-		for (int i = 1; i < candidateXright; i++)
-		{
-			for (int j = 0; j <= borderY; j++)
-			{
-				if (Pelna(x + i, y - j)) ok = false;
-			}
-		}
-		if (ok)
-		{
-			if (candidateXright == 1)
-				neighbours.push_back(Node{ x + candidateXright, y, WALKRIGHT });
-			else if (candidateXright == 2)
-				neighbours.push_back(Node{ x + candidateXright, y, RUNRIGHT });
-			else
-				neighbours.push_back(Node{ x + candidateXright, y, JUMPUPRIGHT });
-		}
-
-	}
-
-
-	//left
-	int candidateXleft = 0;
-
-	for (int i = 1; i <= MAX; i++)
-		if (Pelna(x - i, y + 1) && Pusta(x - i, y))
-		{
-			candidateXleft = i;
-			break;
-		}
-
-	if (candidateXleft != 0)
-	{
-		int borderY = 0;
-		if (candidateXleft <= 2) borderY = 0;
-		if (candidateXleft > 2 && candidateXleft <= 4) borderY = 1;
-		if (candidateXleft > 4) borderY = 2;
-
-		bool ok = true;
-		for (int i = 1; i < candidateXleft; i++)
-		{
-			for (int j = 0; j <= borderY; j++)
-			{
-				if (Pelna(x - i, y - j)) ok = false;
-			}
-		}
-		if (ok)
-		{
-			if (candidateXleft == 1)
-				neighbours.push_back(Node{ x - candidateXleft, y, WALKLEFT });
-			else if (candidateXleft == 2)
-				neighbours.push_back(Node{ x - candidateXleft, y, RUNLEFT });
-			else
-				neighbours.push_back(Node{ x - candidateXleft, y, JUMPUPLEFT });
-		}
-	}
+	AddNeighboursLR(x, y, true, &neighbours);
+	AddNeighboursLR(x, y, false, &neighbours);
 
 
 	/*
@@ -289,40 +614,58 @@ vector<Node> Pathfinder::CalculateNeighboursStanding(Node node)
 	//right
 	if (Pusta(x + 1, y) && Pusta(x + 1, y + 1))
 	{
-		if (Pelna(x + 1, y + 2)) neighbours.push_back(Node{ x + 1, y + 1, HANGDROPRIGHT });
-		else neighbours.push_back(Node{ x + 1, y + 1, HANGRIGHT });
+		if (Pelna(x + 1, y + 2)) neighbours.push_back(Node{ x + 1, y + 1, HANGDROP });
+		else neighbours.push_back(Node{ x + 1, y + 1, HANG, LEDGE });
 	}
 
 	//left
 	if (Pusta(x - 1, y) && Pusta(x - 1, y + 1))
 	{
-		if (Pelna(x - 1, y + 2)) neighbours.push_back(Node{ x - 1, y + 1, HANGDROPLEFT });
-		else neighbours.push_back(Node{ x - 1, y + 1, HANGLEFT });
+		if (Pelna(x - 1, y + 2)) neighbours.push_back(Node{ x - 1, y + 1, HANGDROP });
+		else neighbours.push_back(Node{ x - 1, y + 1, HANG, LEDGE });
 	}
 
 
 	/*
 	* DOWN jump
 	*/
-	int MAXx = 7;
+	int MAXx = 8; //max travel distance
 	int MAXy = 5; //only 5 because we would take damage if we jumped further
 
-				  //right
+	//right
 	if (Pusta(x + 1, y + 1))
 	{
-		for (int i = 2; i <= MAXx; i++)
+		for (int i = 1; i <= MAXx; i++)
 			for (int j = 1; j <= MAXy; j++)
-				if (Pelna(x + i, y + j + 1) && Pusta(x + i, y + j) && DownJumpPathClear(x, y, x + i, y + j, RIGHT))
-					neighbours.push_back(Node{ x + i, y + j, JUMPDOWNRIGHT });
+			{
+				//awkward blocked jump; bot will HangDrop instead
+				if (i == 1 && Pelna(x, y - 1))
+					continue;
+
+				if (Pelna(x + i, y + j + 1) && Pusta(x + i, y + j) && DownJumpPathClear(x, y, x + i, y + j, xRIGHT))
+					neighbours.push_back(Node{ x + i, y + j, JUMP });
+				if (Ladder(x + i, y + j) && DownJumpPathClear(x, y, x + i, y + j, xRIGHT))
+					neighbours.push_back(Node{ x + i, y + j, JUMP, LADDER });
+			}
+				
 	}
 
 	//left
 	if (Pusta(x - 1, y + 1))
 	{
-		for (int i = 2; i <= MAXx; i++)
+		for (int i = 1; i <= MAXx; i++)
 			for (int j = 1; j <= MAXy; j++)
-				if (Pelna(x - i, y + j + 1) && Pusta(x - i, y + j) && DownJumpPathClear(x, y, x - i, y + j, LEFT))
-					neighbours.push_back(Node{ x - i, y + j, JUMPDOWNLEFT });
+			{
+				//awkward blocked jump; bot will HangDrop instead
+				if (i == 1 && Pelna(x, y - 1))
+					continue;
+
+				if (Pelna(x - i, y + j + 1) && Pusta(x - i, y + j) && DownJumpPathClear(x, y, x - i, y + j, xLEFT))
+					neighbours.push_back(Node{ x - i, y + j, JUMP });
+				if (Ladder(x - i, y + j) && DownJumpPathClear(x, y, x - i, y + j, xLEFT))
+					neighbours.push_back(Node{ x - i, y + j, JUMP, LADDER });
+			}
+				
 	}
 
 
@@ -340,8 +683,13 @@ vector<Node> Pathfinder::CalculateNeighboursStanding(Node node)
 			{
 				if (i >= j + 3) continue; //fall is too steep
 				else
-					if (Pelna(x + i, y + j + 1) && Pusta(x + i, y + j) && WalkOffLedgePathClear(x, y, x + i, y + j, RIGHT))
-						neighbours.push_back(Node{ x + i, y + j, WALKOFFLEDGERIGHT });
+				{
+					if (Pelna(x + i, y + j + 1) && Pusta(x + i, y + j) && WalkOffLedgePathClear(x, y, x + i, y + j, xRIGHT))
+						neighbours.push_back(Node{ x + i, y + j, WALKOFFLEDGE });
+					if (Ladder(x + i, y + j) && WalkOffLedgePathClear(x, y, x + i, y + j, xRIGHT))
+						neighbours.push_back(Node{ x + i, y + j, WALKOFFLEDGE, LADDER });
+				}
+					
 			}
 
 	}
@@ -354,8 +702,13 @@ vector<Node> Pathfinder::CalculateNeighboursStanding(Node node)
 			{
 				if (i >= j + 3) continue; //fall is too steep
 				else
-					if (Pelna(x - i, y + j + 1) && Pusta(x - i, y + j) && WalkOffLedgePathClear(x, y, x - i, y + j, LEFT))
-						neighbours.push_back(Node{ x - i, y + j, WALKOFFLEDGELEFT });
+				{
+					if (Pelna(x - i, y + j + 1) && Pusta(x - i, y + j) && WalkOffLedgePathClear(x, y, x - i, y + j, xLEFT))
+						neighbours.push_back(Node{ x - i, y + j, WALKOFFLEDGE });
+					if (Ladder(x - i, y + j) && WalkOffLedgePathClear(x, y, x - i, y + j, xLEFT))
+						neighbours.push_back(Node{ x - i, y + j, WALKOFFLEDGE, LADDER });
+				}
+					
 			}
 
 	}
@@ -364,426 +717,49 @@ vector<Node> Pathfinder::CalculateNeighboursStanding(Node node)
 }
 
 
-#pragma region CalculateNeighbours with ladders
-//
-//vector<Node> Pathfinder::CalculateNeighboursList(Node node)
-//{
-//	int x = node.x;
-//	int y = node.y;
-//	vector<Node> neighbours;
-//	int MAX;
-//
-//	/*
-//	* UP I
-//	*/
-//	/*
-//	if (Pelna(x, y - 1) && Pusta(x, y - 2) && ((Pusta(x - 1, y) && Pusta(x - 1, y - 1) && Pusta(x - 1, y - 2)) || (Pusta(x + 1, y) && Pusta(x + 1, y - 1) && Pusta(x + 1, y - 2))))
-//	neighbours.push_back(Node {x,y-2});
-//	*/
-//	if (Pelna(x, y - 1) && Pusta(x, y - 2))
-//	{
-//		//right
-//		if (Pusta(x + 1, y) && Pusta(x + 1, y - 1) && Pusta(x + 1, y - 2))
-//			neighbours.push_back(Node{ x, y - 2, JUMPABOVERIGHT });
-//		//left
-//		if (Pusta(x - 1, y) && Pusta(x - 1, y - 1) && Pusta(x - 1, y - 2))
-//			neighbours.push_back(Node{ x, y - 2, JUMPABOVELEFT });
-//	}
-//
-//	//LADDER UP
-//	if (Ladder(x, y - 1))
-//	{
-//		if (Ladder(x, y))
-//			neighbours.push_back(Node{ x, y - 1, CLIMBUP });
-//		else
-//			neighbours.push_back(Node{ x, y - 1, JUMPUP_LADDER });
-//	}
-//	else if (Ladder(x, y - 2))
-//		neighbours.push_back(Node{ x, y - 2, JUMPUP_LADDER });
-//
-//
-//	/*
-//	* UP II
-//	*/
-//	if (Pusta(x, y - 1) && Pusta(x, y - 2))
-//	{
-//		//right
-//		if (Pusta(x + 1, y - 2) && Pelna(x + 1, y - 1))
-//		{
-//			if (Pusta(x + 1, y))
-//				neighbours.push_back(Node{ x + 1, y - 2, JUMPUPRIGHT });
-//			else
-//				neighbours.push_back(Node{ x + 1, y - 2, WALKUPRIGHT });
-//		}
-//		//left
-//		if (Pusta(x - 1, y - 2) && Pelna(x - 1, y - 1))
-//		{
-//			if (Pusta(x - 1, y))
-//				neighbours.push_back(Node{ x - 1, y - 2, JUMPUPLEFT });
-//			else
-//				neighbours.push_back(Node{ x - 1, y - 2, WALKUPLEFT });
-//		}
-//
-//
-//		if (Ladder(x + 1, y - 2) && Ladder(x + 1, y - 1))
-//			if (Pusta(x + 1, y))
-//				neighbours.push_back(Node{ x + 1, y - 2, JUMPUPRIGHT_LADDER });
-//
-//		if (Ladder(x - 1, y - 2) && Ladder(x - 1, y - 1))
-//			if (Pusta(x - 1, y))
-//				neighbours.push_back(Node{ x - 1, y - 2, JUMPUPLEFT_LADDER });
-//	}
-//
-//
-//	/*
-//	* UP III (max=4 - possible, max=3 - safe)
-//	*/
-//	MAX = 3; //safe option for now
-//
-//	//right
-//	for (int i = 0; i <= MAX; i++)
-//	{
-//		if (Pusta(x + i, y) && Pusta(x + i, y - 1) && Pusta(x + i + 1, y - 2))
-//		{
-//			if (Pelna(x + i + 1, y - 1))
-//			{
-//				if (i != 0) //i==0 case is handled by UP II
-//					neighbours.push_back(Node{ x + i + 1, y - 2, JUMPUPRIGHT });
-//				break;
-//			}
-//
-//			if (Ladder(x + i + 1, y - 1) && Ladder(x + i + 1, y - 2))
-//			{
-//				if (i != 0) //i==0 case is handled by UP II
-//					neighbours.push_back(Node{ x + i + 1, y - 2, JUMPUPRIGHT_LADDER });
-//				break;
-//			}
-//
-//		}
-//		else break;
-//	}
-//	//left
-//	for (int i = 0; i >= -MAX; i--)
-//	{
-//		if (Pusta(x + i, y) && Pusta(x + i, y - 1) && Pusta(x + i - 1, y - 2))
-//		{
-//			if (Pelna(x + i - 1, y - 1))
-//			{
-//				if (i != 0) //i==0 case is handled by UP II
-//					neighbours.push_back(Node{ x + i - 1, y - 2, JUMPUPLEFT });
-//				break;
-//			}
-//
-//			if (Ladder(x + i - 1, y - 1) && Ladder(x + i - 1, y - 2))
-//			{
-//				if (i != 0) //i==0 case is handled by UP II
-//					neighbours.push_back(Node{ x + i - 1, y - 2, JUMPUPLEFT_LADDER });
-//				break;
-//			}
-//		}
-//		else break;
-//	}
-//
-//
-//	/*
-//	* UP IV  (max=5 - possible, max=4 - safe)
-//	*/
-//	MAX = 4;
-//	//right
-//	for (int i = 0; i <= MAX; i++)
-//	{
-//		if (Pusta(x + i, y) && Pusta(x + i, y - 1) && Pusta(x + i + 1, y - 1) && (i <= 1 || Pusta(x + i, y - 2)))
-//		{
-//			if (Pelna(x + i + 1, y))
-//			{
-//				if (i == 0)
-//					neighbours.push_back(Node{ x + i + 1, y - 1, WALKUPRIGHT });
-//				else
-//					neighbours.push_back(Node{ x + i + 1, y - 1, JUMPUPRIGHT });
-//				break;
-//			}
-//
-//			if (Ladder(x + i + 1, y) && Ladder(x + i + 1, y - 1))
-//			{
-//				neighbours.push_back(Node{ x + i + 1, y - 1, JUMPUPRIGHT_LADDER });
-//				break;
-//			}
-//
-//		}
-//		else break;
-//	}
-//
-//	//left
-//	for (int i = 0; i >= -MAX; i--)
-//	{
-//		if (Pusta(x + i, y) && Pusta(x + i, y - 1) && Pusta(x + i - 1, y - 1) && (i <= 1 || Pusta(x + i, y - 2)))
-//		{
-//			if (Pelna(x + i - 1, y))
-//			{
-//				if (i == 0)
-//					neighbours.push_back(Node{ x + i - 1, y - 1, WALKUPLEFT });
-//				else
-//					neighbours.push_back(Node{ x + i - 1, y - 1, JUMPUPLEFT });
-//				break;
-//			}
-//
-//			if (Ladder(x + i - 1, y) && Ladder(x + i - 1, y - 1))
-//			{
-//				neighbours.push_back(Node{ x + i - 1, y - 1, JUMPUPLEFT_LADDER });
-//				break;
-//			}
-//
-//		}
-//		else break;
-//	}
-//
-//
-//	/*
-//	* L/R I i II
-//	*/
-//	MAX = 6;
-//
-//	//right
-//	int candidateDist = 0;
-//	int candidateDistLadder = 0;
-//
-//	for (int i = 1; i <= MAX; i++)
-//	{
-//		if (Pelna(x + i, y + 1) && Pusta(x + i, y))
-//		{
-//			candidateDist = i;
-//			break;
-//		}
-//
-//		if (Ladder(x + i, y + 1) && Ladder(x + i, y))
-//		{
-//			candidateDistLadder = i;
-//			break;
-//		}
-//	}
-//
-//	if (candidateDist != 0)
-//	{
-//		if (HorizontalJumpPathClear(x, y, candidateDist, RIGHT))
-//		{
-//			if (candidateDist == 1)
-//				neighbours.push_back(Node{ x + candidateDist, y, WALKRIGHT });
-//			else if (candidateDist == 2)
-//				neighbours.push_back(Node{ x + candidateDist, y, RUNRIGHT });
-//			else
-//				neighbours.push_back(Node{ x + candidateDist, y, JUMPUPRIGHT });
-//		}
-//
-//		if (HorizontalJumpPathClear(x, y, candidateDistLadder, RIGHT))
-//		{
-//			if (candidateDist >= 2)
-//				neighbours.push_back(Node{ x + candidateDistLadder, y, JUMPUPRIGHT_LADDER });
-//		}
-//		
-//	}
-//
-//
-//	//left
-//	candidateDist = 0;
-//	candidateDistLadder = 0;
-//
-//	for (int i = 1; i <= MAX; i++)
-//	{
-//		if (Pelna(x - i, y + 1) && Pusta(x - i, y))
-//		{
-//			candidateDist = i;
-//			break;
-//		}
-//
-//		if (Ladder(x - i, y + 1) && Ladder(x - i, y))
-//		{
-//			candidateDistLadder = i;
-//			break;
-//		}
-//	}
-//
-//	if (candidateDist != 0)
-//	{
-//		if (HorizontalJumpPathClear(x, y, candidateDistLadder, LEFT))
-//		{
-//			if (candidateDist == 1)
-//				neighbours.push_back(Node{ x - candidateDist, y, WALKLEFT });
-//			else if (candidateDist == 2)
-//				neighbours.push_back(Node{ x - candidateDist, y, RUNLEFT });
-//			else
-//				neighbours.push_back(Node{ x - candidateDist, y, JUMPUPLEFT });
-//		}
-//
-//		if (HorizontalJumpPathClear(x, y, candidateDistLadder, LEFT))
-//		{
-//			if (candidateDist >= 2)
-//				neighbours.push_back(Node{ x + candidateDistLadder, y, JUMPUPLEFT_LADDER });
-//		}
-//	}
-//
-//
-//	/*
-//	* DOWN hangdrop
-//	*/
-//	MAX = 9; //max distance to ground tile
-//			 //right
-//	if (Pusta(x + 1, y) && Pusta(x + 1, y + 1))
-//	{
-//		for (int j = 2; j <= MAX; j++)
-//		{
-//			if (Pelna(x + 1, y + j) && y + j < Y_NODES)
-//			{
-//				neighbours.push_back(Node{ x + 1, y + j - 1, HANGDROPRIGHT });
-//				break;
-//			}
-//		}
-//	}
-//
-//	//left
-//	if (Pusta(x - 1, y) && Pusta(x - 1, y + 1))
-//	{
-//		for (int j = 2; j <= MAX; j++)
-//		{
-//			if (Pelna(x - 1, y + j) && y + j < Y_NODES)
-//			{
-//				neighbours.push_back(Node{ x - 1, y + j - 1, HANGDROPLEFT });
-//				break;
-//			}
-//		}
-//	}
-//
-//
-//	/*
-//	* DOWN jump
-//	*/
-//	int MAXx = 7;
-//	int MAXy = 5; //only 5 because we would take damage if we jumped further
-//
-//	//right
-//	if (Pusta(x + 1, y + 1))
-//	{
-//		for (int i = 2; i <= MAXx; i++)
-//			for (int j = 1; j <= MAXy; j++)
-//			{
-//				if (Pelna(x + i, y + j + 1) && Pusta(x + i, y + j) && DownJumpPathClear(x, y, x + i, y + j, RIGHT))
-//					neighbours.push_back(Node{ x + i, y + j, JUMPDOWNRIGHT });
-//				if (Ladder(x + i, y + j + 1) && Ladder(x + i, y + j) && DownJumpPathClear(x, y, x + i, y + j, RIGHT))
-//					neighbours.push_back(Node{ x + i, y + j, JUMPDOWNRIGHT_LADDER });
-//			}
-//				
-//	}
-//
-//	//left
-//	if (Pusta(x - 1, y + 1))
-//	{
-//		for (int i = 2; i <= MAXx; i++)
-//			for (int j = 1; j <= MAXy; j++)
-//			{
-//				if (Pelna(x - i, y + j + 1) && Pusta(x - i, y + j) && DownJumpPathClear(x, y, x - i, y + j, LEFT))
-//					neighbours.push_back(Node{ x - i, y + j, JUMPDOWNLEFT });
-//				if (Ladder(x - i, y + j + 1) && Ladder(x - i, y + j) && DownJumpPathClear(x, y, x - i, y + j, LEFT))
-//					neighbours.push_back(Node{ x - i, y + j, JUMPDOWNLEFT_LADDER });
-//			}
-//				
-//	}
-//
-//
-//	/*
-//	* DOWN walkOffLedge
-//	*/
-//	MAXx = 7;
-//	MAXy = 7;
-//
-//	//right
-//	if (Pusta(x + 1, y + 1))
-//	{
-//		for (int i = 2; i <= MAXx; i++)
-//			for (int j = 1; j <= MAXy; j++)
-//			{
-//				if (i >= j + 3) continue; //fall is too steep
-//				else
-//				{
-//					if (Pelna(x + i, y + j + 1) && Pusta(x + i, y + j) && WalkOffLedgePathClear(x, y, x + i, y + j, RIGHT))
-//						neighbours.push_back(Node{ x + i, y + j, WALKOFFLEDGERIGHT });
-//					if (Ladder(x + i, y + j + 1) && Ladder(x + i, y + j) && WalkOffLedgePathClear(x, y, x + i, y + j, RIGHT))
-//						neighbours.push_back(Node{ x + i, y + j, WALKOFFLEDGERIGHT_LADDER });
-//				}
-//					
-//			}
-//
-//	}
-//
-//	//left
-//	if (Pusta(x - 1, y + 1))
-//	{
-//		for (int i = 2; i <= MAXx; i++)
-//			for (int j = 1; j <= MAXy; j++)
-//			{
-//				if (i >= j + 3) continue; //fall is too steep
-//				else
-//				{
-//					if (Pelna(x - i, y + j + 1) && Pusta(x - i, y + j) && WalkOffLedgePathClear(x, y, x - i, y + j, LEFT))
-//						neighbours.push_back(Node{ x - i, y + j, WALKOFFLEDGELEFT });
-//					if (Ladder(x - i, y + j + 1) && Ladder(x - i, y + j) && WalkOffLedgePathClear(x, y, x - i, y + j, LEFT))
-//						neighbours.push_back(Node{ x - i, y + j, WALKOFFLEDGELEFT_LADDER });
-//				}
-//					
-//			}
-//
-//	}
-//
-//
-//	//delete any out of bounds neighbours
-//	for (int i = 0; i < neighbours.size(); i++)
-//	{
-//		if (neighbours[i].x <= 0 || neighbours[i].x >= X_NODES ||
-//			neighbours[i].y <= 0 || neighbours[i].y >= Y_NODES)
-//		{
-//			neighbours.erase(neighbours.begin() + i);
-//			i--;
-//		}
-//	}
-//
-//
-//	return neighbours;
-//}
+MvState Pathfinder::ToMvState(SpState spstate)
+{
+	switch (spstate)
+	{
+	case spSTANDING:
+		return mvSTANDING;
+	case spCLIMBING:
+		return mvCLIMBING;
+	case spHANGING:
+		return mvHANGING;
+	default:
+		return mvSTANDING;
+	}
+}
 
-#pragma endregion
-
-
-
-vector<Node> Pathfinder::CalculateNeighboursList(Node node, SpState spstate)
+vector<Node> Pathfinder::CalculateNeighboursList(Node node, MvState mvstate)
 {
 	vector<Node> neighbours;
 	
-	switch (spstate)
+	switch (mvstate)
 	{
-	case spHANGING:
+	case mvHANGING:
 		neighbours = CalculateNeighboursHanging(node);
 		break;
-	case spCLIMBING:
+	case mvCLIMBING:
 		neighbours = CalculateNeighboursClimbing(node);
 		break;
-	case spSTANDING:
+	case mvCLIMBING_WITH_MOMENTUM:
+		neighbours = CalculateNeighboursClimbingWithMomentum(node);
+		break;
+	case mvSTANDING:
 	default:
 		neighbours = CalculateNeighboursStanding(node);
 		break;
 	}
 
-	//if (spstate == spHANGING)
-	//	neighbours = CalculateNeighboursHanging(node);
-	//else if (spstate == spCLIMBING)
-	//	neighbours = CalculateNeighboursClimbing(node);
-	//else
-	//	neighbours = CalculateNeighboursStanding(node);
-
 	//delete any accidental out of bounds neighbours or neighbours in fog
 	for (int i = 0; i < neighbours.size(); i++)
 	{
-		if (neighbours[i].x <= 0 || neighbours[i].x >= X_NODES-1 ||
-			neighbours[i].y <= 0 || neighbours[i].y >= Y_NODES-1 ||
-			_bot->GetFogState(neighbours[i].x, neighbours[i].y, NODE_COORDS) == 1 ||
-			_bot->GetFogState(neighbours[i].x, neighbours[i].y+1, NODE_COORDS) == 1)
+		if (neighbours[i].GetX() <= 0 || neighbours[i].GetX() >= X_NODES-1 ||
+			neighbours[i].GetY() <= 0 || neighbours[i].GetY() >= Y_NODES-1 ||
+			_bot->GetFogState(neighbours[i].GetX(), neighbours[i].GetY(), NODE_COORDS) == 1 ||
+			_bot->GetFogState(neighbours[i].GetX(), neighbours[i].GetY() + 1, NODE_COORDS) == 1)
 		{
 			neighbours.erase(neighbours.begin()+i);
 			i--;
@@ -796,45 +772,107 @@ vector<Node> Pathfinder::CalculateNeighboursList(Node node, SpState spstate)
 
 
 
-vector<MapSearchNode*> Pathfinder::CalculateNeighboursList(MapSearchNode* node, SpState spstate)
+vector<MapSearchNode*> Pathfinder::CalculateNeighboursList(MapSearchNode* node, MvState mvstate)
 {
 	vector<MapSearchNode*> neighbours;
 
-	vector<Node> n = CalculateNeighboursList(Node{ node->_x, node->_y }, spstate);
+	vector<Node> n = CalculateNeighboursList(Node{ node->_x, node->_y }, mvstate);
 	for (int i = 0; i < n.size(); i++)
 	{
-		neighbours.push_back(_grid[n[i].x][n[i].y]);
+		_grid[n[i].GetX()][n[i].GetY()]->_actionToReachCandidate = n[i].GetActionToReach();
+		neighbours.push_back(_grid[n[i].GetX()][n[i].GetY()]);
 	}
 
 	return neighbours;
 }
 
-vector<MapSearchNode*> Pathfinder::CalculateNeighboursList(MapSearchNode* node)
-{
-	SpState spstate = PredictCurrentState(node->GetX(), node->GetY());
+//std::vector<Node> Pathfinder::CalculateNeighboursList(MapSearchNode* node)
+//{
+//	MvState mvstate = GetCurrentMvState(node->GetX(), node->GetY(), node->_actionToReach, node->_parent);
+//
+//	vector<Node> neighbours = CalculateNeighboursList(Node{ node->_x, node->_y }, mvstate);
+//
+//	return neighbours;
+//}
 
-	return CalculateNeighboursList(node, spstate);
+//vector<Node> Pathfinder::CalculateNeighboursList(Node node)
+//{
+//	MvState mvstate = GetCurrentMvState(node.x, node.y);
+//
+//	return CalculateNeighboursList(node, mvstate);
+//}
+
+MvState Pathfinder::GetCurrentMvState2(MapSearchNode *currentNode)
+{
+	return mvSTANDING;
 }
 
-vector<Node> Pathfinder::CalculateNeighboursList(Node node)
+MvState Pathfinder::GetCurrentMvState(MapSearchNode *currentNode)
 {
-	SpState spstate = PredictCurrentState(node.x, node.y);
+	int distToParentX, distToParentY;
+	int x = currentNode->GetX();
+	int y = currentNode->GetY();
 
-	return CalculateNeighboursList(node, spstate);
-}
-
-SpState Pathfinder::PredictCurrentState(int x, int y)
-{
-	if (!_bot->IsNodePassable(x, y + 1, NODE_COORDS)) 
-		return spSTANDING;
+	if (!_bot->IsNodePassable(x, y + 1, NODE_COORDS))
+		return mvSTANDING;
 	else
 	{
-		if (Ladder(x, y)) return spCLIMBING;
-		else return spHANGING;
+		if (Ladder(x, y))
+		{
+			if (currentNode->_parent != NULL)
+			{
+				distToParentX = x - currentNode->_parent->_x;
+				distToParentY = y - currentNode->_parent->_y;
+
+				//if previous action that ended on a ladder was made using running, then bot has momentum while climbing
+				if (currentNode->_actionToReach == JUMP &&
+					(abs(distToParentX) > 3 || (abs(distToParentX) == 3 && distToParentY == -2))
+					)
+					return mvCLIMBING_WITH_MOMENTUM;
+				else
+					return mvCLIMBING;
+			}
+
+			else
+				return mvCLIMBING;
+		}
+		else 
+			return mvHANGING;
 	}
 		
 
-	return spSTANDING;
+	return mvSTANDING;
+}
+
+MvState Pathfinder::GetCurrentMvState(Node *currentNode, Node *parentNode)
+{
+	MapSearchNode current;
+	current._x = currentNode->GetX();
+	current._y = currentNode->GetY();
+	current._actionToReach = currentNode->GetActionToReach();
+
+	if (parentNode != NULL)
+	{
+		MapSearchNode parent;
+		parent._x = parentNode->GetX();
+		parent._y = parentNode->GetY();
+		parent._actionToReach = parentNode->GetActionToReach();
+
+		current._parent = &parent;
+	}
+	else
+		current._parent = NULL;
+
+	return GetCurrentMvState(&current);
+}
+
+JUMP_TARGET Pathfinder::GetCurrentJumpTarget(Node *currentNode)
+{
+	if (CanStandInNode(currentNode->GetX(), currentNode->GetY())) return GROUND;
+	else if (Ladder(currentNode->GetX(), currentNode->GetY())) return LADDER;
+	else if (Pelna(currentNode->GetX()+1, currentNode->GetY()) || 
+			 Pelna(currentNode->GetX()-1, currentNode->GetY())) return LEDGE;
+
 }
 
 
@@ -938,60 +976,60 @@ SpState Pathfinder::PredictCurrentState(int x, int y)
 //	MAX = 6;
 //
 //	//right
-//	int candidateXright = 0;
+//	int candidateX = 0;
 //
 //	for (int i = 1; i <= MAX; i++)
 //		if (Pelna(x + i, y + 1) && Pusta(x + i, y))
 //		{
-//			candidateXright = i;
+//			candidateX = i;
 //			break;
 //		}
 //
-//	if (candidateXright != 0)
+//	if (candidateX != 0)
 //	{
 //		int borderY = 0;
-//		if (candidateXright <= 2) borderY = 0;
-//		if (candidateXright > 2 && candidateXright <= 4) borderY = 1;
-//		if (candidateXright > 4) borderY = 2;
+//		if (candidateX <= 2) borderY = 0;
+//		if (candidateX > 2 && candidateX <= 4) borderY = 1;
+//		if (candidateX > 4) borderY = 2;
 //
 //		bool ok = true;
-//		for (int i = 1; i < candidateXright; i++)
+//		for (int i = 1; i < candidateX; i++)
 //		{
 //			for (int j = 0; j <= borderY; j++)
 //			{
 //				if (Pelna(x + i, y - j)) ok = false;
 //			}
 //		}
-//		if (ok) neighbours.push_back(grid[x + candidateXright][y]);
+//		if (ok) neighbours.push_back(grid[x + candidateX][y]);
 //	}
 //
 //	
 //	//left
-//	int candidateXleft = 0;
+//	int candidateX = 0;
 //
 //	for (int i = 1; i <= MAX; i++)
 //		if (Pelna(x - i, y + 1) && Pusta(x - i, y))
 //		{
-//			candidateXleft = i;
+//			candidateX = i;
 //			break;
 //		}
 //
-//	if (candidateXleft != 0)
+//	if (candidateX != 0)
 //	{
 //		int borderY = 0;
-//		if (candidateXleft <= 2) borderY = 0;
-//		if (candidateXleft > 2 && candidateXleft <= 4) borderY = 1;
-//		if (candidateXleft > 4) borderY = 2;
+//		if (candidateX <= 2) borderY = 0;
+//		if (candidateX > 2 && candidateX <= 4) borderY = 1;
+//		if (candidateX > 4) borderY = 2;
 //
 //		bool ok = true;
-//		for (int i = 1; i < candidateXleft; i++)
+//		for (int i = 1; i < candidateX; i++)
 //		{
 //			for (int j = 0; j <= borderY; j++)
 //			{
 //				if (Pelna(x - i, y - j)) ok = false;
 //			}
 //		}
-//		if (ok) neighbours.push_back(grid[x - candidateXleft][y]);
+//		if (ok) neighbours.push_back(grid[x - candidateX][y]);
 //	}
 //
 //
@@ -1098,14 +1136,14 @@ bool Pathfinder::HorizontalJumpPathClear(int x, int y, int dist, bool right)
 }
 
 //crude; to be used by GetNeighboursList
-bool Pathfinder::DownJumpPathClear(int x1, int y1, int x2, int y2, bool right)
+bool Pathfinder::DownJumpPathClear(int x1, int y1, int x2, int y2, DIRECTIONX direction)
 {
 	int startX, startY;
 
 	int distX = abs(x2 - x1);
 	int distY = abs(y2 - y1);
 	
-	if (right)
+	if (direction == xRIGHT)
 	{
 		//assumes that x2 > x1 && y2 > y1
 		startX = x1 - 1;
@@ -1124,6 +1162,18 @@ bool Pathfinder::DownJumpPathClear(int x1, int y1, int x2, int y2, bool right)
 					if ((distX - distY) <= 3) continue; 
 				}
 
+				//fresh change
+				//in the row 1 tile above spelunker
+				if (j == startY+1)
+				{
+					//don't mind corner straight above your head (check if bot can make jump if you ignore that tile)
+					if (i == x1) continue;
+
+					//if jump is very short dont mind node which is in front and up from you
+					if (distX == 1 && i == x1 + 1) continue;
+
+				}
+
 				if (Pelna(i, j)) return false;
 			}
 
@@ -1132,7 +1182,7 @@ bool Pathfinder::DownJumpPathClear(int x1, int y1, int x2, int y2, bool right)
 
 		return true;
 	}
-	else
+	else if (direction == xLEFT)
 	{
 		//assumes that x1 > x2 && y2 > y1
 		startX = x1 + 1;
@@ -1149,6 +1199,17 @@ bool Pathfinder::DownJumpPathClear(int x1, int y1, int x2, int y2, bool right)
 					if (i == x1 + 1 || i == x1 || i == x2) continue;
 					//if jump is close enough don't mind possible tiles above your head
 					if ((distX - distY) <= 3) continue;
+				}
+
+				//fresh change
+				//in the row 1 tile above spelunker
+				if (j == startY + 1)
+				{
+					//don't mid corner straight above your head (check if bot can make jump if you ignore that tile)
+					if (i == x1) continue;
+
+					//if jump is very short dont mind node which is in front and up from you
+					if (distX == 1 && i == x1 - 1) continue;
 				}
 
 				if (Pelna(i, j)) return false;
@@ -1203,14 +1264,14 @@ bool Pathfinder::DownJumpPathClear(int x1, int y1, int x2, int y2, bool right)
 }
 
 //crude; to be used by GetNeighboursList
-bool Pathfinder::WalkOffLedgePathClear(int x1, int y1, int x2, int y2, bool right)
+bool Pathfinder::WalkOffLedgePathClear(int x1, int y1, int x2, int y2, DIRECTIONX direction)
 {
 	int startX, startY;
 
 	int distX = abs(x2 - x1);
 	int distY = abs(y2 - y1);
 
-	if (right)
+	if (direction == xRIGHT)
 	{
 		//assumes that x2 > x1 && y2 > y1
 		//startX = x1 + 1;
@@ -1229,7 +1290,7 @@ bool Pathfinder::WalkOffLedgePathClear(int x1, int y1, int x2, int y2, bool righ
 
 		return true;
 	}
-	else
+	else if (direction == xLEFT)
 	{
 		//assumes that x1 > x2 && y2 > y1
 		//startX = x1 - 1;
@@ -1257,14 +1318,19 @@ void Pathfinder::NeighboursDebug(int x, int y)
 	ofstream fileStream;
 	fileStream.open(".\\Pathfinder\\neighbours.txt");
 
-	std::vector<Node> neighbours = CalculateNeighboursList(Node{x,y}, _bot->GetSpelunkerState());
+	MvState mvState = ToMvState(_bot->GetSpelunkerState());
+	if (mvState == mvCLIMBING && _bot->HasMomentum())
+		mvState = mvCLIMBING_WITH_MOMENTUM;
+
+	std::vector<Node> neighbours = CalculateNeighboursList(Node{x,y}, mvState);
 	
 
 	for (int i = 0; i < neighbours.size(); i++)
 	{
-		fileStream << " X: " << neighbours[i].x;
-		fileStream << " Y: " << neighbours[i].y;
-		fileStream << " " << MVactionStrings[neighbours[i].actionToReach];
+		fileStream << " X: " << neighbours[i].GetX();
+		fileStream << " Y: " << neighbours[i].GetY();
+		fileStream << " " << MVactionStrings[neighbours[i].GetActionToReach()];
+		fileStream << " " << JumpTargetStrings[neighbours[i].GetJumpTarget()];
 		fileStream << endl;
 	}
 	fileStream.close();
@@ -1280,7 +1346,7 @@ std::vector<Node> Pathfinder::GetPathListNode()
 {
 	std::vector<Node> pathListNode;
 	for (int i = 0; i < _pathList.size(); i++)
-		pathListNode.push_back(Node{ _pathList[i]->_x, _pathList[i]->_y });
+		pathListNode.push_back(Node{ _pathList[i]->_x, _pathList[i]->_y, _pathList[i]->_actionToReach });
 
 	return pathListNode;
 }
@@ -1486,7 +1552,9 @@ std::vector<Node> Pathfinder::FindExplorationTargets(double x1, double y1, doubl
 
 	unsigned int n = 0;
 
-	vector<MapSearchNode*> neighbours = CalculateNeighboursList(start);
+	vector<MapSearchNode*> neighbours = CalculateNeighboursList(start, GetCurrentMvState(start));
+	
+
 	if (!neighbours.empty())
 	{
 		current = neighbours[0];
@@ -1507,7 +1575,7 @@ std::vector<Node> Pathfinder::FindExplorationTargets(double x1, double y1, doubl
 			explTargets.push_back(toNode(current));
 		}
 
-		vector<MapSearchNode*> neighbours = CalculateNeighboursList(current);
+		vector<MapSearchNode*> neighbours = CalculateNeighboursList(current, GetCurrentMvState(current));
 		
 		//no neighbours - backtracking
 		if (neighbours.empty())
@@ -1562,7 +1630,7 @@ std::vector<Node> Pathfinder::FindExplorationTargets(double x1, double y1, doubl
 
 bool Pathfinder::CalculatePath(double x1, double y1, double x2, double y2, double usingPixelCoords)
 {
-	bool DEBUG = FALSE;
+	bool DEBUG = true;
 
 	bool path_found = false;
 
@@ -1660,7 +1728,7 @@ bool Pathfinder::CalculatePath(double x1, double y1, double x2, double y2, doubl
 			//for (int i = 0; i < neighboursNode.size(); i++)
 			//	neighbours.push_back(_grid[neighboursNode[i].x][neighboursNode[i].y]);
 
-			std::vector<MapSearchNode*> neighbours = CalculateNeighboursList(current);
+			std::vector<MapSearchNode*> neighbours = CalculateNeighboursList(current, GetCurrentMvState(current));
 
 			for (int i = 0; i < neighbours.size(); i++)
 			{
@@ -1688,6 +1756,7 @@ bool Pathfinder::CalculatePath(double x1, double y1, double x2, double y2, doubl
 					if (child->_gScore > child->GetGScore(current))
 					{
 						child->_parent = current;
+						child->_actionToReach = child->_actionToReachCandidate;
 						child->ComputeScores(end);
 					}
 				}
@@ -1698,6 +1767,7 @@ bool Pathfinder::CalculatePath(double x1, double y1, double x2, double y2, doubl
 
 					// COMPUTE THE G
 					child->_parent = current;
+					child->_actionToReach = child->_actionToReachCandidate;
 					child->ComputeScores(end);
 				}
 			}
@@ -1726,7 +1796,6 @@ bool Pathfinder::CalculatePath(double x1, double y1, double x2, double y2, doubl
 			(*i)->_hScore = 0;
 			(*i)->_gScore = 0;
 
-			//I don't have to do these two
 			(*i)->_parent = NULL;
 			//(*i)->_closed = false;
 		}
@@ -1736,7 +1805,6 @@ bool Pathfinder::CalculatePath(double x1, double y1, double x2, double y2, doubl
 			(*i)->_hScore = 0;
 			(*i)->_gScore = 0;
 
-			//I don't have to do these two
 			(*i)->_parent = NULL;
 			//(*i)->_opened = false;
 		}
@@ -1751,6 +1819,8 @@ bool Pathfinder::CalculatePath(double x1, double y1, double x2, double y2, doubl
 				fileStream << _pathList[i]->_x;
 				fileStream << " Y ";
 				fileStream << _pathList[i]->_y;
+				fileStream << " Akcja: ";
+				fileStream << MVactionStrings[_pathList[i]->_actionToReach];
 				fileStream << "\n";
 			}
 			fileStream.close();

@@ -82,6 +82,7 @@
   <ItemGroup>
     <ClInclude Include="BasicBotExampleOne.h" />
     <ClInclude Include="CentralizeAction.h" />
+    <ClInclude Include="ClimbAction.h" />
     <ClInclude Include="ClimbFromHangAction.h" />
     <ClInclude Include="DebugBot.h" />
     <ClInclude Include="DropAction.h" />
@@ -97,7 +98,11 @@
     <ClInclude Include="Indie.h" />
     <ClInclude Include="JumpAboveAction.h" />
     <ClInclude Include="JumpAction.h" />
+    <ClInclude Include="JumpActionStary.h" />
+    <ClInclude Include="JumpFromLadderAction.h" />
+    <ClInclude Include="JumpToLadderAction.h" />
     <ClInclude Include="MapSearchNode.h" />
+    <ClInclude Include="Node.h" />
     <ClInclude Include="NotSoSolidSnake.h" />
     <ClInclude Include="ObjectManager.h" />
     <ClInclude Include="Pathfinder.h" />
@@ -112,6 +117,7 @@
   <ItemGroup>
     <ClCompile Include="BasicBotExampleOne.cpp" />
     <ClCompile Include="CentralizeAction.cpp" />
+    <ClCompile Include="ClimbAction.cpp" />
     <ClCompile Include="ClimbFromHangAction.cpp" />
     <ClCompile Include="DebugBot.cpp" />
     <ClCompile Include="DropAction.cpp" />
@@ -135,7 +141,11 @@
     <ClCompile Include="Indie.cpp" />
     <ClCompile Include="JumpAboveAction.cpp" />
     <ClCompile Include="JumpAction.cpp" />
+    <ClCompile Include="JumpActionStary.cpp" />
+    <ClCompile Include="JumpFromLadderAction.cpp" />
+    <ClCompile Include="JumpToLadderAction.cpp" />
     <ClCompile Include="MapSearchNode.cpp" />
+    <ClCompile Include="Node.cpp" />
     <ClCompile Include="NotSoSolidSnake.cpp" />
     <ClCompile Include="ObjectManager.cpp" />
     <ClCompile Include="Pathfinder.cpp" />
