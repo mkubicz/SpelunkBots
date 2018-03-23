@@ -11,7 +11,7 @@ private:
 	int _dirDelayTimer;
 	int _moveRange;
 	bool _hasMomentum;
-	JUMP_TARGET _jumpTarget;
+	ACTION_TARGET _actionTarget;
 	Node _targetNode;
 
 	enum STATE { JUMPING, FALLING, CLIMBING, HANGING };
@@ -22,7 +22,7 @@ private:
 	void MoveToTarget(ordersStruct *orders);
 
 public:
-	JumpFromLadderAction(IBot * bot, JUMP_TARGET target, bool hasMomentum, int distX, int distY);
+	JumpFromLadderAction(IBot * bot, ACTION_TARGET target, bool hasMomentum, int distX, int distY);
 	JumpFromLadderAction(IBot *bot, int distX, int distY);
 
 

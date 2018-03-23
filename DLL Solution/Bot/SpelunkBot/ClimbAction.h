@@ -10,5 +10,6 @@ private:
 	Node _targetNode;
 public:
 	ClimbAction(IBot * bot, int distY);
+	void AddDistance(int distance);
 	ordersStruct GetOrders();
 };

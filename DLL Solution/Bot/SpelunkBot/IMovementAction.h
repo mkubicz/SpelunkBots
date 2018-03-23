@@ -37,6 +37,10 @@ protected:
 	int _targetX;
 	int _targetY;
 	bool ShouldTryToGrabLadder(Node target);
+	bool IsNearLadderTop(int playerPosX, int playerPosY);
+
+
+	//void Centralize(ordersStruct *orders, int centralizingPoint);
 
 public:
 	IMovementAction(IBot* bot);

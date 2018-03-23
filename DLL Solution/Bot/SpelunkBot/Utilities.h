@@ -1,8 +1,10 @@
 #pragma once
 
-//forward declaration
+//forward declarations
 class Node;
 enum DIRECTIONX;
+enum ACTION_TARGET;
+
 
 
 bool CloseToZero(double x);
@@ -46,3 +48,4 @@ int EdgeOfNodeX(int nrOfNode, DIRECTIONX direction);
 int CenterOfNode(int nrOfNode);
 
 bool WithinRangeFromTarget(int posPixel, int targetPixel, int pixelRange);
+bool IsJumpWithRunning(int distX, int distY, ACTION_TARGET jumpTarget);

@@ -159,3 +159,28 @@ bool WithinRangeFromTarget(int posPixel, int targetPixel, int pixelRange)
 	if (abs(targetPixel - posPixel) <= pixelRange) return true;
 	else return false;
 }
+
+bool IsJumpWithRunning(int distX, int distY, ACTION_TARGET jumpTarget)
+{
+	bool withRunning = false;
+
+	if (distY >= 0)
+	{
+		if (abs(distX) > 4)
+			withRunning = true;
+		else
+			withRunning = false;
+	}
+	else
+	{
+		if (abs(distX) > 3)
+			withRunning = true;
+		else
+			withRunning = false;
+	}
+
+	if (abs(distX) == 3 && distY == -1 && jumpTarget == LEDGE)
+		withRunning = true;
+
+	return withRunning;
+}

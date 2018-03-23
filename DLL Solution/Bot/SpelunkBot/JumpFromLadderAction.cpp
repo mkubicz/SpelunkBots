@@ -2,12 +2,12 @@
 #include "JumpFromLadderAction.h"
 
 //negative distX means going left! negative distY means going up!
-JumpFromLadderAction::JumpFromLadderAction(IBot * bot, JUMP_TARGET target, bool hasMomentum, int distX, int distY)
+JumpFromLadderAction::JumpFromLadderAction(IBot * bot, ACTION_TARGET target, bool hasMomentum, int distX, int distY)
 	: IMovementAction(bot)
 {
 	_distX = distX;
 	_distY = distY;
-	_jumpTarget = target;
+	_actionTarget = target;
 	_hasMomentum = hasMomentum;
 	_dirDelayTimer = 0;
 
@@ -41,26 +41,37 @@ void JumpFromLadderAction::SetTimers()
 	if (abs(_distX) >= 2)
 		_jumpTimer = 5;
 
-	if (_jumpTarget == LEDGE || _jumpTarget == LADDER)
+	if (_actionTarget == LEDGE || _actionTarget == LADDER)
 		_jumpTimer += 3;
 
 	//fresh change
 	if (abs(_distX) == 1 && _distY == 0)
 		_jumpTimer = 1;
-	
+
+	if (_actionTarget == LEDGE && abs(_distX == 0) && _distY == -1)
+		_jumpTimer = 4;
+	if (_actionTarget == LEDGE && abs(_distX == 1) && _distY == -1)
+		_jumpTimer = 3;
+
+	if (abs(_distX) == 5 && _distY == 0)
+		_jumpTimer = 15;
+
+	if (_actionTarget == LEDGE && abs(_distX == 4) && _distY == 0)
+		_jumpTimer = 6;
+
+	if (_actionTarget == LEDGE && abs(_distX == 0) && _distY == -1)
+		_dirDelayTimer = 3;
+
 	if (_hasMomentum)
 	{
-		if (abs(_distX == 2))
+		if (abs(_distX == 2) && _distY != -1)
 			_dirDelayTimer = 3;
 
 		if (abs(_distX == 4) && (_distY == 3 || _distY == 2))
 			_dirDelayTimer = 3;
 	}
-	else
-	{
-		if (_jumpTarget == LEDGE && abs(_distX == 0) && _distY == -1)
-			_jumpTimer = 3;
-	}
+
+
 }
 
 
@@ -72,7 +83,13 @@ void JumpFromLadderAction::SetMovementRange()
 		{
 		case -1:
 			if (abs(_distX) == 1) _moveRange = 12;
+			else if (abs(_distX) == 2) _moveRange = 12;
 			else _moveRange = 16;
+			break;
+		case 0:
+			if (abs(_distX) == 1) _moveRange = 12;
+			else if (abs(_distX) == 5) _moveRange = 16;
+			else _moveRange = 20;
 			break;
 		case 3:
 			if (abs(_distX) == 1) _moveRange = 12;
@@ -135,7 +152,7 @@ void JumpFromLadderAction::MoveToTarget(ordersStruct *orders)
 	int playerPosX = (int)_bot->GetPlayerPositionX();
 
 	if (!WithinRangeFromTarget(playerPosX, MiddleXPixel(_targetNode), _moveRange)
-		|| _jumpTarget == LEDGE)
+		|| _actionTarget == LEDGE)
 	{
 		if (_directionX == xRIGHT) orders->goRight = true;
 		if (_directionX == xLEFT) orders->goLeft = true;
@@ -154,7 +171,7 @@ ordersStruct JumpFromLadderAction::GetOrders()
 
 		//makes the bot grab the ledge even when distX=0
 		//priority - right
-		if (_distX == 0 && _jumpTarget == LEDGE)
+		if (_distX == 0 && _actionTarget == LEDGE)
 		{
 			if (!_bot->IsNodePassable(_targetNode.GetX() + 1, _targetNode.GetY(), NODE_COORDS))
 				_directionX = xRIGHT;
@@ -166,10 +183,16 @@ ordersStruct JumpFromLadderAction::GetOrders()
 	}
 
 
+	//grabbing ladders
 	if (_state != CLIMBING && 
-		_jumpTarget == LADDER &&
+		_actionTarget == LADDER &&
 		ShouldTryToGrabLadder(_targetNode))
 		orders.lookUp = true;
+
+	//flying through hard ladder tops
+	if ((_state == JUMPING || _state == FALLING) &&
+		IsNearLadderTop(playerPosX, playerPosY))
+		orders.duck = true;
 
 
 
@@ -182,6 +205,7 @@ ordersStruct JumpFromLadderAction::GetOrders()
 		else
 			_dirDelayTimer -= 1;
 
+		//_jumpTimer += 1;
 		if (_jumpTimer > 0)
 		{
 			orders.jump = true;
@@ -225,7 +249,7 @@ ordersStruct JumpFromLadderAction::GetOrders()
 	}
 
 
-	switch (_jumpTarget)
+	switch (_actionTarget)
 	{
 	case GROUND:
 		if (_bot->GetSpelunkerState() == spSTANDING && closeToTarget(playerPosX, MiddleXPixel(_targetNode)))
@@ -240,8 +264,6 @@ ordersStruct JumpFromLadderAction::GetOrders()
 			_actionDone = true;
 		break;
 	}
-
-	
 
 
 	return orders;

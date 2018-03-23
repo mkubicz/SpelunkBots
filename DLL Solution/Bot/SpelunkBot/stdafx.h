@@ -66,13 +66,13 @@ enum DIRECTIONY {
 	yDOWN = 1
 };
 
-enum JUMP_TARGET {
+enum ACTION_TARGET {
 	GROUND,
 	LADDER,
 	LEDGE
 };
 
-const std::string JumpTargetStrings[] =
+const std::string ActionTargetStrings[] =
 {
 	"GROUND",
 	"LADDER",
@@ -142,7 +142,7 @@ enum SpState
 	spDUCKTOHANG = 24
 };
 
-enum MvState
+enum MVSTATE
 {
 	mvSTANDING,
 	mvCLIMBING,

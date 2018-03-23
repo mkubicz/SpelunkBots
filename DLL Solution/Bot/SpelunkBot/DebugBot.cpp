@@ -39,6 +39,7 @@ void DebugBot::NewLevel()
 
 	InitialiseVariables();
 	InitialiseHelperVariables();
+	_pathfinder->InitializeVariables();
 	ClearOrders();
 
 	while (!_actionsQ.empty())
@@ -53,6 +54,12 @@ void DebugBot::NewLevel()
 	* TESTING AND DEBUGGING
 	*/
 	IMovementAction* a;
+
+	//a = new HangAction(this, xRIGHT);
+	//_actionsQ.push(a);
+	//a = new DropAction(this, LADDER, 3);
+	//_actionsQ.push(a);
+	
 
 
 	//NEWJUMPTEST1
@@ -174,7 +181,7 @@ void DebugBot::NewLevel()
 	//JUMPFROMLADDERTEST3
 	//jump without momentum test
 
-	//JUMP_TARGET target = LADDER; //target should be GROUND or LADDER (LEDGE will set itself automatically)
+	//ACTION_TARGET target = LADDER; //target should be GROUND or LADDER (LEDGE will set itself automatically)
 	////int distY = -1;
 	//int maxX = 3;
 
@@ -237,59 +244,100 @@ void DebugBot::NewLevel()
 	//jump with momentum test
 	//distY=-1..5
 	//int distY = 3;
-	//JUMP_TARGET target = GROUND;
+	//ACTION_TARGET target = LADDER;
 	//int minX = 1;
 	//int maxX = 5;
 
-	//int climbDist = -distY - 2;
-
-	//if (target == LADDER)
+	//for (int distY = -1; distY <= 5; distY++)
 	//{
-	//	if (distY == -1) maxX = 4;
-	//}
 
+	//	int climbDist = -distY - 3;
 
-	//if (target == LADDER)
-	//{
-	//	for (int i = minX; i <= maxX; i++)
+	//	if (target == LADDER)
 	//	{
-	//		a = new WalkAction(this, RIGHT, RUN, 2, NODE_COORDS);
-	//		_actionsQ.push(a);
-	//		a = new ClimbAction(this, climbDist);
-	//		_actionsQ.push(a);
-	//		a = new JumpFromLadderAction(this, target, true, i, distY);
-	//		_actionsQ.push(a);
-	//		a = new DropAction(this);
-	//		_actionsQ.push(a);
-	//		a = new WalkAction(this, RIGHT, RUN, 1, NODE_COORDS);
-	//		_actionsQ.push(a);
+	//		if (distY == -1) maxX = 4;
+	//		else maxX = 5;
 	//	}
-	//}
-	//else
-	//{
-	//	for (int i = minX; i <= maxX; i++)
+
+
+	//	if (target == LADDER)
 	//	{
-	//		a = new WalkAction(this, RIGHT, RUN, 2, NODE_COORDS);
-	//		_actionsQ.push(a);
-	//		a = new ClimbAction(this, climbDist);
-	//		_actionsQ.push(a);
-	//		if (distY == -1 && i == 5)
+	//		for (int i = minX; i <= maxX; i++)
 	//		{
-	//			a = new JumpFromLadderAction(this, LEDGE, true, i - 1, distY + 1);
+	//			a = new WalkAction(this, 2, RUN);
 	//			_actionsQ.push(a);
-	//			a = new ClimbFromHangAction(this, RIGHT);
+	//			a = new ClimbAction(this, climbDist);
+	//			_actionsQ.push(a);
+	//			a = new JumpFromLadderAction(this, target, true, i, distY);
+	//			_actionsQ.push(a);
+	//			a = new DropAction(this);
+	//			_actionsQ.push(a);
+	//			a = new WalkAction(this, 1, RUN);
+	//			_actionsQ.push(a);
+	//		}
+	//	}
+	//	else
+	//	{
+	//		for (int i = minX; i <= maxX; i++)
+	//		{
+	//			a = new WalkAction(this, 2, RUN);
+	//			_actionsQ.push(a);
+	//			a = new ClimbAction(this, climbDist);
+	//			_actionsQ.push(a);
+	//			if (distY == -1 && i == 5)
+	//			{
+	//				a = new JumpFromLadderAction(this, LEDGE, true, i - 1, distY + 1);
+	//				_actionsQ.push(a);
+	//				a = new ClimbFromHangAction(this, xRIGHT);
+	//				_actionsQ.push(a);
+	//			}
+	//			else
+	//			{
+	//				a = new JumpFromLadderAction(this, target, true, i, distY);
+	//				_actionsQ.push(a);
+	//			}
+
+	//			a = new HangDropAction(this, xRIGHT);
+	//			_actionsQ.push(a);
+	//		}
+	//	}
+
+	//	if (target == LADDER)
+	//	{
+	//		if (distY == -1)
+	//		{
+	//			a = new WalkAction(this, -22, NORUN);
 	//			_actionsQ.push(a);
 	//		}
 	//		else
 	//		{
-	//			a = new JumpFromLadderAction(this, target, true, i, distY);
+	//			a = new WalkAction(this, -30, NORUN);
 	//			_actionsQ.push(a);
 	//		}
-
-	//		a = new HangDropAction(this, RIGHT, false);
+	//	}
+	//	else
+	//	{
+	//		a = new WalkAction(this, -30, NORUN);
 	//		_actionsQ.push(a);
 	//	}
 	//}
+
+	//y=-2
+	//int maxX = 2;
+	//for (int distX = 0; distX <= 2; distX++)
+	//{
+	//	a = new WalkAction(this, 2, RUN);
+	//	_actionsQ.push(a);
+	//	a = new ClimbAction(this, -1);
+	//	_actionsQ.push(a);
+	//	a = new JumpFromLadderAction(this, LEDGE, true, distX, -1);
+	//	_actionsQ.push(a);
+	//	a = new ClimbFromHangAction(this, xRIGHT);
+	//	_actionsQ.push(a);
+	//	a = new HangDropAction(this, xRIGHT);
+	//	_actionsQ.push(a);
+	//}
+
 
 	//a = new WalkAction(this, RIGHT, RUN, 2, NODE_COORDS);
 	//_actionsQ.push(a);
@@ -1416,7 +1464,7 @@ void DebugBot::ClearOrders()
 //	MOVEMENTACTION prevAction = IDLE;
 //	currX = (int)_playerPositionXNode;
 //	currY = (int)_playerPositionYNode;
-//	MvState mvState;
+//	MVSTATE mvState;
 //
 //	for (int i = 0; i < path.size(); i++)
 //	{
@@ -1474,9 +1522,9 @@ void DebugBot::CreateCommands(std::vector<Node> path)
 	MOVEMENTACTION prevAction = IDLE;
 	currX = (int)_playerPositionXNode;
 	currY = (int)_playerPositionYNode;
-	Node start(currX, currY);
-	MvState mvState;
-	JUMP_TARGET jumpTarget;
+	MapSearchNode *start = _pathfinder->GetNodeFromGrid(currX, currY);
+	MVSTATE mvState;
+	ACTION_TARGET jumpTarget;
 
 	for (int i = 0; i < path.size(); i++)
 	{
@@ -1490,19 +1538,22 @@ void DebugBot::CreateCommands(std::vector<Node> path)
 		MOVEMENTACTION action = path[i].GetActionToReach();
 
 		//I could save this info in path if GetCurrentJumpTarget doesn't work
-		jumpTarget = _pathfinder->GetCurrentJumpTarget(&path[i]);
-		//JUMP_TARGET jumpTarget = path[i].GetJumpTarget();
-
-		if (i == 0)
-			mvState = _pathfinder->GetCurrentMvState(&start, NULL);
-		else if (i == 1)
-			mvState = _pathfinder->GetCurrentMvState(&path[i - 1], &start);
-		else
-			mvState = _pathfinder->GetCurrentMvState(&path[i - 1], &path[i - 2]);
+		//jumpTarget = _pathfinder->GetCurrentJumpTarget(&path[i]);
+		jumpTarget = path[i].GetActionTarget();
 
 
 		//if (i != 0) mvState = _pathfinder->GetCurrentMvState(&path[i], &path[i-1]);
 		//else mvState = _pathfinder->GetCurrentMvState(&path[i], NULL);
+
+		//if (i == 0)
+		//	mvState = _pathfinder->GetCurrentMvState(&start, NULL);
+		//else if (i == 1)
+		//	mvState = _pathfinder->GetCurrentMvState(&path[i - 1], &start);
+		//else
+		//	mvState = _pathfinder->GetCurrentMvState(&path[i - 1], &path[i - 2]);
+		
+		if (i == 0) mvState = start->GetMvState();
+		else mvState = path[i-1].GetMvState();
 
 
 		AddActionToActionQueue(action, jumpTarget, mvState, distX, distY);
@@ -1514,7 +1565,7 @@ void DebugBot::CreateCommands(std::vector<Node> path)
 	}
 }
 
-void DebugBot::AddActionToActionQueue(MOVEMENTACTION action, JUMP_TARGET jumpTarget, MvState mvState, int distX, int distY)
+void DebugBot::AddActionToActionQueue(MOVEMENTACTION action, ACTION_TARGET jumpTarget, MVSTATE mvState, int distX, int distY)
 {
 	DIRECTIONX directionX;
 	DIRECTIONY directionY;
@@ -1535,12 +1586,35 @@ void DebugBot::AddActionToActionQueue(MOVEMENTACTION action, JUMP_TARGET jumpTar
 		_actionsQ.push(new CentralizeAction(this));
 		break;
 	case WALK:
+		//if (!_actionsQ.empty())
+		//{
+		//	if (_actionsQ.back()->ActionType() == WALK &&
+		//		((distX > 0 && _actionsQ.back()->GetDirectionX() == xRIGHT) ||
+		//		(distX < 0 && _actionsQ.back()->GetDirectionX() == xLEFT))
+		//		)
+		//	{
+		//		//previous action is also a WalkAction, and its going in the same direction,
+		//		//so we increase its distance instead of creating a new command (ActionBatching™)
+		//		dynamic_cast<WalkAction*>(_actionsQ.back())->AddDistance(distX);
+		//		break;
+		//	}
+		//}
+
+		//_actionsQ.push(new WalkAction(this, distX));
+
+
+		//if (distX == 2), then bot is walking over a hole which should be runned
+		if (abs(distX) == 2)
+		{
+			_actionsQ.push(new WalkAction(this, distX, RUN));
+			break;
+		}
+
 		if (!_actionsQ.empty())
 		{
 			if (_actionsQ.back()->ActionType() == WALK &&
 				((distX > 0 && _actionsQ.back()->GetDirectionX() == xRIGHT) ||
-				(distX < 0 && _actionsQ.back()->GetDirectionX() == xLEFT))
-				)
+				(distX < 0 && _actionsQ.back()->GetDirectionX() == xLEFT)))
 			{
 				//previous action is also a WalkAction, and its going in the same direction,
 				//so we increase its distance instead of creating a new command (ActionBatching™)
@@ -1550,12 +1624,13 @@ void DebugBot::AddActionToActionQueue(MOVEMENTACTION action, JUMP_TARGET jumpTar
 		}
 
 		_actionsQ.push(new WalkAction(this, distX));
+
 		break;
 	case HANG:
 		_actionsQ.push(new HangAction(this, directionX));
 		break;
 	case DROP:
-		_actionsQ.push(new DropAction(this));
+		_actionsQ.push(new DropAction(this, jumpTarget, distY));
 		break;
 	case HANGDROP:
 		_actionsQ.push(new HangDropAction(this, directionX));
@@ -1567,6 +1642,19 @@ void DebugBot::AddActionToActionQueue(MOVEMENTACTION action, JUMP_TARGET jumpTar
 		_actionsQ.push(new ClimbFromHangAction(this, directionX));
 		break;
 	case CLIMB:
+		if (!_actionsQ.empty())
+		{
+			if (_actionsQ.back()->ActionType() == CLIMB &&
+				((distY > 0 && _actionsQ.back()->GetDirectionY() == yDOWN) ||
+				(distY < 0 && _actionsQ.back()->GetDirectionY() == yUP)))
+			{
+				//previous action is also a ClimbAction, and its going in the same direction,
+				//so we increase its distance instead of creating a new command (ActionBatching™)
+				dynamic_cast<ClimbAction*>(_actionsQ.back())->AddDistance(distY);
+				break;
+			}
+		}
+
 		_actionsQ.push(new ClimbAction(this, distY));
 		break;
 	case JUMPABOVERIGHT:
@@ -1584,7 +1672,7 @@ void DebugBot::AddActionToActionQueue(MOVEMENTACTION action, JUMP_TARGET jumpTar
 		else if (mvState == mvCLIMBING)
 			_actionsQ.push(new JumpFromLadderAction(this, jumpTarget, false, distX, distY));
 		else
-			std::cout << "Error: MvState is not CLIMBING when creating JUMPFROMLADDER" << std::endl;
+			std::cout << "Error: MVSTATE is not CLIMBING when creating JUMPFROMLADDER" << std::endl;
 		break;
 	case WALKOFFLEDGE:
 		//_actionsQ.push(new WalkOffLedgeAction(this, distX, distY, jumpTarget));

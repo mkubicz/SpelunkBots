@@ -32,7 +32,7 @@ private:
 	STATE _state;
 	void InitialiseHelperVariables();
 	void CreateCommands(std::vector<Node> path);
-	void AddActionToActionQueue(MOVEMENTACTION action, JUMP_TARGET jumpTarget, MvState mvState, int distX, int distY);
+	void AddActionToActionQueue(MOVEMENTACTION action, ACTION_TARGET jumpTarget, MVSTATE mvState, int distX, int distY);
 	void ClearOrders();
 	bool FindExit(int & x, int & y);
 

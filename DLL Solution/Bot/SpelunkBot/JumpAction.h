@@ -11,18 +11,22 @@ private:
 	int _jumpTimer;
 	int _dirDelayTimer;
 	int _moveRange;
-	JUMP_TARGET _jumpTarget;
+	ACTION_TARGET _actionTarget;
 	Node _targetNode;
 
 	int _jumpThreshold;
 	int _firstJumpPosX;
+
+	int _standingStillCounter;
+	int _prevPlayerPosX;
+	int _prevPlayerPosY;
 
 	int _startNodeCenter;
 	int _centralizeMoveTimer = 0;
 	int _centralizeBreakTimer = 0;
 	DIRECTIONX _centralizeDir;
 
-	enum STATE { CENTRALIZING, WALKING, JUMPING, FALLING, CLIMBING };
+	enum STATE { CENTRALIZING, WALKING, JUMPING, FALLING, CLIMBING, LANDED_STUCK };
 	STATE _state;
 
 	void SetRunning();
@@ -30,11 +34,12 @@ private:
 	void SetMovementRange();
 	void ModifyMoveRangeIfNeeded(int firstJumpPosX);
 	void MoveToTarget(ordersStruct *orders);
-	void Centralize(ordersStruct *orders);
+	void Centralize(ordersStruct *orders, int centralizingPoint);
 
+	bool IsStandingStill(int playerPosX, int playerPosY, int prevPlayerPosX, int prevPlayerPosY);
 
 public:
-	JumpAction(IBot * bot, JUMP_TARGET target, int distX, int distY);
+	JumpAction(IBot * bot, ACTION_TARGET target, int distX, int distY);
 	JumpAction(IBot *bot, int distX, int distY);
 
 

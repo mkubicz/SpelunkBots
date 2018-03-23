@@ -67,6 +67,68 @@ bool IMovementAction::ShouldTryToGrabLadder(Node target)
 	return false;
 }
 
+bool IMovementAction::IsNearLadderTop(int playerPosX, int playerPosY)
+{
+	int playerNodeX = (int)_bot->GetPlayerPositionXNode();
+	int playerNodeY = (int)_bot->GetPlayerPositionYNode();
+
+	if (_bot->GetNodeState(playerNodeX, playerNodeY, NODE_COORDS) != spLadder &&
+		_bot->GetNodeState(playerNodeX, playerNodeY + 1, NODE_COORDS) == spLadder)
+		return true;
+
+	return false;
+}
+
+//void IMovementAction::Centralize(ordersStruct * orders, int centralizingPoint)
+//{
+//	int playerPosX = (int)_bot->GetPlayerPositionX();
+//
+//	if (_centralizeBreakTimer == 0 && _centralizeMoveTimer == 0)
+//	{
+//		if (playerPosX < centralizingPoint)
+//			_centralizeDir = xRIGHT;
+//		if (playerPosX > centralizingPoint)
+//			_centralizeDir = xLEFT;
+//
+//		_centralizeMoveTimer = 3;
+//
+//		//if (playerPosX == _startNodeCenter)
+//		if (WithinRangeFromTarget(playerPosX, centralizingPoint, 1))
+//		{
+//			_state = WALKING;
+//		}
+//
+//		return;
+//	}
+//
+//
+//	if (_centralizeMoveTimer != 0)
+//	{
+//		if (_centralizeDir == xRIGHT)
+//			orders->goRight = true;
+//		else
+//			orders->goLeft = true;
+//
+//		_centralizeMoveTimer--;
+//
+//		if (_centralizeMoveTimer == 0)
+//		{
+//			//if (playerPosX == _startNodeCenter)
+//			if (WithinRangeFromTarget(playerPosX, centralizingPoint, 1))
+//				_centralizeBreakTimer = 6;
+//			else
+//				_centralizeBreakTimer = 2;
+//		}
+//
+//		return;
+//	}
+//
+//	if (_centralizeBreakTimer != 0)
+//	{
+//		_centralizeBreakTimer--;
+//		return;
+//	}
+//}
 
 ordersStruct IMovementAction::GetOrders()
 {

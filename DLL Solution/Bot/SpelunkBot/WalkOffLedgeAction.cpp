@@ -5,6 +5,9 @@
 WalkOffLedgeAction::WalkOffLedgeAction(IBot * bot, int distX, int distY)
 	: IMovementAction(bot)
 {
+	_distX = distX;
+	_distY = distY;
+
 	if (_distX < 0) _directionX = xLEFT;
 	else if (_distX == 0) _directionX = xNONE;
 	else _directionX = xRIGHT;
@@ -12,9 +15,6 @@ WalkOffLedgeAction::WalkOffLedgeAction(IBot * bot, int distX, int distY)
 	if (_distY < 0) _directionY = yUP;
 	else if (_distY == 0) _directionY = yNONE;
 	else _directionY = yDOWN;
-
-	_distX = distX;
-	_distY = distY;
 
 	_actionType = WALKOFFLEDGE;
 
@@ -70,6 +70,11 @@ ordersStruct WalkOffLedgeAction::GetOrders()
 			break;
 		case LANDED:
 			if (closeToTarget(playerPosX, _targetX)) _actionDone = true;
+
+			if (playerPosX > _targetX)
+				orders.goLeft = true;
+			if (playerPosX < _targetX)
+				orders.goRight = true;
 
 			break;
 	}

@@ -5,9 +5,11 @@ class HangAction : public IMovementAction
 {
 public:
 	HangAction(IBot* bot, DIRECTIONX directionX);
+
 	~HangAction() {};
 	ordersStruct GetOrders() override;
 
 private:
+	ACTION_TARGET _actionTarget;
 
 };

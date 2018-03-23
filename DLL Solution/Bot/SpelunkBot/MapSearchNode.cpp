@@ -41,6 +41,16 @@ MOVEMENTACTION MapSearchNode::GetActionToReach()
 	return _actionToReach;
 }
 
+ACTION_TARGET MapSearchNode::GetActionTarget()
+{
+	return _actionTarget;
+}
+
+MVSTATE MapSearchNode::GetMvState()
+{
+	return _mvState;
+}
+
 void MapSearchNode::ComputeScores(MapSearchNode * end)
 {
 	_gScore = GetGScore(_parent);

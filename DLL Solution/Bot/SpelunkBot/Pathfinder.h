@@ -10,10 +10,13 @@ public:
 	Pathfinder(IBot* bot);
 	~Pathfinder();
 
-	std::vector<Node> CalculateNeighboursList(Node node, MvState mvstate);
-	std::vector<MapSearchNode*> CalculateNeighboursList(MapSearchNode* node, MvState mvstate);
+	void InitializeVariables();
+
+	std::vector<Node> CalculateNeighboursList(Node node, MVSTATE mvstate);
+	std::vector<MapSearchNode*> CalculateNeighboursList(MapSearchNode* node, MVSTATE mvstate);
 	//std::vector<MapSearchNode*> CalculateNeighboursList(MapSearchNode* node);
 	//std::vector<Node> CalculateNeighboursList(MapSearchNode* node);
+	MapSearchNode* GetNodeFromGrid(int x, int y);
 	bool HorizontalJumpPathClear(int x, int y, int dist, bool right);
 	bool isCloseToFog(int x, int y, int closeness);
 	bool isCloseToFog(MapSearchNode *n, int closeness);
@@ -26,9 +29,9 @@ public:
 	bool IsOutOfBounds(int x, int y);
 
 	bool CanStandInNode(int x, int y);
-	MvState ToMvState(SpState spstate);
-	MvState GetCurrentMvState(Node *currentNode, Node *parentNode);
-	JUMP_TARGET GetCurrentJumpTarget(Node *currentNode);
+	MVSTATE ToMvState(SpState spstate);
+	MVSTATE GetCurrentMvState(Node *currentNode, Node *parentNode);
+	ACTION_TARGET GetCurrentJumpTarget(Node *currentNode);
 
 private:	
 	IBot* _bot; 
@@ -43,14 +46,14 @@ private:
 	std::vector<Node> CalculateNeighboursStanding(Node node);
 	std::vector<Node> CalculateNeighboursClimbingWithMomentum(Node node);
 
-	MvState GetCurrentMvState2(MapSearchNode * currentNode);
+	//MVSTATE GetCurrentMvState2(MapSearchNode * currentNode);
 
-	MvState GetCurrentMvState(MapSearchNode *currentNode);
+	MVSTATE GetCurrentMvState(MapSearchNode *currentNode);
 
 	//for simplicity
-	bool Pusta(int x, int y); //the node is passable
-	bool Pelna(int x, int y); //the node is impassable
-	bool Ladder(int x, int y);
+	bool Pusta(int x, int y); //node is passable
+	bool Pelna(int x, int y); //node is impassable
+	bool Ladder(int x, int y); //node contains a ladder
 	void AddNeighboursLR(int x, int y, bool right, std::vector<Node>* neighbours);
 	//void AddNeighboursLRleft(int x, int y, std::vector<Node>* neighbours);
 };

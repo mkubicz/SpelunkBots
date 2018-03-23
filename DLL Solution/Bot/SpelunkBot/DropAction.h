@@ -4,8 +4,16 @@
 class DropAction : public IMovementAction
 {
 public:
-	DropAction(IBot* bot);
+	DropAction(IBot* bot, ACTION_TARGET actionTarget, int distY);
+	DropAction(IBot* bot, int distY);
 	~DropAction() {};
 
 	ordersStruct GetOrders() override;
+
+private:
+	ACTION_TARGET _actionTarget;
+	Node _targetNode;
+	enum STATE { DROPPING, FALLING, CLIMBING };
+	STATE _state;
+	int _distY;
 };

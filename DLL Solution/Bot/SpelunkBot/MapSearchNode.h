@@ -12,11 +12,15 @@ private:
 	int _hScore;
 	//int _fScore;
 	MapSearchNode* _parent;
+
 	MOVEMENTACTION _actionToReach;
 	MOVEMENTACTION _actionToReachCandidate;
 
-	//JUMP_TARGET _moveTarget;
-	//JUMP_TARGET _moveTargetCandidate;
+	ACTION_TARGET _actionTarget;
+	ACTION_TARGET _actionTargetCandidate;
+
+	MVSTATE _mvState = mvSTANDING;
+	MVSTATE _mvStateCandidate = mvSTANDING;
 
 	bool _opened;
 	bool _closed;
@@ -31,6 +35,8 @@ public:
 	double GetHScore(MapSearchNode *p);
 	double GetFScore();
 	MOVEMENTACTION GetActionToReach();
+	ACTION_TARGET GetActionTarget();
+	MVSTATE GetMvState();
 
 	void ComputeScores(MapSearchNode * end);
 }; 

@@ -7,10 +7,13 @@ private:
 	int _y;
 
 	MOVEMENTACTION _actionToReach;
-	JUMP_TARGET _jumpTarget;
+	ACTION_TARGET _actionTarget;
+	MVSTATE _mvState;
 
 public:
-	Node(int x, int y, MOVEMENTACTION actionToReach, JUMP_TARGET jumpTarget);
+	Node(int x, int y, MOVEMENTACTION actionToReach, ACTION_TARGET jumpTarget, MVSTATE mvState);
+	Node(int x, int y, MOVEMENTACTION actionToReach, MVSTATE mvState);
+	Node(int x, int y, MOVEMENTACTION actionToReach, ACTION_TARGET jumpTarget);
 	Node(int x, int y, MOVEMENTACTION actionToReach);
 	Node(int x, int y);
 	Node();
@@ -18,6 +21,7 @@ public:
 	int GetX();
 	int GetY();
 	MOVEMENTACTION GetActionToReach();
-	JUMP_TARGET GetJumpTarget();
+	ACTION_TARGET GetActionTarget();
+	MVSTATE GetMvState();
 
 };

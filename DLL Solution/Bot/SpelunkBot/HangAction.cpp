@@ -1,11 +1,12 @@
 #include "stdafx.h"
 #include "HangAction.h"
 
-HangAction::HangAction(IBot* bot, DIRECTIONX directionX)
+HangAction::HangAction(IBot * bot, DIRECTIONX directionX)
 	: IMovementAction(bot)
 {
 	_directionX = directionX;
 }
+
 
 ordersStruct HangAction::GetOrders()
 {
