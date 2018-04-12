@@ -1,51 +1,88 @@
 #include "stdafx.h"
 #include "ObjectManager.h"
 
+#include <fstream>
+//#include <ostream>
+
+using namespace std;
+
 ObjectManager::ObjectManager(IBot *bot)
 {
 	_bot = bot;
 }
 
-std::vector<collectableObject> ObjectManager::GetVisibleCollectables()
+std::vector<collectableObject> ObjectManager::GetCollectables()
 {
 	return collectablesList;
 }
 
-std::vector<enemyObject> ObjectManager::GetVisibleEnemies()
+std::vector<enemyObject> ObjectManager::GetEnemies()
 {
 	return enemiesList;
 }
 
 void ObjectManager::UpdateGameObjectLists()
 {
-	int i = 0;
 	enemiesList.clear();
-	collectableObject* e = _bot->GetIthEnemy(i);
-
+	enemyObject* e = _bot->GetNextEnemy();
 	while (e != NULL)
 	{
 		//top left corner of enemy is on the list, so we make it a center by adding 0.5 to x and y coordinates
 		//(most enemies are roughly 1 node wide and long)
-		enemyObject enemy = enemyObject{ e->type, e->id, e->x+0.5, e->y+0.5 };
+		enemyObject enemy = enemyObject{ e->type, e->id, e->x + 0.5, e->y + 0.5 };
 		enemiesList.push_back(enemy);
-		
-		i++;
-		e = _bot->GetIthEnemy(i);
-		
+
+		e = _bot->GetNextEnemy();
 	}
 	
-	i = 0;
-	collectablesList.clear();
-	collectableObject* c = _bot->GetIthCollectable(i);
 
+	collectablesList.clear();
+	collectableObject* c = _bot->GetNextCollectable();
 	while (c != NULL)
 	{
 		collectableObject collectable = collectableObject{ c->type, c->id, c->x, c->y };
 		collectablesList.push_back(collectable);
 
-		i++;
-		c = _bot->GetIthCollectable(i);
+		c = _bot->GetNextCollectable();
 	}
+}
+
+void ObjectManager::CollectablesDebug()
+{
+	ofstream fileStream;
+	fileStream.open(".\\ObjectManager\\collectables.txt");
+
+	fileStream << "ObjectManager Collectables: " << endl;
+
+	for (int i = 0; i < collectablesList.size(); i++)
+	{
+		fileStream << "TYPE: " << collectablesList[i].type;
+		fileStream << " X: " << collectablesList[i].x;
+		fileStream << " Y: " << collectablesList[i].y;
+		fileStream << " ID: " << collectablesList[i].id;
+		fileStream << endl;
+	}
+
+	fileStream.close();
+}
+
+void ObjectManager::EnemiesDebug()
+{
+	ofstream fileStream;
+	fileStream.open(".\\ObjectManager\\enemies.txt");
+
+	fileStream << "ObjectManager Enemies: " << endl;
+
+	for (int i = 0; i < enemiesList.size(); i++)
+	{
+		fileStream << "TYPE: " << enemiesList[i].type;
+		fileStream << " X: " << enemiesList[i].x;
+		fileStream << " Y: " << enemiesList[i].y;
+		fileStream << " ID: " << enemiesList[i].id;
+		fileStream << endl;
+	}
+
+	fileStream.close();
 }
 
 //void ObjectManager::ResetEnemies()

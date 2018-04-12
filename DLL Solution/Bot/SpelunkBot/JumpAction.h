@@ -26,7 +26,9 @@ private:
 	int _centralizeBreakTimer = 0;
 	DIRECTIONX _centralizeDir;
 
-	enum STATE { CENTRALIZING, WALKING, JUMPING, FALLING, CLIMBING, LANDED_STUCK };
+	int _finishedTimer = 0;
+
+	enum STATE { CENTRALIZING, WALKING, JUMPING, FALLING, CLIMBING, LANDED_STUCK, FINISHED };
 	STATE _state;
 
 	void SetRunning();

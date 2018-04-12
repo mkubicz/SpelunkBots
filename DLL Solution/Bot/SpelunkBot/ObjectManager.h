@@ -7,10 +7,13 @@ class ObjectManager
 public:
 	ObjectManager(IBot *bot);
 
-	std::vector<collectableObject> GetVisibleCollectables();
-	std::vector<enemyObject> GetVisibleEnemies();
+	std::vector<collectableObject> GetCollectables();
+	std::vector<enemyObject> GetEnemies();
 	void UpdateGameObjectLists();
 	
+	void CollectablesDebug();
+	void EnemiesDebug();
+
 	/*
 	void ResetEnemies();
 	void NodeContainsEnemy(double x, double y, double type, double id);

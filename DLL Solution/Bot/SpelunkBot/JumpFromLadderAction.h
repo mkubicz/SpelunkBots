@@ -13,8 +13,9 @@ private:
 	bool _hasMomentum;
 	ACTION_TARGET _actionTarget;
 	Node _targetNode;
+	int _finishedTimer = 0;
 
-	enum STATE { JUMPING, FALLING, CLIMBING, HANGING };
+	enum STATE { JUMPING, FALLING, CLIMBING, HANGING, FINISHED };
 	STATE _state;
 
 	void SetTimers();

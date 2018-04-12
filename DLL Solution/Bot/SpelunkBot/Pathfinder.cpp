@@ -1420,6 +1420,14 @@ bool Pathfinder::WalkOffLedgePathClear(int x1, int y1, int x2, int y2, DIRECTION
 			for (int i = startX; i <= x2; i++)
 			{
 				if (Pelna(i, j)) return false;
+
+				//falling through narrow spaces is hard; walkoffledge cant do that or it is likely that it will get stuck.
+				//until we rework it, we remove the neighbours getting to which requires flying througha narrow space.
+				if (startX == x2)
+				{
+					if (Pelna(i - 1, j) || Pelna(i + 1,j)) return false;
+				}
+
 			}
 
 			if (startX != x2) startX += 1;

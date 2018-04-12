@@ -81,6 +81,9 @@ void JumpAction::SetTimers()
 	{
 		if (abs(_distX) == 0 && _distY == -1)
 			_jumpTimer = 3;
+
+		if (abs(_distX) == 1 && _distY == -1)
+			_jumpTimer = 2;
 	}
 	else
 	{
@@ -332,7 +335,7 @@ ordersStruct JumpAction::GetOrders()
 
 
 		//calculating the threshold; after crossing it bot will jump
-		if (abs(_distX) == 1 || (abs(_distX) == 0 && _actionTarget == LEDGE))
+		if ((abs(_distX) == 1 && _actionTarget != LEDGE) || (abs(_distX) == 0 && _actionTarget == LEDGE))
 		{
 			_jumpThreshold = _startNodeCenter;
 			if (_directionX == xRIGHT)
@@ -438,6 +441,11 @@ ordersStruct JumpAction::GetOrders()
 	case LANDED_STUCK:
 		Centralize(&orders, MiddleXPixel(_targetNode));
 		break;
+	case FINISHED:
+		_finishedTimer += 1;
+		if (_finishedTimer == 5)
+			_actionDone = true;
+		break;
 	}
 
 
@@ -446,15 +454,18 @@ ordersStruct JumpAction::GetOrders()
 	{
 	case GROUND:
 		if (_bot->GetSpelunkerState() == spSTANDING && closeToTarget(playerPosX, MiddleXPixel(_targetNode)))
-			_actionDone = true;
+			//_actionDone = true;
+			_state = FINISHED;
 		break;
 	case LADDER:
 		if (_bot->GetSpelunkerState() == spCLIMBING && playerPosY == MiddleYPixel(_targetNode) && playerPosX == MiddleXPixel(_targetNode))
-			_actionDone = true;
+			//_actionDone = true;
+			_state = FINISHED;
 		break;
 	case LEDGE:
 		if (_bot->GetSpelunkerState() == spHANGING && playerPosY == MiddleYPixel(_targetNode))
-			_actionDone = true;
+			//_actionDone = true;
+			_state = FINISHED;
 		break;
 	}
 

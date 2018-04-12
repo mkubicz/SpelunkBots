@@ -246,6 +246,11 @@ ordersStruct JumpFromLadderAction::GetOrders()
 		break;
 	case HANGING:
 		break;
+	case FINISHED:
+		_finishedTimer += 1;
+		if (_finishedTimer == 5)
+			_actionDone = true;
+		break;
 	}
 
 
@@ -253,15 +258,18 @@ ordersStruct JumpFromLadderAction::GetOrders()
 	{
 	case GROUND:
 		if (_bot->GetSpelunkerState() == spSTANDING && closeToTarget(playerPosX, MiddleXPixel(_targetNode)))
-			_actionDone = true;
+			//_actionDone = true;
+			_state = FINISHED;
 		break;
 	case LADDER:
 		if (_bot->GetSpelunkerState() == spCLIMBING && playerPosY == MiddleYPixel(_targetNode) && playerPosX == MiddleXPixel(_targetNode))
-			_actionDone = true;
+			//_actionDone = true;
+			_state = FINISHED;
 		break;
 	case LEDGE:
 		if (_bot->GetSpelunkerState() == spHANGING && playerPosY == MiddleYPixel(_targetNode))
-			_actionDone = true;
+			//_actionDone = true;
+			_state = FINISHED;
 		break;
 	}
 

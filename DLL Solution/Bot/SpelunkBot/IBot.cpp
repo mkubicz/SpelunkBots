@@ -123,11 +123,18 @@ void IBot::InitialiseDLLFunctions()
 	DisplayLevelLayout = (DisplayLevelLayoutPROC)GetProcAddress(spelunkbots_hModule, "DisplayLevelLayout");
 	IsFacingLeft = (IsFacingLeftPROC)GetProcAddress(spelunkbots_hModule, "IsFacingLeft");
 	IsFacingRight = (IsFacingRightPROC)GetProcAddress(spelunkbots_hModule, "IsFacingRight");
+	GetHitPoints = (GetHitPointsPROC)GetProcAddress(spelunkbots_hModule, "GetHitPoints");
+	GetMoney = (GetMoneyPROC)GetProcAddress(spelunkbots_hModule, "GetMoney");
+	GetTime = (GetTimePROC)GetProcAddress(spelunkbots_hModule, "GetTime");
+	GetBombs = (GetBombsPROC)GetProcAddress(spelunkbots_hModule, "GetBombs");
+	GetRopes = (GetRopesPROC)GetProcAddress(spelunkbots_hModule, "GetRopes");
 	GetSpelunkerStateDLL = (GetSpelunkerStatePROC)GetProcAddress(spelunkbots_hModule, "GetSpelunkerState");
 
-	GetIthCollectable = (GetIthCollectablePROC)GetProcAddress(spelunkbots_hModule, "GetIthCollectable");
-	GetIthEnemy = (GetIthEnemyPROC)GetProcAddress(spelunkbots_hModule, "GetIthEnemy");
-	GetVisibleEnemies = (GetVisibleEnemiesPROC)GetProcAddress(spelunkbots_hModule, "GetVisibleEnemies");
+	GetNextCollectable = (GetNextCollectablePROC)GetProcAddress(spelunkbots_hModule, "GetNextCollectable");
+	GetNextEnemy = (GetNextEnemyPROC)GetProcAddress(spelunkbots_hModule, "GetNextEnemy");
+	//GetIthCollectable = (GetIthCollectablePROC)GetProcAddress(spelunkbots_hModule, "GetIthCollectable");
+	//GetIthEnemy = (GetIthEnemyPROC)GetProcAddress(spelunkbots_hModule, "GetIthEnemy");
+	//GetVisibleEnemies = (GetVisibleEnemiesPROC)GetProcAddress(spelunkbots_hModule, "GetVisibleEnemies");
 }
 
 void IBot::Reset()

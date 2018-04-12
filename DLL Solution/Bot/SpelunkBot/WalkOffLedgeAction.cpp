@@ -46,7 +46,15 @@ ordersStruct WalkOffLedgeAction::GetOrders()
 		_actionInProgress = true;
 	}
 
+
 	if (_running) orders.run = true;
+
+
+	//flying through hard ladder tops
+	if ((_state == FREEFALLING || _state == FALLING) &&
+		IsNearLadderTop(playerPosX, playerPosY))
+		orders.duck = true;
+
 
 	switch (_state)
 	{

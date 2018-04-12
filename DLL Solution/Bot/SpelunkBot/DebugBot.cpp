@@ -17,7 +17,6 @@
 
 DebugBot::DebugBot()
 {
-	//Node _current = Node{ (int)GetPlayerPositionXNode(), (int)GetPlayerPositionYNode()};
 	_pathfinder = new Pathfinder(this);
 	_objectManager = new ObjectManager(this);
 	NewLevel();
@@ -25,8 +24,14 @@ DebugBot::DebugBot()
 
 void DebugBot::InitialiseHelperVariables()
 {
-	_state = SEARCHING_FOR_EXIT;
+	//_state = SEARCHING_FOR_EXIT;
 	//_state = DEBUG;
+
+	_primState = pIDLE;
+	//_primState = SEARCHING_FOR_EXIT;
+	_secState = sIDLE;
+
+	
 
 	_hasMomentum = false;
 }
@@ -1177,89 +1182,6 @@ void DebugBot::ClearOrders()
 	_itemp = false;
 }
 
-#pragma region CreateCommands using actionToReach
-//void DebugBot::CreateCommands(std::vector<Node> path)
-//{
-//	bool actionFound = false;
-//	int currX, currY, targetX, targetY;
-//	currX = (int)_playerPositionXNode;
-//	currY = (int)_playerPositionYNode;
-//	
-//	for (int i = 0; i < path.size(); i++)
-//	{
-//		targetX = path[i].x;
-//		targetY = path[i].y;
-//
-//		int distX = abs(targetX - currX);
-//		int distY = abs(targetY - currY);
-//
-//		MOVEMENTACTION action = (MOVEMENTACTION)path[i].actionToReach;
-//	
-//		switch (action)
-//		{
-//		case IDLE:
-//			break;
-//		case CENTRALIZE:
-//			_actionsQ.push(new CentralizeAction(this));
-//			break;
-//		case WALKRIGHT:
-//			_actionsQ.push(new WalkAction(this, RIGHT, NORUN, distX, NODE_COORDS));
-//			break;
-//		case WALKLEFT:
-//			_actionsQ.push(new WalkAction(this, LEFT, NORUN, distX, NODE_COORDS));
-//			break;
-//		case RUNRIGHT:
-//			_actionsQ.push(new WalkAction(this, RIGHT, RUN, distX, NODE_COORDS));
-//			break;
-//		case RUNLEFT:
-//			_actionsQ.push(new WalkAction(this, LEFT, RUN, distX, NODE_COORDS));
-//			break;
-//		case HANGDROPRIGHT:
-//			_actionsQ.push(new HangDropAction(this, RIGHT, false));
-//			break;
-//		case HANGDROPLEFT:
-//			_actionsQ.push(new HangDropAction(this, LEFT, false));
-//			break;
-//		case JUMPABOVERIGHT:
-//			_actionsQ.push(new JumpAboveAction(this, RIGHT));
-//			break;
-//		case JUMPABOVELEFT:
-//			_actionsQ.push(new JumpAboveAction(this, LEFT));
-//			break;
-//		case JUMPUPRIGHT:
-//			_actionsQ.push(new JumpAction(this, RIGHT, UP, distX, distY));
-//			break;
-//		case JUMPUPLEFT:
-//			_actionsQ.push(new JumpAction(this, LEFT, UP, distX, distY));
-//			break;
-//		case JUMPDOWNRIGHT:
-//			_actionsQ.push(new JumpAction(this, RIGHT, DOWN, distX, distY));
-//			break;
-//		case JUMPDOWNLEFT:
-//			_actionsQ.push(new JumpAction(this, LEFT, DOWN, distX, distY));
-//			break;
-//		case WALKOFFLEDGERIGHT:
-//			_actionsQ.push(new WalkOffLedgeAction(this, RIGHT, distX, distY));
-//			break;
-//		case WALKOFFLEDGELEFT:
-//			_actionsQ.push(new WalkOffLedgeAction(this, LEFT, distX, distY));
-//			break;
-//		case WALKUPRIGHT:
-//			_actionsQ.push(new WalkUpAction(this, RIGHT));
-//			break;
-//		case WALKUPLEFT:
-//			_actionsQ.push(new WalkUpAction(this, LEFT));
-//			break;
-//		default:
-//			break;
-//		}
-//
-//		currX = targetX;
-//		currY = targetY;
-//	}
-//}
-
-#pragma endregion
 
 #pragma region heurestic CreateCommands (without calculating neighbours)
 //
@@ -1537,20 +1459,7 @@ void DebugBot::CreateCommands(std::vector<Node> path)
 
 		MOVEMENTACTION action = path[i].GetActionToReach();
 
-		//I could save this info in path if GetCurrentJumpTarget doesn't work
-		//jumpTarget = _pathfinder->GetCurrentJumpTarget(&path[i]);
 		jumpTarget = path[i].GetActionTarget();
-
-
-		//if (i != 0) mvState = _pathfinder->GetCurrentMvState(&path[i], &path[i-1]);
-		//else mvState = _pathfinder->GetCurrentMvState(&path[i], NULL);
-
-		//if (i == 0)
-		//	mvState = _pathfinder->GetCurrentMvState(&start, NULL);
-		//else if (i == 1)
-		//	mvState = _pathfinder->GetCurrentMvState(&path[i - 1], &start);
-		//else
-		//	mvState = _pathfinder->GetCurrentMvState(&path[i - 1], &path[i - 2]);
 		
 		if (i == 0) mvState = start->GetMvState();
 		else mvState = path[i-1].GetMvState();
@@ -1586,23 +1495,6 @@ void DebugBot::AddActionToActionQueue(MOVEMENTACTION action, ACTION_TARGET jumpT
 		_actionsQ.push(new CentralizeAction(this));
 		break;
 	case WALK:
-		//if (!_actionsQ.empty())
-		//{
-		//	if (_actionsQ.back()->ActionType() == WALK &&
-		//		((distX > 0 && _actionsQ.back()->GetDirectionX() == xRIGHT) ||
-		//		(distX < 0 && _actionsQ.back()->GetDirectionX() == xLEFT))
-		//		)
-		//	{
-		//		//previous action is also a WalkAction, and its going in the same direction,
-		//		//so we increase its distance instead of creating a new command (ActionBatching™)
-		//		dynamic_cast<WalkAction*>(_actionsQ.back())->AddDistance(distX);
-		//		break;
-		//	}
-		//}
-
-		//_actionsQ.push(new WalkAction(this, distX));
-
-
 		//if (distX == 2), then bot is walking over a hole which should be runned
 		if (abs(distX) == 2)
 		{
@@ -1681,115 +1573,6 @@ void DebugBot::AddActionToActionQueue(MOVEMENTACTION action, ACTION_TARGET jumpT
 	default:
 		break;
 	}
-
-
-	//switch (action)
-	//{
-	//case IDLE:
-	//	break;
-	//case CENTRALIZE:
-	//	_actionsQ.push(new CentralizeAction(this));
-	//	break;
-	//case WALKRIGHT:
-	//	if (!_actionsQ.empty() && _actionsQ.back()->ActionType() == WALKRIGHT)
-	//		//previous action is also a WalkRight, so we increase its distance instead of creating a new command (ActionBatching™)
-	//		dynamic_cast<WalkAction*>(_actionsQ.back())->AddDistance(distX);	
-	//	else
-	//		_actionsQ.push(new WalkAction(this, RIGHT, NORUN, distX, NODE_COORDS));
-	//	break;
-	//case WALKLEFT:
-	//	if (!_actionsQ.empty() && _actionsQ.back()->ActionType() == WALKLEFT)
-	//		//previous action is also a WalkLeft, so we increase its distance instead of creating a new command (ActionBatching™)
-	//		dynamic_cast<WalkAction*>(_actionsQ.back())->AddDistance(distX);	
-	//	else
-	//		_actionsQ.push(new WalkAction(this, LEFT, NORUN, distX, NODE_COORDS));
-	//	break;
-	//case RUNRIGHT:
-	//	if (!_actionsQ.empty() && _actionsQ.back()->ActionType() == RUNRIGHT)
-	//		//previous action is also a WalkRight, so we increase its distance instead of creating a new command (ActionBatching™)
-	//		dynamic_cast<WalkAction*>(_actionsQ.back())->AddDistance(distX);
-	//	else
-	//		_actionsQ.push(new WalkAction(this, RIGHT, RUN, distX, NODE_COORDS));
-	//	break;
-	//case RUNLEFT:
-	//	if(!_actionsQ.empty() && _actionsQ.back()->ActionType() == RUNLEFT)
-	//		//previous action is also a WalkLeft, so we increase its distance instead of creating a new command (ActionBatching™)
-	//		dynamic_cast<WalkAction*>(_actionsQ.back())->AddDistance(distX);
-	//	else
-	//		_actionsQ.push(new WalkAction(this, LEFT, RUN, distX, NODE_COORDS));
-	//		break;
-	//case HANGRIGHT:
-	//	_actionsQ.push(new HangAction(this, RIGHT));
-	//	break;
-	//case HANGLEFT:
-	//	_actionsQ.push(new HangAction(this, LEFT));
-	//	break;
-	//case DROP:
-	//	_actionsQ.push(new DropAction(this));
-	//	break;
-	//case HANGDROPRIGHT:
-	//	_actionsQ.push(new HangDropAction(this, RIGHT, false));
-	//	break;
-	//case HANGDROPLEFT:
-	//	_actionsQ.push(new HangDropAction(this, LEFT, false));
-	//	break;
-	//case JUMPABOVERIGHT:
-	//	_actionsQ.push(new JumpAboveAction(this, RIGHT));
-	//	break;
-	//case JUMPABOVELEFT:
-	//	_actionsQ.push(new JumpAboveAction(this, LEFT));
-	//	break;
-	//case JUMPUPRIGHT:
-	//	_actionsQ.push(new JumpAction(this, RIGHT, UP, distX, distY));
-	//	break;
-	//case JUMPUPLEFT:
-	//	_actionsQ.push(new JumpAction(this, LEFT, UP, distX, distY));
-	//	break;
-	//case JUMPUPRIGHT_LEDGE:
-	//	_actionsQ.push(new JumpAction(this, RIGHT, UP, LEDGE, distX, distY));
-	//	break;
-	//case JUMPUPLEFT_LEDGE:
-	//	_actionsQ.push(new JumpAction(this, LEFT, UP, LEDGE, distX, distY));
-	//	break;
-	//case JUMPDOWNRIGHT:
-	//	_actionsQ.push(new JumpAction(this, RIGHT, DOWN, distX, distY));
-	//	break;
-	//case JUMPDOWNLEFT:
-	//	_actionsQ.push(new JumpAction(this, LEFT, DOWN, distX, distY));
-	//	break;
-	//case WALKOFFLEDGERIGHT:
-	//	_actionsQ.push(new WalkOffLedgeAction(this, RIGHT, distX, distY));
-	//	break;
-	//case WALKOFFLEDGELEFT:
-	//	_actionsQ.push(new WalkOffLedgeAction(this, LEFT, distX, distY));
-	//	break;
-	//case WALKUPRIGHT:
-	//	_actionsQ.push(new WalkUpAction(this, RIGHT));
-	//	break;
-	//case WALKUPLEFT:
-	//	_actionsQ.push(new WalkUpAction(this, LEFT));
-	//	break;
-	//case CLIMBFROMHANG_RIGHT:
-	//	_actionsQ.push(new ClimbFromHangAction(this, RIGHT));
-	//	break;
-	//case CLIMBFROMHANG_LEFT:
-	//	_actionsQ.push(new ClimbFromHangAction(this, LEFT));
-	//	break;
-	//	/*
-	//	case CLIMBUP,
-	//		case CLIMBDOWN,
-	//		case JUMPUP_LADDER,
-	//		case JUMPUPRIGHT_LADDER,
-	//		case JUMPUPLEFT_LADDER,
-	//		case JUMPDOWNRIGHT_LADDER,
-	//		case JUMPDOWNLEFT_LADDER,
-	//		case WALKOFFLEDGERIGHT_LADDER,
-	//		case WALKOFFLEDGELEFT_LADDER,
-	//*/
-	//default:
-	//	break;
-	//}
-
 }
 
 
@@ -1811,14 +1594,35 @@ bool DebugBot::FindExit(int &x, int &y)
 	return false;
 }
 
+Node * DebugBot::TryToFindExit()
+{
+	for (int nodeX = 0; nodeX < X_NODES; nodeX += 1)
+	{
+		for (int nodeY = 0; nodeY < Y_NODES; nodeY += 1)
+		{
+			if (GetNodeState(nodeX, nodeY, NODE_COORDS) == spExit)
+			{
+				return new Node(nodeX, nodeY);
+			}
+		}
+	}
+	return NULL;
+}
+
 
 void DebugBot::Update()
 {
+
 	int exitX, exitY;
 	int playerPosXNode = (int)_playerPositionXNode;
 	int playerPosYNode = (int)_playerPositionYNode;
+	std::vector<Node> explTargets;
 
-	
+	//UPDATING INFO ABOUT ENEMIES AND COLLECTABLES
+	_objectManager->UpdateGameObjectLists();
+
+
+	//PRINTING DEBUG INFO TO FILES
 	if (_debugTimer < 0)
 	{
 		_hasMomentum = false;
@@ -1827,163 +1631,423 @@ void DebugBot::Update()
 	}
 	_debugTimer -= 1;
 
-	//std::vector<enemyObject> enemies = _objectManager->GetVisibleEnemies();
-	//collectableObject e = GetVisibleEnemies();
+	_objectManager->CollectablesDebug();
+	_objectManager->EnemiesDebug();
+
+	//Sleep(10);
+
+	//std::cout << "Hajs: " << GetMoney() << std::endl;
+	//std::cout << "Czas: " << GetTime() << std::endl;
+	//std::cout << "Bomby: " << GetBombs() << std::endl;
+	//std::cout << "Liny: " << GetRopes() << std::endl;
+	//std::cout << "¯yæko: " << GetHitPoints() << std::endl;
 
 
-	_objectManager->UpdateGameObjectLists();
+	
 
-
-	//std::cout << GetSpelunkerState() << std::endl;
-
-
-
-	switch (_state)
+	//if (_secState == IDLE || _secState == FINISHED)
+	if (_secState != EXECUTING_COMMANDS && _secState != DEBUG)
 	{
-		case SEARCHING_FOR_EXIT:
-			if (FindExit(exitX, exitY) && _pathfinder->CalculatePath(_playerPositionXNode, _playerPositionYNode, exitX, exitY, NODE_COORDS))
+
+		switch (_primState)
+		{
+		case pIDLE:
+
+
+
+			//IF there is time THEN
+			//IF there is treasure THEN
+			//		_primState = GATHERING
+			//	ELSE 
+			//		_primState = EXPLORING
+			//ELSE
+			//	_primState = GOING_TO_EXIT
+
+			_primState = EXPLORING_GATHERING;
+
+			break;
+		case EXPLORING_GATHERING:
+			bool exploration;
+			collectableObject collectCandidate;
+
+
+
+			exploration = false;
+
+
+			if (_collectablesQ.empty())
 			{
-				CreateCommands(_pathfinder->GetPathListNode());
-				_hasGoal = true;
+				auto collectablesOM = _objectManager->GetCollectables();
+
+				if (collectablesOM.empty())
+					exploration = true;
+				else
+				{
+					for (int i = 0; i < collectablesOM.size(); i++)
+						_collectablesQ.push(collectablesOM[i]);
+				}
 			}
 			else
 			{
-				//dfs
-				std::vector<Node> explTargets = _pathfinder->FindExplorationTargets(_playerPositionXNode, _playerPositionYNode, NODE_COORDS);
+				while (!_collectablesQ.empty())
+				{
+					collectCandidate = _collectablesQ.front();
+					_collectablesQ.pop();
+
+					//check if collect candidate is marked as unreachable
+					if (_unreachableColl.find(collectCandidate.id) != _unreachableColl.end()
+						&& _unreachableColl[collectCandidate.id] == true)
+					{
+						//if Q is empty, all collectables are unreachable. We should explore.
+						if (_collectablesQ.empty())
+							exploration = true;
+						else
+							continue;
+					}
+					else
+					{
+						//if candidate not marked as unreachable, try to calculate a path to it
+						if (_pathfinder->CalculatePath(_playerPositionXNode, _playerPositionYNode, collectCandidate.x, collectCandidate.y, NODE_COORDS))
+						{
+							//if there is a path, execute it
+							CreateCommands(_pathfinder->GetPathListNode());
+							_secState = EXECUTING_COMMANDS;
+							//break the loop
+							break;
+						}
+						else
+						{
+							//if there is no path, mark the candidate as unreachable
+							_unreachableColl[collectCandidate.id] = true;
+						}
+					}
+				}
+			}
+
+
+
+			//if (!_objectManager->GetCollectables().empty())
+			//{
+
+			//	for (int i = 0; i < _objectManager->GetCollectables().size(); i++)
+			//	{
+			//		collectCandidate = _objectManager->GetCollectables()[i];
+
+			//		//check if collect candidate is marked as unreachable
+			//		if (_unreachableColl.find(collectCandidate.id) != _unreachableColl.end()
+			//			&& _unreachableColl[collectCandidate.id] == true)
+			//		{
+			//			//if candidate is marked as unreachable, check if this is the last candidate
+			//			if (i == _objectManager->GetCollectables().size() - 1)
+			//			{
+			//				//if this is the last candidate, break the loop. Exploration.
+			//				exploration = true;
+			//				break;
+			//			}
+			//			else
+			//			{
+			//				//if there is more candidates, continue
+			//				continue;
+			//			}
+			//		}
+			//		else
+			//		{
+			//			//if candidate not marked as unreachable, try to calculate a path to it
+			//			if (_pathfinder->CalculatePath(_playerPositionXNode, _playerPositionYNode, collectCandidate.x, collectCandidate.y, NODE_COORDS))
+			//			{
+			//				//if there is a path, execute it
+			//				CreateCommands(_pathfinder->GetPathListNode());
+			//				_secState = EXECUTING_COMMANDS;
+			//				//break the loop
+			//				break;
+			//			}
+			//			else
+			//			{
+			//				//if there is no path, mark the candidate as unreachable
+			//				_unreachableColl[collectCandidate.id] = true;
+			//			}
+			//		}
+			//	}
+
+			//}
+			//else
+			//	exploration = true;
+
+
+			if (exploration)
+			{
+				explTargets = _pathfinder->FindExplorationTargets(playerPosXNode, playerPosYNode, NODE_COORDS);
 
 				if (explTargets.size() > 0)
 				{
-					Node target = explTargets[0];
-					int dist = abs((int)_playerPositionXNode - target.GetX()) + abs((int)_playerPositionYNode - target.GetY());
+					_target = &explTargets[0];
+					int dist = abs((int)_playerPositionXNode - _target->GetX()) + abs((int)_playerPositionYNode - _target->GetY());
 
 					for (int i = 1; i < explTargets.size(); i++)
 					{
 						int distNew = abs((int)_playerPositionXNode - explTargets[i].GetX()) + abs((int)_playerPositionYNode - explTargets[i].GetY());
 						if (distNew < dist)
 						{
-							target = explTargets[i];
+							_target = &explTargets[i];
 							dist = distNew;
 						}
 
 					}
-					
-					_pathfinder->CalculatePath(_playerPositionXNode, _playerPositionYNode, target.GetX(), target.GetY(), NODE_COORDS);
-					CreateCommands(_pathfinder->GetPathListNode());
+
+					_secState = NEW_TARGET;
+
+					//delete unreachable markings - something may be reachable now
+					std::map<int, bool>::iterator uc = _unreachableColl.begin();
+					while (uc != _unreachableColl.end())
+					{
+						uc->second = false;
+						uc++;
+					}
 
 				}
 				else
 				{
-					//no exploration target - we can search again with looser criteria, or allow usage of ropes and bombs
+					//nothing to explore - go to exit
+					_primState = SEARCHING_FOR_EXIT;
 				}
-				
-
 			}
 
-			_state = EXECUTING_COMMANDS;
 			break;
+		case SEARCHING_FOR_EXIT:
+			//1. search for exit among not-fogged nodes
+			//2. if you found exit, go to it.
+			//3. if you did not find exit, explore a node and goto 1.
+			//4. if there are no nodes to explore, Idle.
 
-		case EXECUTING_COMMANDS:
-			if (!_actionsQ.empty())
+
+			_target = TryToFindExit();
+			if (_target != NULL)
 			{
-				ordersStruct orders = (_actionsQ.front())->GetOrders();
+				_primState = GOING_TO_EXIT;
+				break;
+			}
 
+			//dfs
+			explTargets = _pathfinder->FindExplorationTargets(playerPosXNode, playerPosYNode, NODE_COORDS);
 
+			if (explTargets.size() > 0)
+			{
+				_target = &explTargets[0];
+				int dist = abs((int)_playerPositionXNode - _target->GetX()) + abs((int)_playerPositionYNode - _target->GetY());
 
-				//set momentum
-				if ((GetSpelunkerState() == spSTANDING ||
-					GetSpelunkerState() == spRUNNING) &&
-					orders.run == true)
-					_hasMomentum = true;
-
-				if ((GetSpelunkerState() == spSTANDING ||
-					GetSpelunkerState() == spRUNNING) &&
-					orders.run == false)
-					_hasMomentum = false;
-
-
-
-				//naive fighting (mostly with snakes)
-				if (_attackTimer == 0)
+				for (int i = 1; i < explTargets.size(); i++)
 				{
-					std::vector<enemyObject> enemies = _objectManager->GetVisibleEnemies();
-					for (int i = 0; i < enemies.size(); i++)
+					int distNew = abs((int)_playerPositionXNode - explTargets[i].GetX()) + abs((int)_playerPositionYNode - explTargets[i].GetY());
+					if (distNew < dist)
 					{
-						if (enemies[i].y == _playerPositionYNode &&
-							abs(enemies[i].x - _playerPositionXNode) < 2.5)
-						{
-							orders.attack = true;
-							_attackTimer = 6;
-							break;
-						}
+						_target = &explTargets[i];
+						dist = distNew;
 					}
+
 				}
-				else
-					_attackTimer -= 1;
 
-
-
-				ExecuteOrders(orders);
-
-				if ((_actionsQ.front())->ActionDone())
-				{
-					delete _actionsQ.front();
-					_actionsQ.pop();
-					ClearOrders();
-				}
+				_secState = NEW_TARGET;
 			}
 			else
 			{
-				ClearOrders();
-				//if (_hasGoal) _lookUp = true;
-				if (GetNodeState(_playerPositionX, _playerPositionY, PIXEL_COORDS) == spExit)
-					_lookUp = true;
-				else 
-					_state = SEARCHING_FOR_EXIT;
+				//no exploration target - we can search again with looser criteria, or allow usage of ropes and bombs
+				_primState = pIDLE;
 			}
 
 			break;
+		case GOING_TO_EXIT:
+			//1. go to exit.
+			//2. if exit is not yet found, search for it.
 
-		case DEBUG:
-			if (!_actionsQ.empty())
+			if (_target != NULL)
 			{
-				ordersStruct orders = (_actionsQ.front())->GetOrders();
-
-
-
-				ExecuteOrders(orders);
-				
-
-
-				//set momentum
-				if ((GetSpelunkerState() == spSTANDING ||
-					GetSpelunkerState() == spRUNNING) &&
-					orders.run == true)
-					_hasMomentum = true;
-
-				if ((GetSpelunkerState() == spSTANDING ||
-					GetSpelunkerState() == spRUNNING) &&
-					orders.run == false)
-					_hasMomentum = false;
-
-
-
-				if ((_actionsQ.front())->ActionDone())
-				{
-					delete _actionsQ.front();
-					_actionsQ.pop();
-					ClearOrders();
-				}
-
-				//for jump from ladder with momentum testing
-				//if (!_actionsQ.empty())
-				//{
-				//	if (_actionsQ.front()->ActionType() == WALK ||
-				//		_actionsQ.front()->ActionType() == CLIMB)
-				//		_runp = true;
-				//}
+				_secState = NEW_TARGET;
 			}
+			else
+			{
+				std::cout << "Unexpected behaviour: target is NULL when going to exit." << std::endl;
+				_primState = SEARCHING_FOR_EXIT;
+			}
+
+			break;
+		default:
+			break;
+		}
+
 	}
+
+
+
+	switch (_secState)
+	{
+	case DebugBot::sIDLE:
+		break;
+	case DebugBot::NEW_TARGET:
+
+		if (_pathfinder->CalculatePath(_playerPositionXNode, _playerPositionYNode, _target->GetX(), _target->GetY(), NODE_COORDS))
+		{
+			CreateCommands(_pathfinder->GetPathListNode());
+			_secState = EXECUTING_COMMANDS;
+		}
+		else
+			_secState = UNREACHABLE_TARGET;
+
+
+		break;
+	case UNREACHABLE_TARGET:
+		break;
+	case DebugBot::EXECUTING_COMMANDS:
+		if (!_actionsQ.empty())
+		{
+			ordersStruct orders = (_actionsQ.front())->GetOrders();
+
+			ExecuteOrders(orders);
+
+			if ((_actionsQ.front())->ActionDone())
+			{
+				delete _actionsQ.front();
+				_actionsQ.pop();
+				ClearOrders();
+			}
+		}
+		else
+		{
+			_secState = FINISHED;
+		}
+		break;
+	case DebugBot::FINISHED:
+		break;
+	case DebugBot::DEBUG:
+		if (!_actionsQ.empty())
+		{
+			ordersStruct orders = (_actionsQ.front())->GetOrders();
+
+			ExecuteOrders(orders);
+					
+			if ((_actionsQ.front())->ActionDone())
+			{
+				delete _actionsQ.front();
+				_actionsQ.pop();
+				ClearOrders();
+			}
+
+			//for jump from ladder with momentum testing
+			//if (!_actionsQ.empty())
+			//{
+			//	if (_actionsQ.front()->ActionType() == WALK ||
+			//		_actionsQ.front()->ActionType() == CLIMB)
+			//		_runp = true;
+			//}
+		}
+	default:
+		break;
+	}
+
+
+#pragma region stare
+
+	//switch (_state)
+	//{
+	//	case SEARCHING_FOR_EXIT:
+	//		if (FindExit(exitX, exitY) && _pathfinder->CalculatePath(_playerPositionXNode, _playerPositionYNode, exitX, exitY, NODE_COORDS))
+	//		{
+	//			CreateCommands(_pathfinder->GetPathListNode());
+	//		}
+	//		else
+	//		{
+	//			//dfs
+	//			std::vector<Node> explTargets = _pathfinder->FindExplorationTargets(_playerPositionXNode, _playerPositionYNode, NODE_COORDS);
+
+	//			if (explTargets.size() > 0)
+	//			{
+	//				Node target = explTargets[0];
+	//				int dist = abs((int)_playerPositionXNode - target.GetX()) + abs((int)_playerPositionYNode - target.GetY());
+
+	//				for (int i = 1; i < explTargets.size(); i++)
+	//				{
+	//					int distNew = abs((int)_playerPositionXNode - explTargets[i].GetX()) + abs((int)_playerPositionYNode - explTargets[i].GetY());
+	//					if (distNew < dist)
+	//					{
+	//						target = explTargets[i];
+	//						dist = distNew;
+	//					}
+
+	//				}
+	//				
+	//				_pathfinder->CalculatePath(_playerPositionXNode, _playerPositionYNode, target.GetX(), target.GetY(), NODE_COORDS);
+	//				CreateCommands(_pathfinder->GetPathListNode());
+
+	//			}
+	//			else
+	//			{
+	//				//no exploration target - we can search again with looser criteria, or allow usage of ropes and bombs
+	//			}
+	//			
+
+	//		}
+
+	//		_state = EXECUTING_COMMANDS;
+	//		break;
+
+	//	case EXECUTING_COMMANDS:
+	//		if (!_actionsQ.empty())
+	//		{
+	//			ordersStruct orders = (_actionsQ.front())->GetOrders();
+
+
+
+
+	//			ExecuteOrders(orders);
+
+	//			if ((_actionsQ.front())->ActionDone())
+	//			{
+	//				delete _actionsQ.front();
+	//				_actionsQ.pop();
+	//				ClearOrders();
+	//			}
+	//		}
+	//		else
+	//		{
+	//			ClearOrders();
+	//			//if (_hasGoal) _lookUp = true;
+	//			if (GetNodeState(_playerPositionX, _playerPositionY, PIXEL_COORDS) == spExit)
+	//				_lookUp = true;
+	//			else 
+	//				_state = SEARCHING_FOR_EXIT;
+	//		}
+
+	//		break;
+
+	//	case DEBUG:
+	//		if (!_actionsQ.empty())
+	//		{
+	//			ordersStruct orders = (_actionsQ.front())->GetOrders();
+
+
+
+	//			ExecuteOrders(orders);
+	//			
+
+
+
+	//			if ((_actionsQ.front())->ActionDone())
+	//			{
+	//				delete _actionsQ.front();
+	//				_actionsQ.pop();
+	//				ClearOrders();
+	//			}
+
+	//			//for jump from ladder with momentum testing
+	//			//if (!_actionsQ.empty())
+	//			//{
+	//			//	if (_actionsQ.front()->ActionType() == WALK ||
+	//			//		_actionsQ.front()->ActionType() == CLIMB)
+	//			//		_runp = true;
+	//			//}
+	//		}
+	//}
 	
+#pragma endregion
 	
 }
 

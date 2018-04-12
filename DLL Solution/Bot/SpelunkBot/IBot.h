@@ -69,10 +69,15 @@ typedef double(__cdecl *DisplayLevelLayoutPROC)();
 typedef bool(__cdecl *IsFacingLeftPROC)();
 typedef bool(__cdecl *IsFacingRightPROC)();
 typedef int(__cdecl *GetSpelunkerStatePROC)();
+typedef int(__cdecl *GetHitPointsPROC)();
+typedef int(__cdecl *GetTimePROC)();
+typedef int(__cdecl *GetMoneyPROC)();
+typedef int(__cdecl *GetRopesPROC)();
+typedef int(__cdecl *GetBombsPROC)();
 
-typedef collectableObject*(__cdecl *GetIthCollectablePROC)(int i);
-typedef collectableObject*(__cdecl *GetIthEnemyPROC)(int i);
-typedef collectableObject(__cdecl *GetVisibleEnemiesPROC)();
+typedef collectableObject*(__cdecl *GetNextCollectablePROC)();
+typedef enemyObject*(__cdecl *GetNextEnemyPROC)();
+//typedef collectableObject(__cdecl *GetVisibleEnemiesPROC)();
 
 #pragma endregion
 
@@ -188,10 +193,15 @@ public:
 	DisplayLevelLayoutPROC DisplayLevelLayout;
 	IsFacingLeftPROC IsFacingLeft;
 	IsFacingRightPROC IsFacingRight;
+	GetHitPointsPROC GetHitPoints;
+	GetTimePROC GetTime;
+	GetMoneyPROC GetMoney;
+	GetBombsPROC GetBombs;
+	GetRopesPROC GetRopes;
 
-	GetIthCollectablePROC GetIthCollectable;
-	GetIthEnemyPROC GetIthEnemy;
-	GetVisibleEnemiesPROC GetVisibleEnemies;
+	GetNextCollectablePROC GetNextCollectable;
+	GetNextEnemyPROC GetNextEnemy;
+	//GetVisibleEnemiesPROC GetVisibleEnemies;
 
 	inline double GetHasGoal(void)
 	{

@@ -77,8 +77,14 @@ int screenHeight;
 
 enum FACING
 { LEFT = 0, RIGHT };
-bool spfacing;
+bool spFacing;
 double spSpelunkerState;
+double spBombs;
+double spRopes;
+double spTimeInLevel;
+double spHitPoints;
+double spMoney;
+
 
 // hold arrays of each type of object in here 
 // means user can query the nearest object, or all of them
@@ -103,7 +109,7 @@ double pushBlocks[X_NODES][Y_NODES];
 double bats[X_NODES][Y_NODES];
 
 std::vector<collectableObject> collectablesList;
-std::vector<collectableObject> enemiesList;
+std::vector<enemyObject> enemiesList;
 
 double hasResetMap = 0;
 
@@ -827,11 +833,11 @@ GMEXPORT double UpdateCollectableAtNode(double x, double y, double id)
 	{
 		if (collectablesList.at(i).id == id)
 		{
-			if (spmap[(int)x][(int)y] == 0 || coolGlasses || udjatEye)
-			{
+			//if (spmap[(int)x][(int)y] != 1 || coolGlasses || udjatEye)
+			//{
 				collectablesList.at(i).x = x;
 				collectablesList.at(i).y = y;
-			}
+			//}
 			return 0;
 		}
 	}
@@ -959,21 +965,49 @@ GMEXPORT double IsCollectableInNode(double x, double y, double usingPixelCoords)
 }
 
 /**
-* \brief GetIthCollectable returns ith element from the collectables list.
-* \brief Bot should get elements one by one until it encounters a NULL. Its done thie way because passing collection through DLL barriers is problematic.
+* \brief GetIthCollectable returns an element from the collectables list.
+* \brief Bot should get elements one by one until it encounters a NULL. Its done this way because passing collections through DLL barriers is problematic.
 *
-* @param i The index of collectable to get.
-*
-* @return collectablesList[i]
+* @return collectablesList[cNr]
 *
 */
-GMEXPORT collectableObject* GetIthCollectable(int i)
+int cNr = 0;
+GMEXPORT collectableObject* GetNextCollectable()
 {
-	if (collectablesList.size() > i)
-		return &collectablesList.at(i);
-	else
-		return NULL;
+	while (collectablesList.size() > cNr)
+	{
+		int x = (int)collectablesList[cNr].x;
+		int y = (int)collectablesList[cNr].y;
+
+		//if item is not in fog
+		if (mapFog[x][y] == 0)
+		{
+			//if item is not in ground or it is in ground but bot can see it with glasses or udjat
+			if (spmap[x][y] != 1 || coolGlasses || udjatEye)
+			{
+				//bot can see this collectable - return it
+				cNr++;
+				return &collectablesList.at(cNr-1);
+			}
+		}
+
+		//bot should not see this collectable - skip
+		cNr++;
+	}
+
+
+	//no more collectables - reset counter and return NULL
+	cNr = 0;
+	return NULL;
 }
+
+//GMEXPORT collectableObject* GetIthCollectable()
+//{
+//	//if (collectablesList.size() > i)
+//	//	return &collectablesList.at(i);
+//	//else
+//	//	return NULL;
+//}
 
 #pragma endregion
 
@@ -1002,7 +1036,7 @@ GMEXPORT double ResetEnemies()
 */
 GMEXPORT double NodeContainsEnemy(double x, double y, double type, double id)
 {
-	collectableObject object;
+	enemyObject object;
 	object.x = x;
 	object.y = y;
 	object.type = type;
@@ -1159,22 +1193,48 @@ GMEXPORT double IsEnemyInNode(double x, double y, double usingPixelCoords)
 	return 0;
 }
 
+
 /**
-* \brief GetIthEnemy returns ith element from the enemies list.
-* \brief Bot should get elements one by one until it encounters a NULL. Its done thie way because passing collection through DLL barriers is problematic.
+* \brief GetNextEnemy returns an element from the enemies list.
+* \brief Bot should get elements one by one until it encounters a NULL. Its done this way because passing collections through DLL barriers is problematic.
 *
-* @param i The index of enemy to get.
-*
-* @return enemiesList[i]
+* @return enemiesList[eNr]
 *
 */
-GMEXPORT collectableObject* GetIthEnemy(int i)
+int eNr = 0;
+GMEXPORT enemyObject* GetNextEnemy()
 {
-	if (enemiesList.size() > i)
-		return &enemiesList.at(i);
-	else
-		return NULL;
+	while (enemiesList.size() > eNr)
+	{
+		int x = (int)enemiesList[eNr].x;
+		int y = (int)enemiesList[eNr].y;
+
+		//if enemy is not in fog
+		if (mapFog[x][y] == 0)
+		{
+			//bot can see this enemy - return it
+			eNr++;
+			return &enemiesList.at(eNr-1);
+		}
+
+		//bot should not see this enemy - skip
+		eNr++;
+	}
+
+
+	//no more enemies - reset counter and return NULL
+	eNr = 0;
+	return NULL;
 }
+
+
+//GMEXPORT enemyObject* GetIthEnemy(int i)
+//{
+//	if (enemiesList.size() > i)
+//		return &enemiesList.at(i);
+//	else
+//		return NULL;
+//}
 
 
 #pragma endregion
@@ -1908,36 +1968,7 @@ GMEXPORT double RecordStats(double val, char* stat)
 
 #pragma region New Functions
 /**
-* \brief UpdateFacing Gets the information which way the spelunker is facing from the source code.
-*
-* @param facing tells which way the spelunker is facing - 18 for LEFT, 19 for RIGHT (they are kept in the game that way).
-*
-* \note This function should not be changed or used when implementing a bot
-*/
-GMEXPORT double UpdateFacing(double facing)
-{
-	spfacing = facing == 18 ? LEFT : RIGHT;
-	return 0;
-}
-
-/**
-* \brief IsFacingLeft Tells if the spelunker is facing left. To be used by the bot.
-*/
-GMEXPORT bool IsFacingLeft()
-{
-	return spfacing == LEFT;
-}
-
-/**
-* \brief IsFacingRight Tells if the spelunker is facing right. To be used by the bot.
-*/
-GMEXPORT bool IsFacingRight()
-{
-	return spfacing == RIGHT;
-}
-
-/**
-* \brief UpdateFacing Gets the information of the state the Spelunker is in.
+* \brief SetSpelunkerState gets the information of the state the Spelunker is in.
 *
 * @param state The state of the Spelunker.
 *
@@ -1947,6 +1978,92 @@ GMEXPORT double SetSpelunkerState(double state)
 {
 	spSpelunkerState = state;
 	return 0;
+}
+
+/**
+* \brief UpdateFacing Gets the information which way the spelunker is facing from the source code.
+*
+* @param facing tells which way the spelunker is facing - 18 for LEFT, 19 for RIGHT (they are kept in the game that way).
+*
+* \note This function should not be changed or used when implementing a bot.
+*/
+GMEXPORT double UpdateFacing(double facing)
+{
+	spFacing = facing == 18 ? LEFT : RIGHT;
+	return 0;
+}
+
+/**
+* \brief UpdateHitPoints Gets the information how much health points does the Spelunker have left.
+*
+* @param hp Hit points.
+*
+* \note This function should not be changed or used when implementing a bot.
+*/
+GMEXPORT double UpdateHitPoints(double hp)
+{
+	spHitPoints = hp;
+	return 0;
+}
+
+/**
+* \brief UpdateTime Gets the information how much time has the Spelunker spent in current level.
+*
+* \note This function should not be changed or used when implementing a bot.
+*/
+GMEXPORT double UpdateTime(double time)
+{
+	spTimeInLevel = time;
+	return 0;
+}
+
+/**
+* \brief UpdateMoney Gets the information how much money has the spelunker collected.
+*
+* \note This function should not be changed or used when implementing a bot
+*/
+GMEXPORT double UpdateMoney(double money)
+{
+	spMoney = money;
+	return 0;
+}
+
+/**
+* \brief UpdateRopes Gets the information how much rope does the spelunker have.
+*
+* \note This function should not be changed or used when implementing a bot
+*/
+GMEXPORT double UpdateRopes(double ropes)
+{
+	spRopes = ropes;
+	return 0;
+}
+
+/**
+* \brief UpdateBombs Gets the information how much bombs does the Spelunker have.
+*
+* \note This function should not be changed or used when implementing a bot
+*/
+GMEXPORT double UpdateBombs(double bombs)
+{
+	spBombs = bombs;
+	return 0;
+}
+
+/**
+* \brief IsFacingLeft Tells if the spelunker is facing left. To be used by the bot.
+*/
+GMEXPORT bool IsFacingLeft()
+{
+	return spFacing == LEFT;
+}
+
+/**
+* \brief IsFacingRight Tells if the spelunker is facing right. To be used by the bot.
+*/
+GMEXPORT bool IsFacingRight()
+{
+	return spFacing == RIGHT;
 }
 
 /**
@@ -1963,5 +2080,49 @@ GMEXPORT int GetSpelunkerState()
 	return spSpelunkerState;
 }
 
+/**
+* \brief GetHitPoints Gets the information how much health points does the Spelunker have left.
+* \note To be used by the bot.
+*/
+GMEXPORT int GetHitPoints()
+{
+	return spHitPoints;
+}
+
+/**
+* \brief GetTime Gets the information how much time has the Spelunker spent in current level.
+* \note To be used by the bot.
+*/
+GMEXPORT int GetTime()
+{
+	return spTimeInLevel;
+}
+
+/**
+* \brief GetMoney Gets the information how much money has the spelunker collected.
+* \note To be used by the bot.
+*/
+GMEXPORT int GetMoney()
+{
+	return spMoney;
+}
+
+/**
+* \brief GetRopes Gets the information how much rope does the spelunker have.
+* \note To be used by the bot.
+*/
+GMEXPORT int GetRopes()
+{
+	return spRopes;
+}
+
+/**
+* \brief GetBombs Gets the information how much bombs does the Spelunker have.
+* \note To be used by the bot.
+*/
+GMEXPORT int GetBombs()
+{
+	return spBombs;
+}
 
 #pragma endregion
