@@ -17,6 +17,7 @@
 #include "utilities.h"
 //#include "Node.h"
 #include <time.h>
+#include <thread>
 
 const int NODE_COORDS = 0;
 const int PIXEL_COORDS = 1;

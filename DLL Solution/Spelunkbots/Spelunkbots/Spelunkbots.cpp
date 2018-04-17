@@ -1994,7 +1994,7 @@ GMEXPORT double UpdateFacing(double facing)
 }
 
 /**
-* \brief UpdateHitPoints Gets the information how much health points does the Spelunker have left.
+* \brief UpdateHitPoints Updates the amount of hit points.
 *
 * @param hp Hit points.
 *
@@ -2007,7 +2007,7 @@ GMEXPORT double UpdateHitPoints(double hp)
 }
 
 /**
-* \brief UpdateTime Gets the information how much time has the Spelunker spent in current level.
+* \brief UpdateTime Updates the amount of time in level.
 *
 * \note This function should not be changed or used when implementing a bot.
 */
@@ -2018,7 +2018,7 @@ GMEXPORT double UpdateTime(double time)
 }
 
 /**
-* \brief UpdateMoney Gets the information how much money has the spelunker collected.
+* \brief UpdateMoney Updates the amount of money.
 *
 * \note This function should not be changed or used when implementing a bot
 */
@@ -2029,7 +2029,7 @@ GMEXPORT double UpdateMoney(double money)
 }
 
 /**
-* \brief UpdateRopes Gets the information how much rope does the spelunker have.
+* \brief UpdateRopes Updates the amount of ropes.
 *
 * \note This function should not be changed or used when implementing a bot
 */
@@ -2040,7 +2040,7 @@ GMEXPORT double UpdateRopes(double ropes)
 }
 
 /**
-* \brief UpdateBombs Gets the information how much bombs does the Spelunker have.
+* \brief UpdateBombs Updates the amount of bombs.
 *
 * \note This function should not be changed or used when implementing a bot
 */

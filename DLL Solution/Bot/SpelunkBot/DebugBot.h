@@ -30,17 +30,20 @@ private:
 	
 	std::queue<collectableObject> _collectablesQ;
 	//std::vector<collectableObject> _unreachableCollectables;
-	std::map<int, bool> _unreachableColl;
+	std::map<int, bool> _unreachableCollectables;
 
 
 
-	enum PRIMARY_STATE {pIDLE, EXPLORING_GATHERING, GOING_TO_EXIT, SEARCHING_FOR_EXIT};
-	enum SECONDARY_STATE {sIDLE, NEW_TARGET, UNREACHABLE_TARGET, EXECUTING_COMMANDS, FINISHED, DEBUG};
+	enum PRIMARY_STATE {pIDLE, EXPLORING_GATHERING, EXPLORING_GATHERING_stare, GOING_TO_EXIT, SEARCHING_FOR_EXIT};
+	enum SECONDARY_STATE {sIDLE, NEW_TARGET, UNREACHABLE_TARGET, EXECUTING_COMMANDS, CREATING_COMMANDS, FINISHED, DEBUG};
 	PRIMARY_STATE _primState;
 	SECONDARY_STATE _secState;
 
 	//enum STATE {SEARCHING_FOR_EXIT, CREATING_COMMANDS, EXECUTING_COMMANDS, DEBUG};
 	//STATE _state;
+
+
+
 
 	void InitialiseHelperVariables();
 	void CreateCommands(std::vector<Node> path);
@@ -48,10 +51,16 @@ private:
 	void ClearOrders();
 	bool FindExit(int & x, int & y);
 	Node* TryToFindExit();
+	void BotLogic();
+	void BotLogic2();
+
+	bool _botLogicInProgress = false;
+	std::thread _botLogicThread;
 
 	int _debugTimer;
 	int _attackTimer = 0;
 	bool _commandsCreated;
+
 
 	//Node current;
 	Node* _target;
