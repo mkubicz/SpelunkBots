@@ -13,11 +13,11 @@
 #include <windows.h>
 #include <iostream>
 #include <queue>
+//#include <deque>
 #include <string>
 #include "utilities.h"
 //#include "Node.h"
 #include <time.h>
-#include <thread>
 
 const int NODE_COORDS = 0;
 const int PIXEL_COORDS = 1;
@@ -38,6 +38,17 @@ const int X_NODES = 42;
 
 const int PIXELS_IN_NODE = 16;
 
+struct moveTarget {
+	int x;
+	int y;
+	bool exploration = false;
+	moveTarget(int x, int y, bool exploration)
+		: x(x), y(y), exploration(exploration) {};
+	moveTarget(int x, int y)
+		: moveTarget(x, y, false) {};
+	moveTarget()
+		: moveTarget(0, 0) {};
+};
 
 struct collectableObject {
 	int type;

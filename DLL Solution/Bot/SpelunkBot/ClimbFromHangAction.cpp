@@ -36,9 +36,16 @@ ordersStruct ClimbFromHangAction::GetOrders()
 			_climbTimer -= 1;
 			_directionX == xRIGHT ? orders.goRight = true : orders.goLeft = true;
 		}
+		
+		if (IsStandingStill(playerPosX, playerPosY, _prevPlayerPosX, _prevPlayerPosY))
+			Centralize(&orders, MiddleXPixel(Node(_targetX, _targetY)));
 	}
 
 	if (closeToTarget(playerPosX, _targetX) && _targetY == playerPosY) _actionDone = true;
+
+
+	_prevPlayerPosX = playerPosX;
+	_prevPlayerPosY = playerPosY;
 
 	return orders;
 }

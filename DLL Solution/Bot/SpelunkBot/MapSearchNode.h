@@ -28,6 +28,8 @@ private:
 	//used in FindExplorationTargets
 	bool _visited = false;
 
+	int _CCnr;
+
 public:
 	int GetX();
 	int GetY();

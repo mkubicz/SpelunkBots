@@ -237,69 +237,69 @@ void JumpAction::MoveToTarget(ordersStruct *orders)
 	}
 }
 
-void JumpAction::Centralize(ordersStruct * orders, int centralizingPoint)
-{
-	int playerPosX = (int)_bot->GetPlayerPositionX();
+//void JumpAction::Centralize(ordersStruct * orders, int centralizingPoint)
+//{
+//	int playerPosX = (int)_bot->GetPlayerPositionX();
+//
+//	if (_centralizeBreakTimer == 0 && _centralizeMoveTimer == 0)
+//	{
+//		if (playerPosX < centralizingPoint)
+//			_centralizeDir = xRIGHT;
+//		if (playerPosX > centralizingPoint)
+//			_centralizeDir = xLEFT;
+//
+//		_centralizeMoveTimer = 3;
+//
+//		//if (playerPosX == _startNodeCenter)
+//		if (WithinRangeFromTarget(playerPosX, centralizingPoint, 1))
+//		{
+//			_state = WALKING;
+//		}
+//
+//		return;
+//	}
+//
+//
+//	if (_centralizeMoveTimer != 0)
+//	{
+//		if (_centralizeDir == xRIGHT)
+//			orders->goRight = true;
+//		else
+//			orders->goLeft = true;
+//
+//		_centralizeMoveTimer--;
+//
+//		if (_centralizeMoveTimer == 0)
+//		{
+//			//if (playerPosX == _startNodeCenter)
+//			if (WithinRangeFromTarget(playerPosX, centralizingPoint, 1))
+//				_centralizeBreakTimer = 6;
+//			else
+//				_centralizeBreakTimer = 2;
+//		}
+//
+//		return;
+//	}
+//
+//	if (_centralizeBreakTimer != 0)
+//	{
+//		_centralizeBreakTimer--;
+//		return;
+//	}
+//}
 
-	if (_centralizeBreakTimer == 0 && _centralizeMoveTimer == 0)
-	{
-		if (playerPosX < centralizingPoint)
-			_centralizeDir = xRIGHT;
-		if (playerPosX > centralizingPoint)
-			_centralizeDir = xLEFT;
-
-		_centralizeMoveTimer = 3;
-
-		//if (playerPosX == _startNodeCenter)
-		if (WithinRangeFromTarget(playerPosX, centralizingPoint, 1))
-		{
-			_state = WALKING;
-		}
-
-		return;
-	}
-
-
-	if (_centralizeMoveTimer != 0)
-	{
-		if (_centralizeDir == xRIGHT)
-			orders->goRight = true;
-		else
-			orders->goLeft = true;
-
-		_centralizeMoveTimer--;
-
-		if (_centralizeMoveTimer == 0)
-		{
-			//if (playerPosX == _startNodeCenter)
-			if (WithinRangeFromTarget(playerPosX, centralizingPoint, 1))
-				_centralizeBreakTimer = 6;
-			else
-				_centralizeBreakTimer = 2;
-		}
-
-		return;
-	}
-
-	if (_centralizeBreakTimer != 0)
-	{
-		_centralizeBreakTimer--;
-		return;
-	}
-}
-
-bool JumpAction::IsStandingStill(int playerPosX, int playerPosY, int prevPlayerPosX, int prevPlayerPosY)
-{
-	if (playerPosX == prevPlayerPosX && playerPosY == prevPlayerPosY)
-		_standingStillCounter += 1;
-	else
-		_standingStillCounter = 0;
-
-	if (_standingStillCounter == 3)
-		return true;
-
-	return false;
-}
+//bool JumpAction::IsStandingStill(int playerPosX, int playerPosY, int prevPlayerPosX, int prevPlayerPosY)
+//{
+//	if (playerPosX == prevPlayerPosX && playerPosY == prevPlayerPosY)
+//		_standingStillCounter += 1;
+//	else
+//		_standingStillCounter = 0;
+//
+//	if (_standingStillCounter == 3)
+//		return true;
+//
+//	return false;
+//}
 
 ordersStruct JumpAction::GetOrders()
 {
@@ -328,8 +328,14 @@ ordersStruct JumpAction::GetOrders()
 		if (playerPosX != _startNodeCenter && _actionTarget == LADDER && _distY > 3)
 			_state = CENTRALIZING;
 		else
-			_state = WALKING;
+		{
+			if (abs(_distX) == 0 && _actionTarget == LEDGE)
+				_state = CENTRALIZING;
+			else
+				_state = WALKING;
+		}
 
+		//TODO: this condition will never be true now? fix this 
 		if (_directionX == xNONE && _directionY == yUP && _actionTarget == LADDER)
 			_state = JUMPING;
 
@@ -376,6 +382,11 @@ ordersStruct JumpAction::GetOrders()
 	{
 	case CENTRALIZING:
 		Centralize(&orders, _startNodeCenter);
+
+		if (WithinRangeFromTarget(playerPosX, _startNodeCenter, 1))
+		{
+			_state = WALKING;
+		}
 
 		break;
 	case WALKING:

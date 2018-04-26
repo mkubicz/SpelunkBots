@@ -79,56 +79,65 @@ bool IMovementAction::IsNearLadderTop(int playerPosX, int playerPosY)
 	return false;
 }
 
-//void IMovementAction::Centralize(ordersStruct * orders, int centralizingPoint)
-//{
-//	int playerPosX = (int)_bot->GetPlayerPositionX();
-//
-//	if (_centralizeBreakTimer == 0 && _centralizeMoveTimer == 0)
-//	{
-//		if (playerPosX < centralizingPoint)
-//			_centralizeDir = xRIGHT;
-//		if (playerPosX > centralizingPoint)
-//			_centralizeDir = xLEFT;
-//
-//		_centralizeMoveTimer = 3;
-//
-//		//if (playerPosX == _startNodeCenter)
-//		if (WithinRangeFromTarget(playerPosX, centralizingPoint, 1))
-//		{
-//			_state = WALKING;
-//		}
-//
-//		return;
-//	}
-//
-//
-//	if (_centralizeMoveTimer != 0)
-//	{
-//		if (_centralizeDir == xRIGHT)
-//			orders->goRight = true;
-//		else
-//			orders->goLeft = true;
-//
-//		_centralizeMoveTimer--;
-//
-//		if (_centralizeMoveTimer == 0)
-//		{
-//			//if (playerPosX == _startNodeCenter)
-//			if (WithinRangeFromTarget(playerPosX, centralizingPoint, 1))
-//				_centralizeBreakTimer = 6;
-//			else
-//				_centralizeBreakTimer = 2;
-//		}
-//
-//		return;
-//	}
-//
-//	if (_centralizeBreakTimer != 0)
-//	{
-//		_centralizeBreakTimer--;
-//		return;
-//	}
-//}
+
+void IMovementAction::Centralize(ordersStruct * orders, int centralizingPoint)
+{
+	int playerPosX = (int)_bot->GetPlayerPositionX();
+
+	if (_centralizeBreakTimer == 0 && _centralizeMoveTimer == 0)
+	{
+		if (playerPosX < centralizingPoint)
+			_centralizeDir = xRIGHT;
+		if (playerPosX > centralizingPoint)
+			_centralizeDir = xLEFT;
+
+		_centralizeMoveTimer = 3;
+
+		return;
+	}
+
+
+	if (_centralizeMoveTimer != 0)
+	{
+		if (_centralizeDir == xRIGHT)
+			orders->goRight = true;
+		else
+			orders->goLeft = true;
+
+		_centralizeMoveTimer--;
+
+		if (_centralizeMoveTimer == 0)
+		{
+			//if (playerPosX == _startNodeCenter)
+			if (WithinRangeFromTarget(playerPosX, centralizingPoint, 1))
+				_centralizeBreakTimer = 6;
+			else
+				_centralizeBreakTimer = 2;
+		}
+
+		return;
+	}
+
+	if (_centralizeBreakTimer != 0)
+	{
+		_centralizeBreakTimer--;
+		return;
+	}
+}
+
+
+bool IMovementAction::IsStandingStill(int playerPosX, int playerPosY, int prevPlayerPosX, int prevPlayerPosY)
+{
+	if (playerPosX == prevPlayerPosX && playerPosY == prevPlayerPosY)
+		_standingStillCounter += 1;
+	else
+		_standingStillCounter = 0;
+
+	if (_standingStillCounter >= 3)
+		return true;
+
+	return false;
+}
 
 ordersStruct IMovementAction::GetOrders()
 {

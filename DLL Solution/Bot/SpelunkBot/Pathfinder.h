@@ -3,6 +3,7 @@
 #include "MapSearchNode.h"
 #include "Node.h"
 #include <map>
+#include <stack>
 
 class Pathfinder
 {
@@ -22,16 +23,27 @@ public:
 	bool isCloseToFog(MapSearchNode *n, int closeness);
 	Node toNode(MapSearchNode *n);
 	std::vector<Node> FindExplorationTargets(double x1, double y1, double usingPixelCoords);
-	bool CalculatePath(double x1, double y1, double x2, double y2, double usingPixelCoords);
+	bool TryToCalculatePath(double x1, double y1, double x2, double y2, double usingPixelCoords);
 	void NeighboursDebug(int x, int y);
+	void SCCDebug();
 	std::vector<MapSearchNode*> GetPathList();
 	std::vector<Node> GetPathListNode();
+	int GetPathLength();
+	int GetPathLength(std::vector<Node> path);
 	bool IsOutOfBounds(int x, int y);
 
 	bool CanStandInNode(int x, int y);
+	bool CanStandInNode(MapSearchNode * n);
+	bool IsInFog(int x, int y);
+	bool IsInFog(MapSearchNode * n);
 	MVSTATE ToMvState(SpState spstate);
 	MVSTATE GetCurrentMvState(Node *currentNode, Node *parentNode);
 	ACTION_TARGET GetCurrentJumpTarget(Node *currentNode);
+
+	void CalculateConnectedComponents();
+
+	//bool PathReady();
+	//std::vector<Node>* GetNextPath();
 
 private:	
 	IBot* _bot; 
@@ -46,14 +58,22 @@ private:
 	std::vector<Node> CalculateNeighboursStanding(Node node);
 	std::vector<Node> CalculateNeighboursClimbingWithMomentum(Node node);
 
-	//MVSTATE GetCurrentMvState2(MapSearchNode * currentNode);
-
 	MVSTATE GetCurrentMvState(MapSearchNode *currentNode);
+
+	//tarjan's algorithm
+	int _tar_cvn;
+	int _tar_CCnr;
+	int _tar_VN[X_NODES][Y_NODES];
+	int _tar_VLow[X_NODES][Y_NODES];
+	bool _tar_VS[X_NODES][Y_NODES];
+	std::stack<MapSearchNode*> _tar_S;
+	std::vector<std::vector<MapSearchNode*>> _tar_Lscc;
+	void TarjanDFS(MapSearchNode* n);
 
 	//for simplicity
 	bool Pusta(int x, int y); //node is passable
 	bool Pelna(int x, int y); //node is impassable
 	bool Ladder(int x, int y); //node contains a ladder
+	bool Ladder(MapSearchNode* n); //node contains a ladder
 	void AddNeighboursLR(int x, int y, bool right, std::vector<Node>* neighbours);
-	//void AddNeighboursLRleft(int x, int y, std::vector<Node>* neighbours);
 };

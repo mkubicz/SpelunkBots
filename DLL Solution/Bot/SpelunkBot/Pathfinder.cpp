@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Pathfinder.h"
-#include <vector>
+//#include <vector>
 #include <list>
 #include <algorithm>
 #include <fstream>
@@ -42,6 +42,7 @@ void Pathfinder::InitializeVariables()
 			_grid[i][j] = new MapSearchNode();
 			_grid[i][j]->_x = i;
 			_grid[i][j]->_y = j;
+			_grid[i][j]->_CCnr = 0;
 		}
 	}
 }
@@ -63,6 +64,10 @@ bool Pathfinder::Ladder(int x, int y)
 	return _bot->GetNodeState(x, y, NODE_COORDS) == spLadder;
 }
 
+bool Pathfinder::Ladder(MapSearchNode *n)
+{
+	return Ladder(n->_x, n->_y);
+}
 
 void Pathfinder::AddNeighboursLR(int x, int y, bool right, std::vector<Node> *neighbours)
 {
@@ -706,7 +711,7 @@ vector<Node> Pathfinder::CalculateNeighboursStanding(Node node)
 			for (int j = 1; j <= MAXy; j++)
 			{
 				//awkward blocked jump; bot will HangDrop instead
-				if (i == 1 && Pelna(x, y - 1))
+				if (i == 1 && (Pelna(x, y - 1) || Pelna(x + 1, y - 1)))
 					continue;
 
 				if (Pelna(x + i, y + j + 1) && Pusta(x + i, y + j) && DownJumpPathClear(x, y, x + i, y + j, xRIGHT))
@@ -733,7 +738,7 @@ vector<Node> Pathfinder::CalculateNeighboursStanding(Node node)
 			for (int j = 1; j <= MAXy; j++)
 			{
 				//awkward blocked jump; bot will HangDrop instead
-				if (i == 1 && Pelna(x, y - 1))
+				if (i == 1 && (Pelna(x, y - 1) || Pelna(x - 1, y - 1)))
 					continue;
 
 				if (Pelna(x - i, y + j + 1) && Pusta(x - i, y + j) && DownJumpPathClear(x, y, x - i, y + j, xLEFT))
@@ -974,6 +979,90 @@ MVSTATE Pathfinder::GetCurrentMvState(MapSearchNode *currentNode)
 	}
 }
 
+
+
+void Pathfinder::TarjanDFS(MapSearchNode* n)
+{
+	_tar_cvn++;
+	_tar_VN[n->_x][n->_y] = _tar_cvn;
+	_tar_VLow[n->_x][n->_y] = _tar_cvn;
+	_tar_S.push(n);
+	_tar_VS[n->_x][n->_y] = true;
+
+	//will GetMvState work? IF not, we can estimate it
+	for each (MapSearchNode * m in CalculateNeighboursList(n, n->GetMvState()))
+	{
+		//m not visited - visit it recursively
+		if (_tar_VN[m->_x][m->_y] == 0)
+		{
+			//we need to save mvstate which is saved as candidate during neighbour-finding
+			m->_mvState = m->_mvStateCandidate;
+
+			TarjanDFS(m);
+			_tar_VLow[n->_x][n->_y] = min(_tar_VLow[n->_x][n->_y], _tar_VLow[m->_x][m->_y]);
+		}
+		else
+		{
+			//if node m is on the stack, a path m -> n exists
+			//and we know that m is n's neighbour, so path n -> m exists
+			//so n and m are in one connected component
+			if (_tar_VS[m->_x][m->_y]) _tar_VLow[n->_x][n->_y] = min(_tar_VLow[n->_x][n->_y], _tar_VLow[m->_x][m->_y]);
+		}
+	}
+
+	//continue only if you are at the root of the connected component
+	if (_tar_VLow[n->_x][n->_y] != _tar_VN[n->_x][n->_y]) return;
+
+	_tar_CCnr++;
+	MapSearchNode* m;
+	vector<MapSearchNode*> sccp;
+	do
+	{
+		m = _tar_S.top();
+		_tar_S.pop();
+		_tar_VS[m->_x][m->_y] = false;
+		m->_CCnr = _tar_CCnr;
+		sccp.push_back(m);
+	} while (m->_x != n->_x || m->_y != n->_y);
+
+	_tar_Lscc.push_back(sccp);
+}
+
+void Pathfinder::CalculateConnectedComponents()
+{
+	//initialize variables
+	_tar_cvn = 0;
+	_tar_CCnr = 0;
+	for (int i = 0; i < X_NODES; i++)
+		for (int j = 0; j < Y_NODES; j++)
+		{
+			_tar_VN[i][j] = 0;
+			_tar_VS[i][j] = 0;
+			_tar_VLow[i][j] = 0;
+		}
+	//clear the stack just in case
+	while (!_tar_S.empty())
+		_tar_S.pop();
+	_tar_Lscc.clear();
+
+	//reset the component numbers
+	for (int i = 0; i < X_NODES; i++)
+	{
+		for (int j = 0; j < Y_NODES; j++)
+		{
+			_grid[i][j]->_CCnr = 0;
+		}
+	}
+
+	for (int i = 0; i < X_NODES; i++)
+		for (int j = 0; j < Y_NODES; j++)
+		{
+			if (_tar_VN[i][j] == 0 && !IsInFog(_grid[i][j]) &&
+				(CanStandInNode(_grid[i][j]) || Ladder(_grid[i][j])))
+				TarjanDFS(_grid[i][j]);
+		}
+}
+
 MVSTATE Pathfinder::GetCurrentMvState(Node *currentNode, Node *parentNode)
 {
 	MapSearchNode current;
@@ -1006,6 +1095,28 @@ ACTION_TARGET Pathfinder::GetCurrentJumpTarget(Node *currentNode)
 			 Pelna(currentNode->GetX()-1, currentNode->GetY())) return LEDGE;
 
 }
+
+
+
+//bool Pathfinder::PathReady()
+//{
+//	if (_pathQ.empty())
+//		return false;
+//	else
+//		return true;
+//}
+//
+//std::vector<Node>* Pathfinder::GetNextPath()
+//{
+//	if (!_pathQ.empty())
+//	{
+//		auto path = _pathQ.front();
+//		_pathQ.pop();
+//		return path;
+//	}
+//	else
+//		return NULL;
+//}
 
 
 #pragma region CalculateNeighboursList on MapSearchNodes
@@ -1447,6 +1558,13 @@ bool Pathfinder::WalkOffLedgePathClear(int x1, int y1, int x2, int y2, DIRECTION
 			for (int i = startX; i >= x2; i--)
 			{
 				if (Pelna(i, j)) return false;
+
+				//falling through narrow spaces is hard; walkoffledge cant do that or it is likely that it will get stuck.
+				//until we rework it, we remove the neighbours getting to which requires flying througha narrow space.
+				if (startX == x2)
+				{
+					if (Pelna(i - 1, j) || Pelna(i + 1, j)) return false;
+				}
 			}
 
 			if (startX != x2) startX -= 1;
@@ -1478,8 +1596,74 @@ void Pathfinder::NeighboursDebug(int x, int y)
 		fileStream << " " << ActionTargetStrings[neighbours[i].GetActionTarget()];
 		fileStream << endl;
 	}
-	fileStream.close();
 
+	//
+	//for (int mvs = 0; mvs < 4; mvs++)
+	//{
+	//	std::vector<Node> neighbours = CalculateNeighboursList(Node{ x,y }, (MVSTATE)mvs);
+
+	//	switch (mvs)
+	//	{
+	//	case 0:
+	//		fileStream << "***STANDING***" << endl;
+	//		break;
+	//	case 1:
+	//		fileStream << "***CLIMBING***" << endl;
+	//		break;
+	//	case 2:
+	//		fileStream << "***HANGING***" << endl;
+	//		break;
+	//	case 3:
+	//		fileStream << "***CLIMBING_MOMENTUM***" << endl;
+	//		break;
+	//	}
+
+	//	for (int i = 0; i < neighbours.size(); i++)
+	//	{
+	//		fileStream << " X: " << neighbours[i].GetX();
+	//		fileStream << " Y: " << neighbours[i].GetY();
+	//		fileStream << " " << MVactionStrings[neighbours[i].GetActionToReach()];
+	//		fileStream << " " << ActionTargetStrings[neighbours[i].GetActionTarget()];
+	//		fileStream << endl;
+	//	}
+
+	//}
+
+
+	fileStream.close();
+}
+
+void Pathfinder::SCCDebug()
+{
+	ofstream fileStream;
+	fileStream.open(".\\Pathfinder\\level_layoutCC.txt");
+	for (int j = 0; j < Y_NODES; j++)
+	{
+		for (int i = 0; i < X_NODES; i++)
+		{
+			int nodeState = _bot->GetNodeState(i, j, NODE_COORDS);
+			if (nodeState != -1)
+			{
+				if (_grid[i][j]->_CCnr == 0)
+					fileStream << nodeState;
+				else
+				{
+					char int_to_char[] = { ' ', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' };
+					if (_grid[i][j]->_CCnr < 26)
+						fileStream << int_to_char[_grid[i][j]->_CCnr];
+					else 
+						fileStream << '*';
+				}
+			}
+			else
+			{
+				fileStream << '#'; //mapFog[j][i];
+			}
+			fileStream << " ";
+		}
+		fileStream << "\n";
+	}
+	fileStream.close();
 }
 
 std::vector<MapSearchNode*> Pathfinder::GetPathList()
@@ -1496,6 +1680,42 @@ std::vector<Node> Pathfinder::GetPathListNode()
 	return pathListNode;
 }
 
+int Pathfinder::GetPathLength()
+{
+	int dist = 0;
+	auto path = GetPathListNode();
+
+	return GetPathLength(path);
+
+	//auto current = path[0];
+
+	//for (int i = 1; i < path.size(); i++)
+	//{
+	//	dist += abs(current.GetX() - path[i].GetX()) + abs(current.GetY() - path[i].GetY());
+	//	current = path[i];
+	//}
+
+	//return dist;
+}
+
+int Pathfinder::GetPathLength(std::vector<Node> path)
+{
+	int dist = 0;
+	//auto path = GetPathListNode();
+	if (!path.empty())
+	{
+		auto current = path[0];
+
+		for (int i = 1; i < path.size(); i++)
+		{
+			dist += abs(current.GetX() - path[i].GetX()) + abs(current.GetY() - path[i].GetY());
+			current = path[i];
+		}
+	}
+
+	return dist;
+}
+
 bool Pathfinder::IsOutOfBounds(int x, int y)
 {
 	if (x < 0 || x >= X_NODES ||
@@ -1507,7 +1727,25 @@ bool Pathfinder::IsOutOfBounds(int x, int y)
 
 bool Pathfinder::CanStandInNode(int x, int y)
 {
-	return _bot->IsNodePassable(x, y, NODE_COORDS) && !_bot->IsNodePassable(x, y + 1, NODE_COORDS);
+	if (!IsInFog(x, y) && !IsInFog(x, y + 1))
+		return _bot->IsNodePassable(x, y, NODE_COORDS) && !_bot->IsNodePassable(x, y + 1, NODE_COORDS);
+	else
+		return false;
+}
+
+bool Pathfinder::CanStandInNode(MapSearchNode* n)
+{
+	return CanStandInNode(n->_x, n->_y);
+}
+
+bool Pathfinder::IsInFog(MapSearchNode * n)
+{
+	return IsInFog(n->_x, n->_y);
+}
+
+bool Pathfinder::IsInFog(int x, int y)
+{
+	return _bot->GetFogState(x, y, NODE_COORDS);
 }
 
 bool Pathfinder::isCloseToFog(int x, int y, int closeness)
@@ -1784,7 +2022,7 @@ std::vector<Node> Pathfinder::FindExplorationTargets(double x1, double y1, doubl
 }
 
 
-bool Pathfinder::CalculatePath(double x1, double y1, double x2, double y2, double usingPixelCoords)
+bool Pathfinder::TryToCalculatePath(double x1, double y1, double x2, double y2, double usingPixelCoords)
 {
 	bool DEBUG = true;
 
@@ -1946,14 +2184,24 @@ bool Pathfinder::CalculatePath(double x1, double y1, double x2, double y2, doubl
 
 		if (DEBUG) fileStream.open(".\\Pathfinder\\level_path.txt");
 
-		// resolve the path starting from the end point
-		while (current->_parent && current != start)
+		if (path_found)
 		{
-			_pathList.push_back(current);
-			current = current->_parent;
-		}
-		reverse(_pathList.begin(), _pathList.end());
+			// resolve the path starting from the end point
+			while (current->_parent && current != start)
+			{
+				_pathList.push_back(current);
+				current = current->_parent;
+			}
+			_pathList.push_back(start);
 
+			reverse(_pathList.begin(), _pathList.end());
+
+			// convert the path to nodes and add it to pathQ
+			//std::vector<Node>* pathListNode = new std::vector<Node>();
+			//for (int i = 0; i < _pathList.size(); i++)
+			//	pathListNode->push_back(Node{ _pathList[i]->_x, _pathList[i]->_y, _pathList[i]->_actionToReach, _pathList[i]->_actionTarget, _pathList[i]->GetMvState() });
+			//_pathQ.push(pathListNode);
+		}
 
 		// Reset
 		for (i = openList.begin(); i != openList.end(); i++)

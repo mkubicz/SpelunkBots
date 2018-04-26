@@ -15,6 +15,8 @@
 #include "JumpToLadderAction.h"
 #include "ClimbAction.h"
 
+
+
 DebugBot::DebugBot()
 {
 	_pathfinder = new Pathfinder(this);
@@ -27,11 +29,14 @@ void DebugBot::InitialiseHelperVariables()
 	//_state = SEARCHING_FOR_EXIT;
 	//_state = DEBUG;
 
-	_primState = pIDLE;
+	//_primState = pIDLE;
 	//_primState = SEARCHING_FOR_EXIT;
-	_secState = sIDLE;
+	//_secState = WAITING_FOR_PATH;
 	//_secState = DEBUG;
 
+
+	_botLogicState = GATHERING;
+	_secState = WAITING_FOR_PATH;
 	
 	_hasMomentum = false;
 }
@@ -40,7 +45,14 @@ void DebugBot::NewLevel()
 {
 	_debugTimer = 30;
 
+	_botLogicState = EXIT;
+	if (_botLogicThread.joinable())
+		_botLogicThread.join();
 
+	_botLogicState = blIDLE;
+	_botLogicThread = std::thread(&DebugBot::BotLogic2, this);
+
+	_pathsQ.clear();
 
 	InitialiseVariables();
 	InitialiseHelperVariables();
@@ -1132,8 +1144,11 @@ void DebugBot::NewLevel()
 
 DebugBot::~DebugBot()
 {
-	if (_botLogicThread.joinable())
-		_botLogicThread.join();
+	//if (_botLogicThread.joinable())
+	//	_botLogicThread.join();
+
+	_botLogicState = EXIT;
+	_botLogicThread.join();
 
 	while (!_actionsQ.empty())
 	{
@@ -1150,11 +1165,77 @@ ObjectManager* DebugBot::GetObjectManager()
 	return _objectManager;
 }
 
+bool DebugBot::IsPathToTargetSheduled(moveTarget target)
+{
+	bool ok = false;
 
-//SpState DebugBot::SpelunkerState()
-//{
-//	return (SpState)GetSpelunkerState();
-//}
+	for (int j = 0; j < _pathsQ.size(); j++)
+	{
+		if (_pathsQ[j].first.x == (int)target.x &&
+			_pathsQ[j].first.y == (int)target.y)
+		{
+			ok = true;
+			break;
+		}
+	}
+
+	return ok;
+}
+
+std::vector<std::pair<moveTarget, std::vector<Node>>> DebugBot::CalculatePathsToReachableTargets(std::vector<moveTarget> targets)
+{
+	std::vector<std::pair<moveTarget, std::vector<Node>>> paths;
+
+	Node start;
+	if (_pathsQ.empty())
+		start = Node((int)_playerPositionXNode, (int)_playerPositionYNode);
+	else
+		start = Node(_pathsQ.back().first.x, _pathsQ.back().first.y); //target of most recently added path is our start node
+
+	for (int i = 0; i < targets.size(); i++)
+	{
+		if (_pathfinder->TryToCalculatePath(start.GetX(), start.GetY(), (int)targets[i].x, (int)targets[i].y, NODE_COORDS))
+		{
+			paths.push_back(std::make_pair(targets[i], _pathfinder->GetPathListNode()));
+		}
+		else
+		{
+			/*we skip unreachable targets*/
+			continue;
+		}
+	}
+
+	return paths;
+}
+
+std::pair<moveTarget, std::vector<Node>> DebugBot::SelectShortestPath(std::vector<std::pair<moveTarget, std::vector<Node>>> paths)
+{
+	int shortestIndex = 0;
+	int currentLength;
+
+	if (paths.size() > 0)
+	{
+		int shortestLength = _pathfinder->GetPathLength(paths[0].second);
+
+		for (int i = 1; i < paths.size(); i++)
+		{
+			currentLength = _pathfinder->GetPathLength(paths[i].second);
+			if (currentLength < shortestLength)
+			{
+				shortestIndex = i;
+				shortestLength = currentLength;
+			}
+		}
+
+		return paths[shortestIndex];
+	}
+	else
+	{
+		std::cout << "Unexpected behaviour - calculating shortest of 0 paths.";
+		return std::pair<moveTarget, std::vector<Node>>();
+	}
+
+}
 
 
 void DebugBot::ExecuteOrders(ordersStruct orders)
@@ -1449,12 +1530,15 @@ void DebugBot::CreateCommands(std::vector<Node> path)
 	MOVEMENTACTION prevAction = IDLE;
 	currX = (int)_playerPositionXNode;
 	currY = (int)_playerPositionYNode;
-	MapSearchNode *start = _pathfinder->GetNodeFromGrid(currX, currY);
+	//MapSearchNode *start = _pathfinder->GetNodeFromGrid(currX, currY);
 	MVSTATE mvState;
 	ACTION_TARGET jumpTarget;
 
 	for (int i = 0; i < path.size(); i++)
 	{
+		//first node in a path is start node
+		if (i == 0) continue;
+
 		targetX = path[i].GetX();
 		targetY = path[i].GetY();
 		//distX = abs(targetX - currX);
@@ -1466,9 +1550,9 @@ void DebugBot::CreateCommands(std::vector<Node> path)
 
 		jumpTarget = path[i].GetActionTarget();
 		
-		if (i == 0) mvState = start->GetMvState();
-		else mvState = path[i-1].GetMvState();
-
+		//if (i == 0) mvState = start->GetMvState();
+		//else mvState = path[i-1].GetMvState();
+		mvState = path[i - 1].GetMvState();
 
 		AddActionToActionQueue(action, jumpTarget, mvState, distX, distY);
 
@@ -1582,7 +1666,7 @@ void DebugBot::AddActionToActionQueue(MOVEMENTACTION action, ACTION_TARGET jumpT
 
 
 
-bool DebugBot::FindExit(int &x, int &y)
+void DebugBot::TryToFindExit()
 {
 	for (int nodeX = 0; nodeX < X_NODES; nodeX += 1)
 	{
@@ -1590,266 +1674,317 @@ bool DebugBot::FindExit(int &x, int &y)
 		{
 			if (GetNodeState(nodeX, nodeY, NODE_COORDS) == spExit)
 			{
-				x = nodeX;
-				y = nodeY;
-				return true;
+				_exit = Node(nodeX, nodeY);
+				_exitFound = true;
+				return;
 			}
 		}
 	}
-	return false;
 }
 
-Node * DebugBot::TryToFindExit()
-{
-	for (int nodeX = 0; nodeX < X_NODES; nodeX += 1)
-	{
-		for (int nodeY = 0; nodeY < Y_NODES; nodeY += 1)
-		{
-			if (GetNodeState(nodeX, nodeY, NODE_COORDS) == spExit)
-			{
-				return new Node(nodeX, nodeY);
-			}
-		}
-	}
-	return NULL;
-}
 
 void DebugBot::BotLogic()
 {
 	_botLogicInProgress = true;
 
 	Sleep(3000);
-	std::cout << "BotLogic2 Done, id: " << _botLogicThread.get_id() << std::endl;
+	std::cout << "BotLogic Done, id: " << _botLogicThread.get_id() << std::endl;
 
 	_botLogicInProgress = false;
 }
+
+//void DebugBot::BotLogic2()
+//{
+//	_botLogicInProgress = true;
+//
+//	int exitX, exitY;
+//	int playerPosXNode = (int)_playerPositionXNode;
+//	int playerPosYNode = (int)_playerPositionYNode;
+//	std::vector<Node> explTargets;
+//	bool exploration;
+//
+//	switch (_primState)
+//	{
+//	case pIDLE:
+//		//IF there is time THEN
+//		//IF there is treasure THEN
+//		//		_primState = GATHERING
+//		//	ELSE 
+//		//		_primState = EXPLORING
+//		//ELSE
+//		//	_primState = GOING_TO_EXIT
+//
+//		_primState = EXPLORING_GATHERING;
+//
+//		break;
+//	case GATHERING:
+//
+//
+//		if (_collectablesQ.empty())
+//		{
+//			auto collectablesOM = _objectManager->GetCollectables();
+//
+//			if (collectablesOM.empty())
+//				exploration = true;
+//			else
+//			{
+//				for (int i = 0; i < collectablesOM.size(); i++)
+//					_collectablesQ.push(collectablesOM[i]);
+//			}
+//		}
+//		break;
+//	case EXPLORING_GATHERING:
+//		bool exploration;
+//		collectableObject collectCandidate;
+//
+//
+//		exploration = false;
+//
+//		if (_collectablesQ.empty())
+//		{
+//			auto collectablesOM = _objectManager->GetCollectables();
+//
+//			if (collectablesOM.empty())
+//				exploration = true;
+//			else
+//			{
+//				for (int i = 0; i < collectablesOM.size(); i++)
+//					_collectablesQ.push(collectablesOM[i]);
+//			}
+//		}
+//		else
+//		{
+//			while (!_collectablesQ.empty())
+//			{
+//				collectCandidate = _collectablesQ.front();
+//				_collectablesQ.pop();
+//
+//				//check if collect candidate is marked as unreachable
+//				if (_unreachableCollectables.find(collectCandidate.id) != _unreachableCollectables.end()
+//					&& _unreachableCollectables[collectCandidate.id] == true)
+//				{
+//					//if Q is empty, all collectables are unreachable. We should explore.
+//					if (_collectablesQ.empty())
+//						exploration = true;
+//					else
+//						continue;
+//				}
+//				else
+//				{
+//					//if candidate not marked as unreachable, try to calculate a path to it
+//					if (_pathfinder->TryToCalculatePath(_playerPositionXNode, _playerPositionYNode, collectCandidate.x, collectCandidate.y, NODE_COORDS))
+//					{
+//						//if there is a path, execute it
+//						//CreateCommands(_pathfinder->GetPathListNode());
+//						//_secState = EXECUTING_COMMANDS;
+//						//_secState = CREATING_COMMANDS;
+//
+//						//break the loop
+//						break;
+//					}
+//					else
+//					{
+//						//if there is no path, mark the candidate as unreachable
+//						_unreachableCollectables[collectCandidate.id] = true;
+//					}
+//				}
+//			}
+//		}
+//
+//
+//		if (exploration)
+//		{
+//			explTargets = _pathfinder->FindExplorationTargets(playerPosXNode, playerPosYNode, NODE_COORDS);
+//
+//			if (explTargets.size() > 0)
+//			{
+//				_target = &explTargets[0];
+//				int dist = abs((int)_playerPositionXNode - _target->GetX()) + abs((int)_playerPositionYNode - _target->GetY());
+//
+//				for (int i = 1; i < explTargets.size(); i++)
+//				{
+//					int distNew = abs((int)_playerPositionXNode - explTargets[i].GetX()) + abs((int)_playerPositionYNode - explTargets[i].GetY());
+//					if (distNew < dist)
+//					{
+//						_target = &explTargets[i];
+//						dist = distNew;
+//					}
+//
+//				}
+//
+//				//_secState = NEW_TARGET;
+//				if (_pathfinder->TryToCalculatePath(_playerPositionXNode, _playerPositionYNode, _target->GetX(), _target->GetY(), NODE_COORDS))
+//				{
+//					//CreateCommands(_pathfinder->GetPathListNode());
+//					//_secState = EXECUTING_COMMANDS;
+//					_secState = CREATING_COMMANDS;
+//				}
+//				else
+//				{
+//					std::cout << "Unexpected behaviour: Exploration target unreachable while Exploring-Gathering.";
+//					_secState = UNREACHABLE_TARGET;
+//				}
+//
+//				//delete unreachable markings - something may be reachable now
+//				std::map<int, bool>::iterator uc = _unreachableCollectables.begin();
+//				while (uc != _unreachableCollectables.end())
+//				{
+//					uc->second = false;
+//					uc++;
+//				}
+//
+//			}
+//			else
+//			{
+//				//nothing to explore - go to exit
+//				_primState = SEARCHING_FOR_EXIT;
+//			}
+//		}
+//
+//		break;
+//	case SEARCHING_FOR_EXIT:
+//		//1. search for exit among not-fogged nodes
+//		//2. if you found exit, go to it.
+//		//3. if you did not find exit, explore a node and goto 1.
+//		//4. if there are no nodes to explore, Idle.
+//
+//
+//		_target = TryToFindExit();
+//		if (_target != NULL)
+//		{
+//			_primState = GOING_TO_EXIT;
+//			break;
+//		}
+//
+//		//dfs
+//		explTargets = _pathfinder->FindExplorationTargets(playerPosXNode, playerPosYNode, NODE_COORDS);
+//
+//		if (explTargets.size() > 0)
+//		{
+//			_target = &explTargets[0];
+//			int dist = abs((int)_playerPositionXNode - _target->GetX()) + abs((int)_playerPositionYNode - _target->GetY());
+//
+//			for (int i = 1; i < explTargets.size(); i++)
+//			{
+//				int distNew = abs((int)_playerPositionXNode - explTargets[i].GetX()) + abs((int)_playerPositionYNode - explTargets[i].GetY());
+//				if (distNew < dist)
+//				{
+//					_target = &explTargets[i];
+//					dist = distNew;
+//				}
+//
+//			}
+//
+//			//_secState = NEW_TARGET;
+//			if (_pathfinder->TryToCalculatePath(_playerPositionXNode, _playerPositionYNode, _target->GetX(), _target->GetY(), NODE_COORDS))
+//			{
+//				//CreateCommands(_pathfinder->GetPathListNode());
+//				//_secState = EXECUTING_COMMANDS;
+//				_secState = CREATING_COMMANDS;
+//			}
+//			else
+//			{
+//				std::cout << "Unexpected behaviour: Exploration target unreachable while Searching For Exit.";
+//				_secState = UNREACHABLE_TARGET;
+//			}
+//		}
+//		else
+//		{
+//			//no exploration target - we can search again with looser criteria, or allow usage of ropes and bombs
+//			_primState = pIDLE;
+//		}
+//
+//		break;
+//	case GOING_TO_EXIT:
+//		//1. go to exit.
+//		//2. if exit is not yet found, search for it.
+//
+//		if (_target != NULL)
+//		{
+//			//_secState = NEW_TARGET;
+//			if (_pathfinder->TryToCalculatePath(_playerPositionXNode, _playerPositionYNode, _target->GetX(), _target->GetY(), NODE_COORDS))
+//			{
+//				//CreateCommands(_pathfinder->GetPathListNode());
+//				//_secState = EXECUTING_COMMANDS;
+//				_secState = CREATING_COMMANDS;
+//			}
+//			else
+//				_secState = UNREACHABLE_TARGET;
+//		}
+//		else
+//		{
+//			std::cout << "Unexpected behaviour: target is NULL when going to exit." << std::endl;
+//			_primState = SEARCHING_FOR_EXIT;
+//		}
+//
+//		break;
+//	default:
+//		break;
+//	}
+//
+//
+//	_botLogicInProgress = false;
+//}
 
 void DebugBot::BotLogic2()
 {
-	_botLogicInProgress = true;
+	using namespace std::chrono_literals;
 
-	int exitX, exitY;
-	int playerPosXNode = (int)_playerPositionXNode;
-	int playerPosYNode = (int)_playerPositionYNode;
-	std::vector<Node> explTargets;
-
-	//if (_secState == IDLE || _secState == FINISHED)
-	if (_secState != EXECUTING_COMMANDS && _secState != DEBUG)
+	while (true)
 	{
-		switch (_primState)
+		switch (_botLogicState)
 		{
-		case pIDLE:
-			//IF there is time THEN
-			//IF there is treasure THEN
-			//		_primState = GATHERING
-			//	ELSE 
-			//		_primState = EXPLORING
-			//ELSE
-			//	_primState = GOING_TO_EXIT
-
-			_primState = EXPLORING_GATHERING;
-
+		case blIDLE:
+			std::this_thread::sleep_for(100ms);
 			break;
-		case EXPLORING_GATHERING:
-			bool exploration;
-			collectableObject collectCandidate;
+		case GATHERING:
+		{
 
-
-			exploration = false;
-
-			if (_collectablesQ.empty())
+			if (_sleepTimer > 0)
 			{
-				auto collectablesOM = _objectManager->GetCollectables();
-
-				if (collectablesOM.empty())
-					exploration = true;
-				else
-				{
-					for (int i = 0; i < collectablesOM.size(); i++)
-						_collectablesQ.push(collectablesOM[i]);
-				}
+				std::this_thread::sleep_for(100ms);
+				_sleepTimer -= 1;
 			}
 			else
 			{
-				while (!_collectablesQ.empty())
+				_pathfinder->CalculateConnectedComponents();
+				_pathfinder->SCCDebug();
+
+				std::vector<collectableObject> collectablesList = _objectManager->GetCollectables();
+				std::vector<moveTarget> moveTargets;
+
+				for (int i = 0; i < collectablesList.size(); i++)
 				{
-					collectCandidate = _collectablesQ.front();
-					_collectablesQ.pop();
-
-					//check if collect candidate is marked as unreachable
-					if (_unreachableCollectables.find(collectCandidate.id) != _unreachableCollectables.end()
-						&& _unreachableCollectables[collectCandidate.id] == true)
-					{
-						//if Q is empty, all collectables are unreachable. We should explore.
-						if (_collectablesQ.empty())
-							exploration = true;
-						else
-							continue;
-					}
-					else
-					{
-						//if candidate not marked as unreachable, try to calculate a path to it
-						if (_pathfinder->CalculatePath(_playerPositionXNode, _playerPositionYNode, collectCandidate.x, collectCandidate.y, NODE_COORDS))
-						{
-							//if there is a path, execute it
-							//CreateCommands(_pathfinder->GetPathListNode());
-							//_secState = EXECUTING_COMMANDS;
-							_secState = CREATING_COMMANDS;
-
-							//break the loop
-							break;
-						}
-						else
-						{
-							//if there is no path, mark the candidate as unreachable
-							_unreachableCollectables[collectCandidate.id] = true;
-						}
-					}
-				}
-			}
-
-
-			if (exploration)
-			{
-				explTargets = _pathfinder->FindExplorationTargets(playerPosXNode, playerPosYNode, NODE_COORDS);
-
-				if (explTargets.size() > 0)
-				{
-					_target = &explTargets[0];
-					int dist = abs((int)_playerPositionXNode - _target->GetX()) + abs((int)_playerPositionYNode - _target->GetY());
-
-					for (int i = 1; i < explTargets.size(); i++)
-					{
-						int distNew = abs((int)_playerPositionXNode - explTargets[i].GetX()) + abs((int)_playerPositionYNode - explTargets[i].GetY());
-						if (distNew < dist)
-						{
-							_target = &explTargets[i];
-							dist = distNew;
-						}
-
-					}
-
-					//_secState = NEW_TARGET;
-					if (_pathfinder->CalculatePath(_playerPositionXNode, _playerPositionYNode, _target->GetX(), _target->GetY(), NODE_COORDS))
-					{
-						//CreateCommands(_pathfinder->GetPathListNode());
-						//_secState = EXECUTING_COMMANDS;
-						_secState = CREATING_COMMANDS;
-					}
-					else
-					{
-						std::cout << "Unexpected behaviour: Exploration target unreachable while Exploring-Gathering.";
-						_secState = UNREACHABLE_TARGET;
-					}
-
-					//delete unreachable markings - something may be reachable now
-					std::map<int, bool>::iterator uc = _unreachableCollectables.begin();
-					while (uc != _unreachableCollectables.end())
-					{
-						uc->second = false;
-						uc++;
-					}
-
-				}
-				else
-				{
-					//nothing to explore - go to exit
-					_primState = SEARCHING_FOR_EXIT;
-				}
-			}
-
-			break;
-		case SEARCHING_FOR_EXIT:
-			//1. search for exit among not-fogged nodes
-			//2. if you found exit, go to it.
-			//3. if you did not find exit, explore a node and goto 1.
-			//4. if there are no nodes to explore, Idle.
-
-
-			_target = TryToFindExit();
-			if (_target != NULL)
-			{
-				_primState = GOING_TO_EXIT;
-				break;
-			}
-
-			//dfs
-			explTargets = _pathfinder->FindExplorationTargets(playerPosXNode, playerPosYNode, NODE_COORDS);
-
-			if (explTargets.size() > 0)
-			{
-				_target = &explTargets[0];
-				int dist = abs((int)_playerPositionXNode - _target->GetX()) + abs((int)_playerPositionYNode - _target->GetY());
-
-				for (int i = 1; i < explTargets.size(); i++)
-				{
-					int distNew = abs((int)_playerPositionXNode - explTargets[i].GetX()) + abs((int)_playerPositionYNode - explTargets[i].GetY());
-					if (distNew < dist)
-					{
-						_target = &explTargets[i];
-						dist = distNew;
-					}
-
+					moveTarget t = moveTarget((int)collectablesList[i].x, (int)collectablesList[i].y);
+					if (!IsPathToTargetSheduled(t)) moveTargets.push_back(t);
 				}
 
-				//_secState = NEW_TARGET;
-				if (_pathfinder->CalculatePath(_playerPositionXNode, _playerPositionYNode, _target->GetX(), _target->GetY(), NODE_COORDS))
-				{
-					//CreateCommands(_pathfinder->GetPathListNode());
-					//_secState = EXECUTING_COMMANDS;
-					_secState = CREATING_COMMANDS;
-				}
-				else
-				{
-					std::cout << "Unexpected behaviour: Exploration target unreachable while Searching For Exit.";
-					_secState = UNREACHABLE_TARGET;
-				}
-			}
-			else
-			{
-				//no exploration target - we can search again with looser criteria, or allow usage of ropes and bombs
-				_primState = pIDLE;
-			}
+				std::vector<std::pair<moveTarget, std::vector<Node>>> paths = CalculatePathsToReachableTargets(moveTargets);
 
-			break;
-		case GOING_TO_EXIT:
-			//1. go to exit.
-			//2. if exit is not yet found, search for it.
 
-			if (_target != NULL)
-			{
-				//_secState = NEW_TARGET;
-				if (_pathfinder->CalculatePath(_playerPositionXNode, _playerPositionYNode, _target->GetX(), _target->GetY(), NODE_COORDS))
+				if (paths.size() > 0)
 				{
-					//CreateCommands(_pathfinder->GetPathListNode());
-					//_secState = EXECUTING_COMMANDS;
-					_secState = CREATING_COMMANDS;
+					std::pair<moveTarget, std::vector<Node>> shortest = SelectShortestPath(paths);
+					_pathsQ.push_back(shortest);
 				}
-				else
-					_secState = UNREACHABLE_TARGET;
-			}
-			else
-			{
-				std::cout << "Unexpected behaviour: target is NULL when going to exit." << std::endl;
-				_primState = SEARCHING_FOR_EXIT;
-			}
 
-			break;
-		default:
+
+				_sleepTimer = 10;
+			}
 			break;
 		}
-
+		case EXIT:
+			return;
+		}
 	}
-
-
-	_botLogicInProgress = false;
 }
-
 
 void DebugBot::Update()
 {
 	//UPDATING INFO ABOUT ENEMIES AND COLLECTABLES
 	_objectManager->UpdateGameObjectLists();
+
+	//_pathfinder->CalculateConnectedComponents();
 
 	//PRINTING DEBUG INFO TO FILES
 	if (_debugTimer < 0)
@@ -1863,43 +1998,11 @@ void DebugBot::Update()
 	_objectManager->CollectablesDebug();
 	_objectManager->EnemiesDebug();
 
-	//std::cout << "Hajs: " << GetMoney() << std::endl;
-	//std::cout << "Czas: " << GetTime() << std::endl;
-	//std::cout << "Bomby: " << GetBombs() << std::endl;
-	//std::cout << "Liny: " << GetRopes() << std::endl;
-	//std::cout << "¯yæko: " << GetHitPoints() << std::endl;
-
-
-	if (!_botLogicInProgress && !_botLogicThread.joinable())
-		_botLogicThread = std::thread(&DebugBot::BotLogic2, this);
-		
-	if (!_botLogicInProgress && _botLogicThread.joinable())
-		_botLogicThread.join();
-
-	//BotLogic();
-	
-
-
+	//bool dupa = _botLogicThread.joinable();
 
 	switch (_secState)
 	{
 	case DebugBot::sIDLE:
-		break;
-	//case DebugBot::NEW_TARGET:
-
-	//	if (_pathfinder->CalculatePath(_playerPositionXNode, _playerPositionYNode, _target->GetX(), _target->GetY(), NODE_COORDS))
-	//	{
-	//		CreateCommands(_pathfinder->GetPathListNode());
-	//		_secState = EXECUTING_COMMANDS;
-	//	}
-	//	else
-	//		_secState = UNREACHABLE_TARGET;
-	//	break;
-	case UNREACHABLE_TARGET:
-		break;
-	case CREATING_COMMANDS:
-		CreateCommands(_pathfinder->GetPathListNode());
-		_secState = EXECUTING_COMMANDS;
 		break;
 	case DebugBot::EXECUTING_COMMANDS:
 		if (!_actionsQ.empty())
@@ -1913,14 +2016,35 @@ void DebugBot::Update()
 				delete _actionsQ.front();
 				_actionsQ.pop();
 				ClearOrders();
+			
+				//exploration breaking
+				//if (_pathsQ.front().first.exploration && _breakExploration)
+				//{
+				//	while (!_actionsQ.empty())
+				//	{
+				//		delete _actionsQ.front();
+				//		_actionsQ.pop();
+				//	}
+				//	_pathsQ.pop_front();
+				//	
+				//	_breakExploration = false;
+				//	_secState = WAITING_FOR_PATH;
+				//}
 			}
 		}
 		else
 		{
-			_secState = FINISHED;
+			_pathsQ.pop_front();
+			_secState = WAITING_FOR_PATH;
 		}
 		break;
-	case DebugBot::FINISHED:
+	case DebugBot::WAITING_FOR_PATH:
+		if (!_pathsQ.empty())
+		{
+			CreateCommands(_pathsQ.front().second);
+			//_pathsQ.pop_front();
+			_secState = EXECUTING_COMMANDS;
+		}
 		break;
 	case DebugBot::DEBUG:
 		if (!_actionsQ.empty())
@@ -1954,7 +2078,7 @@ void DebugBot::Update()
 	//switch (_state)
 	//{
 	//	case SEARCHING_FOR_EXIT:
-	//		if (FindExit(exitX, exitY) && _pathfinder->CalculatePath(_playerPositionXNode, _playerPositionYNode, exitX, exitY, NODE_COORDS))
+	//		if (FindExit(exitX, exitY) && _pathfinder->TryToCalculatePath(_playerPositionXNode, _playerPositionYNode, exitX, exitY, NODE_COORDS))
 	//		{
 	//			CreateCommands(_pathfinder->GetPathListNode());
 	//		}
@@ -1979,7 +2103,7 @@ void DebugBot::Update()
 
 	//				}
 	//				
-	//				_pathfinder->CalculatePath(_playerPositionXNode, _playerPositionYNode, target.GetX(), target.GetY(), NODE_COORDS);
+	//				_pathfinder->TryToCalculatePath(_playerPositionXNode, _playerPositionYNode, target.GetX(), target.GetY(), NODE_COORDS);
 	//				CreateCommands(_pathfinder->GetPathListNode());
 
 	//			}
