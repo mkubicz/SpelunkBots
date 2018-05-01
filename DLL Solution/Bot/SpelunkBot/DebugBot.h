@@ -41,25 +41,34 @@ private:
 	std::map<int, bool> _unreachableCollectables;
 	std::queue<Node> _targetQ;
 
-	std::deque<std::pair<moveTarget, std::vector<Node>>> _pathsQ;
-	bool IsPathToTargetSheduled(moveTarget target);
+	//std::deque<std::pair<moveTarget, std::vector<Node>>> _pathsQ;
+	std::deque<std::vector<Node>> _pathsQ;
+
+	bool IsPathToTargetSheduled(int x, int y);
 	//bool TryToCalculatePathDist(int targetX, int targetY, std::vector<std::pair<std::vector<Node>, int>> *pathsDists);
 	std::vector< std::pair<moveTarget, std::vector<Node>> > CalculatePathsToReachableTargets(std::vector<moveTarget> targets);
 	std::pair<moveTarget, std::vector<Node>> SelectShortestPath(std::vector<std::pair<moveTarget, std::vector<Node>>> paths);
+	Node GetStartNodeForNextPath();
 
 	//enum PRIMARY_STATE {pIDLE, EXPLORING_GATHERING, GATHERING, GOING_TO_EXIT, SEARCHING_FOR_EXIT};
 	enum SECONDARY_STATE {sIDLE, NEW_TARGET, UNREACHABLE_TARGET, EXECUTING_COMMANDS, CREATING_COMMANDS, FINISHED, WAITING_FOR_PATH, DEBUG};
 	//PRIMARY_STATE _primState;
 	SECONDARY_STATE _secState;
 
-	enum BOTLOGIC_STATE { EXIT, GATHERING, EXPLORING, GOING_TO_EXIT, blIDLE };
+	//enum BOTLOGIC_STATE { EXIT, GATHERING, EXPLORING, GOING_TO_EXIT, blIDLE };
+	//BOTLOGIC_STATE _botLogicState;
+
+	enum BOTLOGIC_STATE { IDLE, EXIT, WAITING, GATHER_FROM_CC, EXPLORE_CC, PICK_TARGET_IN_NEXT_CC, MOVE_TO_NEXT_CC, SEARCH_FOR_EXIT, GO_TO_EXIT, EXIT_REACHED, UNREACHABLE_EXIT, NO_EXIT_EXPLORE, NO_EXIT_ERROR };
 	BOTLOGIC_STATE _botLogicState;
+	BOTLOGIC_STATE _prevState;
+	bool _botLogicWaiting = false;
+	void BotLogicStateDebug();
 
 	//enum STATE {SEARCHING_FOR_EXIT, CREATING_COMMANDS, EXECUTING_COMMANDS, DEBUG};
 	//STATE _state;
 
 
-	int _sleepTimer = 0;
+	int _waitTimer = 0;
 
 	void InitialiseHelperVariables();
 	void CreateCommands(std::vector<Node> path);
@@ -67,7 +76,8 @@ private:
 	void ClearOrders();
 	void TryToFindExit();
 	void BotLogic();
-	void BotLogic2();
+	void BotLogicWaiting();
+
 
 	bool _botLogicInProgress = false;
 	std::thread _botLogicThread;

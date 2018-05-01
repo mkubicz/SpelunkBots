@@ -15,6 +15,8 @@
 #include "JumpToLadderAction.h"
 #include "ClimbAction.h"
 
+#include <fstream>
+#include <ostream>
 
 
 DebugBot::DebugBot()
@@ -22,6 +24,17 @@ DebugBot::DebugBot()
 	_pathfinder = new Pathfinder(this);
 	_objectManager = new ObjectManager(this);
 	NewLevel();
+}
+
+void DebugBot::BotLogicStateDebug()
+{
+	std::ofstream fileStream;
+	fileStream.open("botlogicstate.txt");
+
+	fileStream << BotLogicStrings[_botLogicState] << std::endl;
+	//fileStream << BotLogicStrings[_prevState] << std::endl;
+
+	fileStream.close();
 }
 
 void DebugBot::InitialiseHelperVariables()
@@ -35,7 +48,8 @@ void DebugBot::InitialiseHelperVariables()
 	//_secState = DEBUG;
 
 
-	_botLogicState = GATHERING;
+	//_botLogicState = GATHERING;
+	_botLogicState = GATHER_FROM_CC;
 	_secState = WAITING_FOR_PATH;
 	
 	_hasMomentum = false;
@@ -49,8 +63,8 @@ void DebugBot::NewLevel()
 	if (_botLogicThread.joinable())
 		_botLogicThread.join();
 
-	_botLogicState = blIDLE;
-	_botLogicThread = std::thread(&DebugBot::BotLogic2, this);
+	_botLogicState = GATHER_FROM_CC;
+	_botLogicThread = std::thread(&DebugBot::BotLogic, this);
 
 	_pathsQ.clear();
 
@@ -1165,14 +1179,14 @@ ObjectManager* DebugBot::GetObjectManager()
 	return _objectManager;
 }
 
-bool DebugBot::IsPathToTargetSheduled(moveTarget target)
+bool DebugBot::IsPathToTargetSheduled(int x, int y)
 {
 	bool ok = false;
 
 	for (int j = 0; j < _pathsQ.size(); j++)
 	{
-		if (_pathsQ[j].first.x == (int)target.x &&
-			_pathsQ[j].first.y == (int)target.y)
+		if (_pathsQ[j].back().GetX() == x &&
+			_pathsQ[j].back().GetY() == y)
 		{
 			ok = true;
 			break;
@@ -1190,7 +1204,7 @@ std::vector<std::pair<moveTarget, std::vector<Node>>> DebugBot::CalculatePathsTo
 	if (_pathsQ.empty())
 		start = Node((int)_playerPositionXNode, (int)_playerPositionYNode);
 	else
-		start = Node(_pathsQ.back().first.x, _pathsQ.back().first.y); //target of most recently added path is our start node
+		start = Node(_pathsQ.back().back().GetX(), _pathsQ.back().back().GetY()); //target of most recently added path is our start node
 
 	for (int i = 0; i < targets.size(); i++)
 	{
@@ -1235,6 +1249,17 @@ std::pair<moveTarget, std::vector<Node>> DebugBot::SelectShortestPath(std::vecto
 		return std::pair<moveTarget, std::vector<Node>>();
 	}
 
+}
+
+Node DebugBot::GetStartNodeForNextPath()
+{
+	Node start;
+	if (_pathsQ.empty())
+		start = Node((int)_playerPositionXNode, (int)_playerPositionYNode);
+	else
+		start = Node(_pathsQ.back().back().GetX(), _pathsQ.back().back().GetY()); //target of most recently added path is our start node
+
+	return start;
 }
 
 
@@ -1527,7 +1552,7 @@ void DebugBot::ClearOrders()
 void DebugBot::CreateCommands(std::vector<Node> path)
 {
 	int currX, currY, targetX, targetY, distX, distY;
-	MOVEMENTACTION prevAction = IDLE;
+	MOVEMENTACTION prevAction = MOVEMENTACTION::IDLE;
 	currX = (int)_playerPositionXNode;
 	currY = (int)_playerPositionYNode;
 	//MapSearchNode *start = _pathfinder->GetNodeFromGrid(currX, currY);
@@ -1683,15 +1708,15 @@ void DebugBot::TryToFindExit()
 }
 
 
-void DebugBot::BotLogic()
-{
-	_botLogicInProgress = true;
-
-	Sleep(3000);
-	std::cout << "BotLogic Done, id: " << _botLogicThread.get_id() << std::endl;
-
-	_botLogicInProgress = false;
-}
+//void DebugBot::BotLogic()
+//{
+//	_botLogicInProgress = true;
+//
+//	Sleep(3000);
+//	std::cout << "BotLogic Done, id: " << _botLogicThread.get_id() << std::endl;
+//
+//	_botLogicInProgress = false;
+//}
 
 //void DebugBot::BotLogic2()
 //{
@@ -1926,53 +1951,313 @@ void DebugBot::BotLogic()
 //	_botLogicInProgress = false;
 //}
 
-void DebugBot::BotLogic2()
+//void DebugBot::BotLogic2()
+//{
+//	using namespace std::chrono_literals;
+//
+//	while (true)
+//	{
+//		switch (_botLogicState)
+//		{
+//		case blIDLE:
+//			std::this_thread::sleep_for(100ms);
+//			break;
+//		case GATHERING:
+//		{
+//
+//			if (_waitTimer > 0)
+//			{
+//				std::this_thread::sleep_for(100ms);
+//				_waitTimer -= 1;
+//			}
+//			else
+//			{
+//				_pathfinder->CalculateConnectedComponents();
+//				_pathfinder->SCCDebug();
+//
+//				std::vector<collectableObject> collectablesList = _objectManager->GetCollectables();
+//				std::vector<moveTarget> moveTargets;
+//
+//				for (int i = 0; i < collectablesList.size(); i++)
+//				{
+//					moveTarget t = moveTarget((int)collectablesList[i].x, (int)collectablesList[i].y);
+//					if (!IsPathToTargetSheduled(t)) moveTargets.push_back(t);
+//				}
+//
+//				std::vector<std::pair<moveTarget, std::vector<Node>>> paths = CalculatePathsToReachableTargets(moveTargets);
+//
+//
+//				if (paths.size() > 0)
+//				{
+//					std::pair<moveTarget, std::vector<Node>> shortest = SelectShortestPath(paths);
+//					_pathsQ.push_back(shortest);
+//				}
+//
+//
+//				_waitTimer = 10;
+//			}
+//			break;
+//		}
+//		case EXIT:
+//			return;
+//		}
+//	}
+//}
+
+void DebugBot::BotLogicWaiting()
 {
 	using namespace std::chrono_literals;
+	std::this_thread::sleep_for(100ms);
+
+	switch (_botLogicState)
+	{
+		//case DebugBot::IDLE:
+		//	break;
+		//case DebugBot::EXIT:
+		//	break;
+	case DebugBot::GATHER_FROM_CC:
+		_waitTimer--;
+		if (_waitTimer == 0 || _pathsQ.empty()) _botLogicWaiting = false;
+		break;
+	case DebugBot::EXPLORE_CC:
+		_waitTimer--;
+		if (_waitTimer == 0 || _pathsQ.empty()) _botLogicWaiting = false;
+		break;
+	case DebugBot::PICK_TARGET_IN_NEXT_CC:
+		break;
+	case DebugBot::MOVE_TO_NEXT_CC:
+		//na razie bez timera, ale w sumie nie zaszkodzi³oby jakby by³
+		if (_pathsQ.empty()) _botLogicWaiting = false;
+		break;
+	case DebugBot::SEARCH_FOR_EXIT:
+		break;
+	case DebugBot::GO_TO_EXIT:
+		if ((int)_playerPositionXNode == _exit.GetX() &&
+			(int)_playerPositionYNode == _exit.GetY())
+			_botLogicWaiting = false;
+		break;
+		//case DebugBot::EXIT_REACHED:
+		//	break;
+		//case DebugBot::UNREACHABLE_EXIT:
+		//	break;
+		//case DebugBot::NO_EXIT_EXPLORE:
+		//	break;
+		//case DebugBot::NO_EXIT_ERROR:
+		//	break;
+	default:
+		_waitTimer--;
+		if (_waitTimer == 0) _botLogicWaiting = false;
+		break;
+	}
+
+
+}
+
+void DebugBot::BotLogic()
+{
+	using namespace std::chrono_literals;
+	int currentCCnr;
 
 	while (true)
 	{
+		BotLogicStateDebug();
+		if (!_exitFound)
+			TryToFindExit();
+
+
+		if (_botLogicWaiting)
+		{
+			BotLogicWaiting();
+			continue;
+		}
+
+
+		//czy to potrzebne? mo¿e jednak mo¿na liczyæ za ka¿dym razem?
+		if (_botLogicState == GATHER_FROM_CC || _botLogicState == EXPLORE_CC)
+		{
+			_pathfinder->CalculateConnectedComponents();
+			_pathfinder->SCCDebug();
+			currentCCnr = _pathfinder->GetCCnr((int)_playerPositionXNode, (int)_playerPositionYNode);
+		}
+
+
 		switch (_botLogicState)
 		{
-		case blIDLE:
+		case IDLE:
 			std::this_thread::sleep_for(100ms);
 			break;
-		case GATHERING:
+		case GATHER_FROM_CC:
 		{
+			std::vector<collectableObject> collectablesList = _objectManager->GetCollectables();
+			collectableObject c;
 
-			if (_sleepTimer > 0)
+			//mo¿na potem dodawaæ do kolejki zaczynaj¹c od najkrótszej œcie¿ki
+			//tylko to wymaga przeliczania œcie¿ek do mo¿liwych celów za ka¿dy cel który chcemy dodaæ
+			for (int i = 0; i < collectablesList.size(); i++)
 			{
-				std::this_thread::sleep_for(100ms);
-				_sleepTimer -= 1;
+				c = collectablesList[i];
+				if (_pathfinder->GetCCnr(c.x, c.y) == currentCCnr &&
+					!IsPathToTargetSheduled(c.x, c.y))
+				{
+					Node start = GetStartNodeForNextPath();
+					if (_pathfinder->TryToCalculatePath(start.GetX(), start.GetY(), c.x, c.y, NODE_COORDS))
+						_pathsQ.push_back(_pathfinder->GetPathListNode());
+				}
+			}
+
+			if (!_pathsQ.empty())
+			{
+				_waitTimer = 10;
+				_botLogicWaiting = true;
+			}
+			else
+				_botLogicState = EXPLORE_CC;
+
+			break;
+		}
+		case EXPLORE_CC:
+		{
+			std::vector<collectableObject> collectablesList = _objectManager->GetCollectables();
+			collectableObject c;
+			bool collectableFound = false;
+			for (int i = 0; i < collectablesList.size(); i++)
+			{
+				c = collectablesList[i];
+				if (_pathfinder->GetCCnr(c.x, c.y) == currentCCnr &&
+					!IsPathToTargetSheduled(c.x, c.y))
+				{
+					collectableFound = true;
+					break;
+				}
+			}
+			if (collectableFound)
+			{
+				//mo¿na tu dodaæ przerywanie eksploracji
+				//na razie wydaje sie to problematyczne, a korzyœci daje znikome
+				//_breakExploration = true;
+				_botLogicState = GATHER_FROM_CC;
+				break;
+			}
+
+			if (_pathsQ.empty())
+			{
+				std::vector<MapSearchNode*> nodes = _pathfinder->GetAllNodesFromCC(currentCCnr);
+				MapSearchNode * e;
+				bool exploratonTargetFound = false;
+				for (int i = 0; i < nodes.size(); i++)
+				{
+					if (_pathfinder->isCloseToFog(nodes[i], 5))
+					{
+						e = nodes[i];
+						exploratonTargetFound = true;
+						break;
+					}
+				}
+
+				if (exploratonTargetFound)
+				{
+					Node start = GetStartNodeForNextPath();
+					if (_pathfinder->TryToCalculatePath(start.GetX(), start.GetY(), e->GetX(), e->GetY(), NODE_COORDS))
+						_pathsQ.push_back(_pathfinder->GetPathListNode());
+				}
+				else
+				{
+					_botLogicState = PICK_TARGET_IN_NEXT_CC;
+				}
 			}
 			else
 			{
-				_pathfinder->CalculateConnectedComponents();
-				_pathfinder->SCCDebug();
-
-				std::vector<collectableObject> collectablesList = _objectManager->GetCollectables();
-				std::vector<moveTarget> moveTargets;
-
-				for (int i = 0; i < collectablesList.size(); i++)
-				{
-					moveTarget t = moveTarget((int)collectablesList[i].x, (int)collectablesList[i].y);
-					if (!IsPathToTargetSheduled(t)) moveTargets.push_back(t);
-				}
-
-				std::vector<std::pair<moveTarget, std::vector<Node>>> paths = CalculatePathsToReachableTargets(moveTargets);
-
-
-				if (paths.size() > 0)
-				{
-					std::pair<moveTarget, std::vector<Node>> shortest = SelectShortestPath(paths);
-					_pathsQ.push_back(shortest);
-				}
-
-
-				_sleepTimer = 10;
+				_waitTimer = 10;
+				_botLogicWaiting = true;
 			}
+
+
 			break;
 		}
+		case PICK_TARGET_IN_NEXT_CC:
+		{
+			bool targetFound = false;
+			for each (collectableObject c in _objectManager->GetCollectables())
+			{
+				if (_pathfinder->TryToCalculatePath((int)_playerPositionXNode, (int)_playerPositionYNode, c.x, c.y, NODE_COORDS))
+				{
+					targetFound = true;
+					_pathsQ.push_back(_pathfinder->GetPathListNode());
+					_botLogicState = MOVE_TO_NEXT_CC;
+					break;
+				}
+			}
+			if (targetFound) break;
+
+			Node e;
+			if (_pathfinder->TryToFindExplorationTarget((int)_playerPositionXNode, (int)_playerPositionYNode))
+			{
+				e = _pathfinder->GetExplorationTarget();
+				if (_pathfinder->TryToCalculatePath((int)_playerPositionXNode, (int)_playerPositionYNode, e.GetX(), e.GetY(), NODE_COORDS))
+				{
+					targetFound = true;
+					_pathsQ.push_back(_pathfinder->GetPathListNode());
+					_botLogicState = MOVE_TO_NEXT_CC;
+					break;
+				}
+			}
+
+			if (targetFound) break;
+
+			_botLogicState = SEARCH_FOR_EXIT;
+
+			break;
+		}
+		case MOVE_TO_NEXT_CC:
+			if (_pathsQ.empty())
+				_botLogicState = GATHER_FROM_CC;
+			else
+			{
+				_botLogicWaiting = true;
+			}
+			break;
+		case SEARCH_FOR_EXIT:
+			if (_exitFound)
+			{
+				if (_pathfinder->TryToCalculatePath((int)_playerPositionXNode, (int)_playerPositionYNode, _exit.GetX(), _exit.GetY(), NODE_COORDS))
+				{
+					_pathsQ.push_back(_pathfinder->GetPathListNode());
+					_botLogicState = GO_TO_EXIT;
+				}
+				else
+					_botLogicState = UNREACHABLE_EXIT;
+			}
+			else
+			{
+				if (_pathfinder->IsFogOnMap())
+					_botLogicState = NO_EXIT_EXPLORE;
+				else
+					_botLogicState = NO_EXIT_ERROR;
+			}
+
+			break;
+		case GO_TO_EXIT:
+			if ((int)_playerPositionXNode == _exit.GetX() &&
+				(int)_playerPositionYNode == _exit.GetY())
+				_botLogicState = EXIT_REACHED;
+			else
+			{
+				_botLogicWaiting = true;
+			}
+			break;
+		case EXIT_REACHED:
+			//mo¿na wcisn¹æ strza³kê w górê albo coœ
+			std::this_thread::sleep_for(100ms);
+			break;
+		case UNREACHABLE_EXIT:
+			std::this_thread::sleep_for(100ms);
+			break;
+		case NO_EXIT_EXPLORE:
+			std::this_thread::sleep_for(100ms);
+			break;
+		case NO_EXIT_ERROR:
+			std::this_thread::sleep_for(100ms);
+			break;
 		case EXIT:
 			return;
 		}
@@ -1983,8 +2268,6 @@ void DebugBot::Update()
 {
 	//UPDATING INFO ABOUT ENEMIES AND COLLECTABLES
 	_objectManager->UpdateGameObjectLists();
-
-	//_pathfinder->CalculateConnectedComponents();
 
 	//PRINTING DEBUG INFO TO FILES
 	if (_debugTimer < 0)
@@ -1997,8 +2280,6 @@ void DebugBot::Update()
 
 	_objectManager->CollectablesDebug();
 	_objectManager->EnemiesDebug();
-
-	//bool dupa = _botLogicThread.joinable();
 
 	switch (_secState)
 	{
@@ -2041,7 +2322,8 @@ void DebugBot::Update()
 	case DebugBot::WAITING_FOR_PATH:
 		if (!_pathsQ.empty())
 		{
-			CreateCommands(_pathsQ.front().second);
+			//CreateCommands(_pathsQ.front().second);
+			CreateCommands(_pathsQ.front());
 			//_pathsQ.pop_front();
 			_secState = EXECUTING_COMMANDS;
 		}

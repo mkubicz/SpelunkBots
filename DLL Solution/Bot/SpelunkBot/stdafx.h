@@ -38,18 +38,6 @@ const int X_NODES = 42;
 
 const int PIXELS_IN_NODE = 16;
 
-struct moveTarget {
-	int x;
-	int y;
-	bool exploration = false;
-	moveTarget(int x, int y, bool exploration)
-		: x(x), y(y), exploration(exploration) {};
-	moveTarget(int x, int y)
-		: moveTarget(x, y, false) {};
-	moveTarget()
-		: moveTarget(0, 0) {};
-};
-
 struct collectableObject {
 	int type;
 	int id;
@@ -64,6 +52,20 @@ struct enemyObject {
 	double y;
 	double directionFacing;
 	double status;
+};
+
+struct moveTarget {
+	int x;
+	int y;
+	bool exploration = false;
+	moveTarget(int x, int y, bool exploration)
+		: x(x), y(y), exploration(exploration) {};
+	moveTarget(int x, int y)
+		: moveTarget(x, y, false) {};
+	moveTarget()
+		: moveTarget(0, 0) {};
+	moveTarget(collectableObject c)
+		: moveTarget(c.x, c.y) {};
 };
 
 enum DIRECTIONX {
@@ -127,6 +129,24 @@ const std::string MVactionStrings[] =
 	"JUMP",
 	"JUMPFROMLADDER",
 	"WALKOFFLEDGE"
+};
+
+const std::string BotLogicStrings[] = 
+{ 
+	"IDLE",
+	"EXIT",
+	"WAITING",
+	"GATHER_FROM_CC",
+	"EXPLORE_CC",
+	"PICK_TARGET_IN_NEXT_CC",
+	"MOVE_TO_NEXT_CC",
+	"SEARCH_FOR_EXIT",
+	"GO_TO_EXIT",
+	"EXIT_REACHED",
+	"UNREACHABLE_EXIT",
+	"NO_EXIT_EXPLORE",
+	"NO_EXIT_ERROR"
+
 };
 
 

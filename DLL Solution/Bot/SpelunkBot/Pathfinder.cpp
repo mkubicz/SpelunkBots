@@ -493,7 +493,7 @@ vector<Node> Pathfinder::CalculateNeighboursStanding(Node node)
 		else
 			neighbours.push_back(Node{ x, y - 1, JUMP, LADDER, mvCLIMBING });
 	}
-	else if (Ladder(x, y - 2))
+	else if (Ladder(x, y - 2) && Pusta(x, y - 1))
 		neighbours.push_back(Node{ x, y - 2, JUMP, LADDER, mvCLIMBING });
 
 
@@ -705,6 +705,7 @@ vector<Node> Pathfinder::CalculateNeighboursStanding(Node node)
 	int MAXy = 5; //only 5 because we would take damage if we jumped further
 
 	//right
+	bool canHang = false;
 	if (Pusta(x + 1, y + 1))
 	{
 		for (int i = 1; i <= MAXx; i++)
@@ -719,19 +720,31 @@ vector<Node> Pathfinder::CalculateNeighboursStanding(Node node)
 
 				if (Ladder(x + i, y + j) && DownJumpPathClear(x, y, x + i, y + j, xRIGHT))
 				{
+					if (i == 1 && j == 1)
+						canHang = true;
+
 					MVSTATE mvState;
 					if (IsJumpWithRunning(i, j, LADDER))
 						mvState = mvCLIMBING_WITH_MOMENTUM;
 					else
 						mvState = mvCLIMBING;
 
-					neighbours.push_back(Node{ x + i, y + j, JUMP, LADDER, mvState });
+					if (canHang)
+					{
+						//if ladder is close, block jumping to it; Spelunker will have to hang to it
+						if (i != 1) neighbours.push_back(Node{ x + i, y + j, JUMP, LADDER, mvState });
+					}
+					else
+					{
+						neighbours.push_back(Node{ x + i, y + j, JUMP, LADDER, mvState });
+					}
 				}
 			}
 				
 	}
 
 	//left
+	canHang = false;
 	if (Pusta(x - 1, y + 1))
 	{
 		for (int i = 1; i <= MAXx; i++)
@@ -746,13 +759,23 @@ vector<Node> Pathfinder::CalculateNeighboursStanding(Node node)
 
 				if (Ladder(x - i, y + j) && DownJumpPathClear(x, y, x - i, y + j, xLEFT))
 				{
+					if (i == 1 && j == 1)
+						canHang = true;
+
 					MVSTATE mvState;
 					if (IsJumpWithRunning(-i, j, LADDER))
 						mvState = mvCLIMBING_WITH_MOMENTUM;
 					else
 						mvState = mvCLIMBING;
-
-					neighbours.push_back(Node{ x - i, y + j, JUMP, LADDER, mvState });
+					if (canHang)
+					{
+						//if ladder is close, block jumping to it; Spelunker will have to hang to it
+						if (i != 1) neighbours.push_back(Node{ x - i, y + j, JUMP, LADDER, mvState });
+					}
+					else
+					{
+						neighbours.push_back(Node{ x - i, y + j, JUMP, LADDER, mvState });
+					}
 				}
 			}
 				
@@ -1026,6 +1049,7 @@ void Pathfinder::TarjanDFS(MapSearchNode* n)
 	} while (m->_x != n->_x || m->_y != n->_y);
 
 	_tar_Lscc.push_back(sccp);
+	_tar_CCmap[m->_CCnr] = sccp;
 }
 
 void Pathfinder::CalculateConnectedComponents()
@@ -1061,6 +1085,16 @@ void Pathfinder::CalculateConnectedComponents()
 				(CanStandInNode(_grid[i][j]) || Ladder(_grid[i][j])))
 				TarjanDFS(_grid[i][j]);
 		}
+}
+
+int Pathfinder::GetCCnr(int nodeX, int nodeY)
+{
+	return _grid[nodeX][nodeY]->_CCnr;
+}
+
+std::vector<MapSearchNode*> Pathfinder::GetAllNodesFromCC(int ccnr)
+{
+	return _tar_CCmap[ccnr];
 }
 
 MVSTATE Pathfinder::GetCurrentMvState(Node *currentNode, Node *parentNode)
@@ -1680,6 +1714,11 @@ std::vector<Node> Pathfinder::GetPathListNode()
 	return pathListNode;
 }
 
+Node Pathfinder::GetExplorationTarget()
+{
+	return _explorationTarget;
+}
+
 int Pathfinder::GetPathLength()
 {
 	int dist = 0;
@@ -1743,6 +1782,15 @@ bool Pathfinder::IsInFog(MapSearchNode * n)
 	return IsInFog(n->_x, n->_y);
 }
 
+bool Pathfinder::IsFogOnMap()
+{
+	for (int i = 0; i < X_NODES; i++)
+		for (int j = 0; j < Y_NODES; j++)
+			if (_bot->GetFogState(i, j, NODE_COORDS))
+				return true;
+	return false;
+}
+
 bool Pathfinder::IsInFog(int x, int y)
 {
 	return _bot->GetFogState(x, y, NODE_COORDS);
@@ -1804,9 +1852,92 @@ bool Pathfinder::isCloseToFog(MapSearchNode *n, int closeness)
 }
 
 
-Node Pathfinder::toNode(MapSearchNode *n)
+Node Pathfinder::ToNode(MapSearchNode *n)
 {
 	return Node{ n->_x, n->_y };
+}
+
+bool Pathfinder::TryToFindExplorationTarget(int x, int y)
+{
+	bool targetFound = false;
+	std::list<MapSearchNode*> visitedList;
+	list<MapSearchNode*>::iterator i;
+
+	_pathList.clear();
+
+	MapSearchNode* start = _grid[x][y];
+	start->_visited = true;
+	visitedList.push_back(start);
+
+	MapSearchNode* current = start;
+
+
+	unsigned int n = 0;
+
+	while (n < 1000)
+	{
+		if (isCloseToFog(current, 5))
+		{
+			targetFound = true;
+			_explorationTarget = ToNode(current);
+			break;
+		}
+
+		vector<MapSearchNode*> neighbours = CalculateNeighboursList(current, current->GetMvState());
+
+		//no neighbours - backtracking
+		if (neighbours.empty())
+		{
+			if (current->_parent != NULL)
+				current = current->_parent;
+			else
+				//current does not have a parent, we can't backtrack
+				break;
+		}
+		else
+		{
+			//find first not visited neighbour
+			int i = 0;
+			while (i < neighbours.size())
+			{
+				if (!neighbours[i]->_visited)
+				{
+					//first neighbour becomes current
+					neighbours[i]->_parent = current;
+					current = neighbours[i];
+
+					current->_visited = true;
+					visitedList.push_back(current);
+					current->_actionToReach = current->_actionToReachCandidate;
+					current->_actionTarget = current->_actionTargetCandidate;
+					current->_mvState = current->_mvStateCandidate;
+
+					break;
+				}
+				i++;
+			}
+			//unvisited neighbour not found - backtracking
+			if (i == neighbours.size())
+			{
+				if (current->_parent != NULL)
+					current = current->_parent;
+				else
+					//current does not have a parent, we can't backtrack
+					break;
+			}
+		}
+
+		n++;
+	}
+
+	//reset
+	for (i = visitedList.begin(); i != visitedList.end(); i++)
+	{
+		(*i)->_visited = false;
+		(*i)->_parent = NULL;
+	}
+
+	return targetFound;
 }
 
 #pragma region stare FindExplorationPath
@@ -1954,7 +2085,7 @@ std::vector<Node> Pathfinder::FindExplorationTargets(double x1, double y1, doubl
 	{
 		if (isCloseToFog(current, 5))
 		{
-			explTargets.push_back(toNode(current));
+			explTargets.push_back(ToNode(current));
 		}
 
 		//vector<MapSearchNode*> neighbours = CalculateNeighboursList(current, GetCurrentMvState(current));

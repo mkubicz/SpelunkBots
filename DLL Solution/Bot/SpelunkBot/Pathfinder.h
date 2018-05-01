@@ -21,13 +21,15 @@ public:
 	bool HorizontalJumpPathClear(int x, int y, int dist, bool right);
 	bool isCloseToFog(int x, int y, int closeness);
 	bool isCloseToFog(MapSearchNode *n, int closeness);
-	Node toNode(MapSearchNode *n);
+	Node ToNode(MapSearchNode *n);
+	bool TryToFindExplorationTarget(int x, int y);
 	std::vector<Node> FindExplorationTargets(double x1, double y1, double usingPixelCoords);
 	bool TryToCalculatePath(double x1, double y1, double x2, double y2, double usingPixelCoords);
 	void NeighboursDebug(int x, int y);
 	void SCCDebug();
 	std::vector<MapSearchNode*> GetPathList();
 	std::vector<Node> GetPathListNode();
+	Node GetExplorationTarget();
 	int GetPathLength();
 	int GetPathLength(std::vector<Node> path);
 	bool IsOutOfBounds(int x, int y);
@@ -36,19 +38,25 @@ public:
 	bool CanStandInNode(MapSearchNode * n);
 	bool IsInFog(int x, int y);
 	bool IsInFog(MapSearchNode * n);
+	bool IsFogOnMap();
 	MVSTATE ToMvState(SpState spstate);
 	MVSTATE GetCurrentMvState(Node *currentNode, Node *parentNode);
 	ACTION_TARGET GetCurrentJumpTarget(Node *currentNode);
 
 	void CalculateConnectedComponents();
+	int GetCCnr(int nodeX, int nodeY);
+	std::vector<MapSearchNode*> GetAllNodesFromCC(int ccnr);
 
 	//bool PathReady();
 	//std::vector<Node>* GetNextPath();
+	std::map<int, std::vector<MapSearchNode*>> _tar_CCmap;
 
 private:	
-	IBot* _bot; 
-	std::vector<MapSearchNode*> _pathList;
+	IBot* _bot;
 	std::map<int, std::map<int, MapSearchNode*> > _grid;
+
+	std::vector<MapSearchNode*> _pathList;
+	Node _explorationTarget;
 
 	bool DownJumpPathClear(int x1, int y1, int x2, int y2, DIRECTIONX direction);
 	bool WalkOffLedgePathClear(int x1, int y1, int x2, int y2, DIRECTIONX direction);
