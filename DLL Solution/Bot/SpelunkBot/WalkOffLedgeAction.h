@@ -6,16 +6,13 @@ class WalkOffLedgeAction : public IMovementAction
 private:
 	int _distX;
 	int _distY;
-
-	int _startPosXside;
-	int _startPosXmid;
-	int _targetXSide;
-	//int _previousPosX;
-	//int _previousPosY;
-
 	bool _running;
+	int _startPosXside;
+
 	enum STATE { WALKING, FALLING, FREEFALLING, LANDED };
 	STATE _state;
+
+	bool closeToTargetFall(int playerPosX, int targetPosX, bool running, int distY);
 
 public:
 	ordersStruct GetOrders();

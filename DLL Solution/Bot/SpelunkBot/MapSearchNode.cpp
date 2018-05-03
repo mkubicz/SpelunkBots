@@ -2,6 +2,35 @@
 #include "MapSearchNode.h"
 
 
+MapSearchNode::MapSearchNode()
+	: MapSearchNode(0,0)
+{
+}
+
+MapSearchNode::MapSearchNode(int x, int y)
+{
+	_x = x;
+	_y = y;
+	_gScore = 0;
+	_hScore = 0;
+	_parent = NULL;
+
+	_actionToReach = IDLE;
+	_actionToReachCandidate = IDLE;
+
+	_actionTarget = GROUND;
+	_actionTargetCandidate = GROUND;
+
+	_mvState = mvSTANDING;
+	_mvStateCandidate = mvSTANDING;
+
+	_opened = false;
+	_closed = false;
+	_visited = false;
+
+	_CCnr = 0;
+}
+
 int MapSearchNode::GetX()
 {
 	return _x;
@@ -14,8 +43,6 @@ int MapSearchNode::GetY()
 
 double MapSearchNode::GetGScore(MapSearchNode *parent)
 {
-	//return p->_gScore + ((_x == p->_x || _y == p->_y) ? 1 : 1.5);
-
 	//manhattan
 	return parent->_gScore + abs(parent->_x - _x) + abs(parent->_y - _y);
 }

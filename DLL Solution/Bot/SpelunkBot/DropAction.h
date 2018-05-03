@@ -12,7 +12,6 @@ public:
 
 private:
 	ACTION_TARGET _actionTarget;
-	Node _targetNode;
 	enum STATE { DROPPING, FALLING, CLIMBING };
 	STATE _state;
 	int _distY;

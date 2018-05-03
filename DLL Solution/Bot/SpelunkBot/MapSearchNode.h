@@ -19,8 +19,8 @@ private:
 	ACTION_TARGET _actionTarget;
 	ACTION_TARGET _actionTargetCandidate;
 
-	MVSTATE _mvState = mvSTANDING;
-	MVSTATE _mvStateCandidate = mvSTANDING;
+	MVSTATE _mvState;
+	MVSTATE _mvStateCandidate;
 
 	bool _opened;
 	bool _closed;
@@ -31,6 +31,8 @@ private:
 	int _CCnr;
 
 public:
+	MapSearchNode();
+	MapSearchNode(int x, int y);
 	int GetX();
 	int GetY();
 	double GetGScore(MapSearchNode *p);

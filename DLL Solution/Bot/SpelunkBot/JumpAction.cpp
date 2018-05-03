@@ -11,7 +11,6 @@ JumpAction::JumpAction(IBot * bot, ACTION_TARGET target, int distX, int distY)
 	_actionType = JUMP;
 
 	//state is set in first call of GetOrders
-	//_state = WALKING;
 
 	if (_distX < 0) _directionX = xLEFT;
 	else if (_distX == 0) _directionX = xNONE;
@@ -37,26 +36,6 @@ void JumpAction::SetRunning()
 		_running = true;
 	else
 		_running = false;
-
-	//if (_distY >= 0)
-	//{
-	//	if (abs(_distX) > 4)
-	//		_running = true;
-	//	else
-	//		_running = false;
-	//}
-	//else
-	//{
-	//	if (abs(_distX) > 3)
-	//		_running = true;
-	//	else
-	//		_running = false;
-	//}
-
-	//if (abs(_distX) == 3 && _distY == -1 && _actionTarget == LEDGE)
-	//	_running = true;
-
-
 }
 
 void JumpAction::SetTimers()
@@ -212,19 +191,6 @@ void JumpAction::SetMovementRange()
 	}
 }
 
-void JumpAction::ModifyMoveRangeIfNeeded(int firstJumpPosX)
-{
-	//if (abs(_distX) == 5 && _distY == 5)
-	//{
-	//	if (abs(_startNodeEdge - firstJumpPosX) == 1)
-	//		_moveRange -= 2;
-	//	if (abs(_startNodeEdge - firstJumpPosX) == 2)
-	//		_jumpTimer = 3;
-	//	if (abs(_startNodeEdge - firstJumpPosX) == 6)
-	//		_jumpTimer = 3;
-	//}
-}
-
 void JumpAction::MoveToTarget(ordersStruct *orders)
 {
 	int playerPosX = (int)_bot->GetPlayerPositionX();
@@ -237,70 +203,6 @@ void JumpAction::MoveToTarget(ordersStruct *orders)
 	}
 }
 
-//void JumpAction::Centralize(ordersStruct * orders, int centralizingPoint)
-//{
-//	int playerPosX = (int)_bot->GetPlayerPositionX();
-//
-//	if (_centralizeBreakTimer == 0 && _centralizeMoveTimer == 0)
-//	{
-//		if (playerPosX < centralizingPoint)
-//			_centralizeDir = xRIGHT;
-//		if (playerPosX > centralizingPoint)
-//			_centralizeDir = xLEFT;
-//
-//		_centralizeMoveTimer = 3;
-//
-//		//if (playerPosX == _startNodeCenter)
-//		if (WithinRangeFromTarget(playerPosX, centralizingPoint, 1))
-//		{
-//			_state = WALKING;
-//		}
-//
-//		return;
-//	}
-//
-//
-//	if (_centralizeMoveTimer != 0)
-//	{
-//		if (_centralizeDir == xRIGHT)
-//			orders->goRight = true;
-//		else
-//			orders->goLeft = true;
-//
-//		_centralizeMoveTimer--;
-//
-//		if (_centralizeMoveTimer == 0)
-//		{
-//			//if (playerPosX == _startNodeCenter)
-//			if (WithinRangeFromTarget(playerPosX, centralizingPoint, 1))
-//				_centralizeBreakTimer = 6;
-//			else
-//				_centralizeBreakTimer = 2;
-//		}
-//
-//		return;
-//	}
-//
-//	if (_centralizeBreakTimer != 0)
-//	{
-//		_centralizeBreakTimer--;
-//		return;
-//	}
-//}
-
-//bool JumpAction::IsStandingStill(int playerPosX, int playerPosY, int prevPlayerPosX, int prevPlayerPosY)
-//{
-//	if (playerPosX == prevPlayerPosX && playerPosY == prevPlayerPosY)
-//		_standingStillCounter += 1;
-//	else
-//		_standingStillCounter = 0;
-//
-//	if (_standingStillCounter == 3)
-//		return true;
-//
-//	return false;
-//}
-
 ordersStruct JumpAction::GetOrders()
 {
 	ordersStruct orders;
@@ -309,8 +211,8 @@ ordersStruct JumpAction::GetOrders()
 
 	if (!_actionInProgress)
 	{
-		_targetNode = CalculateTargetNode((int)_bot->GetPlayerPositionXNode(), (int)_bot->GetPlayerPositionYNode(), _distX, _distY);
-		_startNodeCenter = CenterOfNode((int)_bot->GetPlayerPositionXNode());
+		_targetNode = CalculateTargetNode(_distX, _distY);
+		_startNodeCenter = MiddlePixelOfNode((int)_bot->GetPlayerPositionXNode());
 
 		//makes the bot grab the ledge even when distX=0
 		//priority - right

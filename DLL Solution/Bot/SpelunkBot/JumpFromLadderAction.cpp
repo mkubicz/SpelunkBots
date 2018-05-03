@@ -13,15 +13,14 @@ JumpFromLadderAction::JumpFromLadderAction(IBot * bot, ACTION_TARGET target, boo
 
 	_actionType = JUMPFROMLADDER;
 
-
 	_state = JUMPING;
 
-	if (distX < 0) _directionX = xLEFT;
-	else if (distX == 0) _directionX = xNONE;
+	if (_distX < 0) _directionX = xLEFT;
+	else if (_distX == 0) _directionX = xNONE;
 	else _directionX = xRIGHT;
 
-	if (distY < 0) _directionY = yUP;
-	else if (distY == 0) _directionY = yNONE;
+	if (_distY < 0) _directionY = yUP;
+	else if (_distY == 0) _directionY = yNONE;
 	else _directionY = yDOWN;
 
 	SetTimers();
@@ -167,7 +166,7 @@ ordersStruct JumpFromLadderAction::GetOrders()
 
 	if (!_actionInProgress)
 	{
-		_targetNode = CalculateTargetNode((int)_bot->GetPlayerPositionXNode(), (int)_bot->GetPlayerPositionYNode(), _distX, _distY);
+		_targetNode = CalculateTargetNode(_distX, _distY);
 
 		//makes the bot grab the ledge even when distX=0
 		//priority - right
@@ -195,7 +194,6 @@ ordersStruct JumpFromLadderAction::GetOrders()
 		orders.duck = true;
 
 
-
 	switch (_state)
 	{
 	case JUMPING:
@@ -205,7 +203,6 @@ ordersStruct JumpFromLadderAction::GetOrders()
 		else
 			_dirDelayTimer -= 1;
 
-		//_jumpTimer += 1;
 		if (_jumpTimer > 0)
 		{
 			orders.jump = true;

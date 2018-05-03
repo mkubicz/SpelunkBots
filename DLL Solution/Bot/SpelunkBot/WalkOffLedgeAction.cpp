@@ -19,12 +19,26 @@ WalkOffLedgeAction::WalkOffLedgeAction(IBot * bot, int distX, int distY)
 	_actionType = WALKOFFLEDGE;
 
 	_running = false;
-	if (abs(distX) == 3 && distY == 1) _running = true;
-	if (abs(distX) > 3) _running = true;
+	if (abs(_distX) == 3 && _distY == 1) _running = true;
+	if (abs(_distX) > 3) _running = true;
 
 	_state = WALKING;
 }
 
+bool WalkOffLedgeAction::closeToTargetFall(int playerPositionX, int targetPositionX, bool running, int distY)
+{
+	if (distY <= 0) //jumpup or jumpflat
+	{
+		if (running) return abs(playerPositionX - targetPositionX) <= PIXELS_IN_NODE * 1.5;
+		else return closeToTarget(playerPositionX, targetPositionX);
+	}
+	else
+	{ //jumpdown
+		if (running) return abs(playerPositionX - targetPositionX) <= PIXELS_IN_NODE * 2;
+		else return abs(playerPositionX - targetPositionX) <= 12;
+	}
+
+}
 
 ordersStruct WalkOffLedgeAction::GetOrders()
 {
@@ -35,20 +49,15 @@ ordersStruct WalkOffLedgeAction::GetOrders()
 
 	if (!_actionInProgress)
 	{
-		int nodenr = (int)_bot->GetPlayerPositionXNode();
+		_targetNode = CalculateTargetNode(_distX, _distY);
 
-		_targetX = (nodenr + _distX) * PIXELS_IN_NODE + (PIXELS_IN_NODE / 2);
-		_targetY = playerPosY + (_distY * PIXELS_IN_NODE);
-		//_targetXSide = _goingRight ? (nodenr + _distX) * PIXELS_IN_NODE : (nodenr + 1 + _distX) * PIXELS_IN_NODE;
+		int nodenr = (int)_bot->GetPlayerPositionXNode();
 		_startPosXside = _directionX == xRIGHT ? (nodenr * PIXELS_IN_NODE) + PIXELS_IN_NODE : (nodenr * PIXELS_IN_NODE);
-		//_startPosXmid = (nodenr * PIXELS_IN_NODE) + (PIXELS_IN_NODE / 2);
 
 		_actionInProgress = true;
 	}
 
-
 	if (_running) orders.run = true;
-
 
 	//flying through hard ladder tops
 	if ((_state == FREEFALLING || _state == FALLING) &&
@@ -68,20 +77,20 @@ ordersStruct WalkOffLedgeAction::GetOrders()
 		case FALLING:
 			_directionX == xRIGHT ? orders.goRight = true : orders.goLeft = true;
 
-			if (closeToTargetFall(playerPosX, _targetX, _running, _distY))
+			if (closeToTargetFall(playerPosX, MiddleXPixel(_targetNode), _running, _distY))
 				_state = FREEFALLING;
 
 			break;
 		case FREEFALLING:
-			if (_targetY == playerPosY) _state = LANDED;
+			if (MiddleYPixel(_targetNode) == playerPosY) _state = LANDED;
 
 			break;
 		case LANDED:
-			if (closeToTarget(playerPosX, _targetX)) _actionDone = true;
+			if (closeToTarget(playerPosX, MiddleXPixel(_targetNode))) _actionDone = true;
 
-			if (playerPosX > _targetX)
+			if (playerPosX > MiddleXPixel(_targetNode))
 				orders.goLeft = true;
-			if (playerPosX < _targetX)
+			if (playerPosX < MiddleXPixel(_targetNode))
 				orders.goRight = true;
 
 			break;

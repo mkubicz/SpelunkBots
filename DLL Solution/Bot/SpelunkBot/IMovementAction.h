@@ -24,19 +24,17 @@ class IMovementAction
 {
 protected:
 	IBot* _bot;
-	//DebugBot bot;
 
 	MOVEMENTACTION _actionType;
 	bool _actionDone;	
 	bool _actionInProgress;
-	//bool _goingRight;
-	//bool _goingUp;
 	DIRECTIONX _directionX;
 	DIRECTIONY _directionY;
-	//bool _running;
-	int _targetX;
-	int _targetY;
-	bool ShouldTryToGrabLadder(Node target);
+	Node _targetNode;
+
+	Node CalculateTargetNode(int distXNode, int distYNode);
+	bool ShouldTryToGrabLadder(int targetX, int targetY);
+	bool ShouldTryToGrabLadder(Node targetNode);
 	bool IsNearLadderTop(int playerPosX, int playerPosY);
 
 	int _centralizeMoveTimer = 0;
@@ -44,17 +42,15 @@ protected:
 	DIRECTIONX _centralizeDir;
 	void Centralize(ordersStruct *orders, int centralizingPoint);
 
-	int _standingStillCounter;
+	int _standingStillCounter = 0;
 	bool IsStandingStill(int playerPosX, int playerPosY, int prevPlayerPosX, int prevPlayerPosY);
 
 public:
 	IMovementAction(IBot* bot);
 	~IMovementAction();
 
-	MOVEMENTACTION ActionType();
 	bool ActionDone();
-
-	//bool IsRunning();
+	MOVEMENTACTION ActionType();
 	DIRECTIONX GetDirectionX();
 	DIRECTIONY GetDirectionY();
 	

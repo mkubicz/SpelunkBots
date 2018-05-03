@@ -11,45 +11,42 @@ public:
 	Pathfinder(IBot* bot);
 	~Pathfinder();
 
-	void InitializeVariables();
+	void InitializeGrid();
 
-	std::vector<Node> CalculateNeighboursList(Node node, MVSTATE mvstate);
 	std::vector<MapSearchNode*> CalculateNeighboursList(MapSearchNode* node, MVSTATE mvstate);
-	//std::vector<MapSearchNode*> CalculateNeighboursList(MapSearchNode* node);
-	//std::vector<Node> CalculateNeighboursList(MapSearchNode* node);
+	std::vector<Node> CalculateNeighboursList(Node node, MVSTATE mvstate);
+
 	MapSearchNode* GetNodeFromGrid(int x, int y);
-	bool HorizontalJumpPathClear(int x, int y, int dist, bool right);
-	bool isCloseToFog(int x, int y, int closeness);
-	bool isCloseToFog(MapSearchNode *n, int closeness);
-	Node ToNode(MapSearchNode *n);
-	bool TryToFindExplorationTarget(int x, int y);
-	std::vector<Node> FindExplorationTargets(double x1, double y1, double usingPixelCoords);
-	bool TryToCalculatePath(double x1, double y1, double x2, double y2, double usingPixelCoords);
-	void NeighboursDebug(int x, int y);
-	void SCCDebug();
+	
+	bool TryToCalculatePath(int x1, int y1, int x2, int y2);
 	std::vector<MapSearchNode*> GetPathList();
 	std::vector<Node> GetPathListNode();
-	Node GetExplorationTarget();
-	int GetPathLength();
 	int GetPathLength(std::vector<Node> path);
-	bool IsOutOfBounds(int x, int y);
+	int GetPathLength();
 
+	bool TryToFindExplorationTarget(int x, int y);
+	Node GetExplorationTarget();
+	std::vector<Node> FindExplorationTargets(int x1, int y1);
+
+	void TryToFindExit();
+	Node GetExit();
+	bool IsExitFound();
+
+	void CalculateConnectedComponents();
+	std::vector<MapSearchNode*> GetAllNodesFromCC(int ccnr);
+	int GetCCnr(int nodeX, int nodeY);
+
+	bool isCloseToFog(int x, int y, int closeness);
+	bool isCloseToFog(MapSearchNode *n, int closeness);
+	bool IsOutOfBounds(int x, int y);
 	bool CanStandInNode(int x, int y);
 	bool CanStandInNode(MapSearchNode * n);
 	bool IsInFog(int x, int y);
 	bool IsInFog(MapSearchNode * n);
 	bool IsFogOnMap();
-	MVSTATE ToMvState(SpState spstate);
-	MVSTATE GetCurrentMvState(Node *currentNode, Node *parentNode);
-	ACTION_TARGET GetCurrentJumpTarget(Node *currentNode);
 
-	void CalculateConnectedComponents();
-	int GetCCnr(int nodeX, int nodeY);
-	std::vector<MapSearchNode*> GetAllNodesFromCC(int ccnr);
-
-	//bool PathReady();
-	//std::vector<Node>* GetNextPath();
-	std::map<int, std::vector<MapSearchNode*>> _tar_CCmap;
+	void NeighboursDebug(int x, int y, bool hasMomentum);
+	void SCCDebug();
 
 private:	
 	IBot* _bot;
@@ -58,15 +55,17 @@ private:
 	std::vector<MapSearchNode*> _pathList;
 	Node _explorationTarget;
 
+	bool _exitFound = false;
+	Node _exit;
+
 	bool DownJumpPathClear(int x1, int y1, int x2, int y2, DIRECTIONX direction);
 	bool WalkOffLedgePathClear(int x1, int y1, int x2, int y2, DIRECTIONX direction);
+	bool HorizontalJumpPathClear(int x, int y, int dist, DIRECTIONX direction);
 
 	std::vector<Node> CalculateNeighboursHanging(Node node);
 	std::vector<Node> CalculateNeighboursClimbing(Node node);
 	std::vector<Node> CalculateNeighboursStanding(Node node);
 	std::vector<Node> CalculateNeighboursClimbingWithMomentum(Node node);
-
-	MVSTATE GetCurrentMvState(MapSearchNode *currentNode);
 
 	//tarjan's algorithm
 	int _tar_cvn;
@@ -75,7 +74,8 @@ private:
 	int _tar_VLow[X_NODES][Y_NODES];
 	bool _tar_VS[X_NODES][Y_NODES];
 	std::stack<MapSearchNode*> _tar_S;
-	std::vector<std::vector<MapSearchNode*>> _tar_Lscc;
+	std::vector<std::vector<MapSearchNode*>> _tar_CClist;
+	std::map<int, std::vector<MapSearchNode*>> _tar_CCmap;
 	void TarjanDFS(MapSearchNode* n);
 
 	//for simplicity

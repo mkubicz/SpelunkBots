@@ -9,8 +9,6 @@ ClimbAction::ClimbAction(IBot * bot, int distY)
 
 	if (_distY < 0) _directionY = yUP;
 	if (_distY > 0) _directionY = yDOWN;
-
-	//_distY < 0 ? _goingUp = true : _goingUp = false;
 }
 
 void ClimbAction::AddDistance(int distance)
@@ -27,7 +25,7 @@ ordersStruct ClimbAction::GetOrders()
 
 	if (!_actionInProgress)
 	{
-		_targetNode = CalculateTargetNode((int)_bot->GetPlayerPositionXNode(), (int)_bot->GetPlayerPositionYNode(), 0, _distY);
+		_targetNode = CalculateTargetNode(0, _distY);
 		_actionInProgress = true;
 	}
 

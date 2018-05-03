@@ -24,11 +24,10 @@ ordersStruct JumpAboveAction::GetOrders()
 	{
 		_startingPosY = playerPosY;
 
-		int nodenr = (int)_bot->GetPlayerPositionXNode();
-		_targetX = nodenr * PIXELS_IN_NODE + (PIXELS_IN_NODE / 2);
-		_targetY = playerPosY - (PIXELS_IN_NODE * 2);
-
-		_targetXside = _directionX == xRIGHT ? _targetX + (PIXELS_IN_NODE / 2) : _targetX - (PIXELS_IN_NODE / 2);
+		_targetNode = CalculateTargetNode(0, -2);
+		_targetXmid = MiddlePixelOfNode(_targetNode.GetX());
+		_targetYmid = MiddlePixelOfNode(_targetNode.GetY());
+		_targetXside = _directionX == xRIGHT ? _targetXmid + (PIXELS_IN_NODE / 2) : _targetXmid - (PIXELS_IN_NODE / 2);
 
 		_actionInProgress = true;
 	}
@@ -38,8 +37,8 @@ ordersStruct JumpAboveAction::GetOrders()
 		if (playerPosX <= _targetXside && playerPosY == _startingPosY) orders.goRight = true;
 		else
 		{
-			if (!closeToTarget(playerPosX, _targetX)) orders.goLeft = true;
-			if (playerPosY > _targetY) orders.jump = true;
+			if (!closeToTarget(playerPosX, _targetXmid)) orders.goLeft = true;
+			if (playerPosY > _targetYmid) orders.jump = true;
 		}
 			
 	}
@@ -48,17 +47,12 @@ ordersStruct JumpAboveAction::GetOrders()
 		if (playerPosX >= _targetXside && playerPosY == _startingPosY) orders.goLeft = true;
 		else
 		{
-			if (!closeToTarget(playerPosX, _targetX)) orders.goRight = true;
-			if (playerPosY > _targetY) orders.jump = true;
+			if (!closeToTarget(playerPosX, _targetXmid)) orders.goRight = true;
+			if (playerPosY > _targetYmid) orders.jump = true;
 		}
 	}
 
-	if (closeToTarget(playerPosX, _targetX) && playerPosY == _targetY) _actionDone = true;
-
-	/*
-	if (_goingRight && playerPosX < targetXside) orders.goRight = true;
-	if (!_goingRight && playerPosX > targetXside) orders.goLeft = true;
-	*/
+	if (closeToTarget(playerPosX, _targetXmid) && playerPosY == _targetYmid) _actionDone = true;
 
 	return orders;
 

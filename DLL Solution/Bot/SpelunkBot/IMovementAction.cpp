@@ -9,8 +9,9 @@ IMovementAction::IMovementAction(IBot* bot)
 	_actionInProgress = false;
 	_directionX = DIRECTIONX::xNONE;
 	_directionY = DIRECTIONY::yNONE;
-	_targetX = bot->GetPlayerPositionX();
-	_targetY = bot->GetPlayerPositionY();
+	//_targetX = bot->GetPlayerPositionX();
+	//_targetY = bot->GetPlayerPositionY();
+	_targetNode = Node();
 }
 
 IMovementAction::~IMovementAction()
@@ -37,34 +38,39 @@ DIRECTIONY IMovementAction::GetDirectionY()
 	return _directionY;
 }
 
-//bool IMovementAction::IsRunning()
-//{
-//	return _running;
-//}
 
+Node IMovementAction::CalculateTargetNode(int distXNode, int distYNode)
+{
+	return Node(_bot->GetPlayerPositionXNode() + distXNode, _bot->GetPlayerPositionYNode() + distYNode);
+}
 
-bool IMovementAction::ShouldTryToGrabLadder(Node target)
+bool IMovementAction::ShouldTryToGrabLadder(int targetX, int targetY)
 {
 	int playerPosX = (int)_bot->GetPlayerPositionX();
 	int playerPosY = (int)_bot->GetPlayerPositionY();
 
-	if (WithinRangeFromTarget(playerPosX, MiddleXPixel(target), PIXELS_IN_NODE))
+	if (WithinRangeFromTarget(playerPosX, MiddlePixelOfNode(targetX), PIXELS_IN_NODE))
 	{
 		if (_directionY == yUP)
 		{
-			if (WithinRangeFromTarget(playerPosY, MiddleYPixel(target), PIXELS_IN_NODE))
+			if (WithinRangeFromTarget(playerPosY, MiddlePixelOfNode(targetY), PIXELS_IN_NODE))
 				return true;
 		}
 		else
 		{
 			//while falling down, the bot will try to grab the ladder even if he overshoots the target
-			if (WithinRangeFromTarget(playerPosY, MiddleYPixel(target), PIXELS_IN_NODE) ||
-				playerPosY > MiddleYPixel(target))
+			if (WithinRangeFromTarget(playerPosY, MiddlePixelOfNode(targetY), PIXELS_IN_NODE) ||
+				playerPosY > MiddlePixelOfNode(targetY))
 				return true;
 		}
 	}
 
 	return false;
+}
+
+bool IMovementAction::ShouldTryToGrabLadder(Node targetNode)
+{
+	return ShouldTryToGrabLadder(targetNode.GetX(), targetNode.GetY());
 }
 
 bool IMovementAction::IsNearLadderTop(int playerPosX, int playerPosY)
@@ -108,7 +114,6 @@ void IMovementAction::Centralize(ordersStruct * orders, int centralizingPoint)
 
 		if (_centralizeMoveTimer == 0)
 		{
-			//if (playerPosX == _startNodeCenter)
 			if (WithinRangeFromTarget(playerPosX, centralizingPoint, 1))
 				_centralizeBreakTimer = 6;
 			else
@@ -139,8 +144,4 @@ bool IMovementAction::IsStandingStill(int playerPosX, int playerPosY, int prevPl
 	return false;
 }
 
-ordersStruct IMovementAction::GetOrders()
-{
-	return ordersStruct();
-}
 

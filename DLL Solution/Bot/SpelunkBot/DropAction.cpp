@@ -9,7 +9,7 @@ DropAction::DropAction(IBot* bot, ACTION_TARGET actionTarget, int distY)
 
 	_state = DROPPING;
 
-	if (actionTarget == LEDGE)
+	if (_actionTarget == LEDGE)
 		std::cout << "ERROR: ActionTarget for DropAction should not be LEDGE";
 }
 
@@ -26,7 +26,7 @@ ordersStruct DropAction::GetOrders()
 
 	if (!_actionInProgress)
 	{
-		_targetNode = CalculateTargetNode((int)_bot->GetPlayerPositionXNode(), (int)_bot->GetPlayerPositionYNode(), 0, _distY);
+		_targetNode = CalculateTargetNode(0, _distY);
 		_actionInProgress = true;
 	}
 

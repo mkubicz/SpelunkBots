@@ -198,7 +198,7 @@ SPELUNKBOT_API double GetRunp(void)
 
 #pragma endregion
 
-//#pragma region Game objects management
+#pragma region Game objects management
 ////see bot.h for explanation
 //
 //SPELUNKBOT_API double ResetEnemies()
@@ -226,7 +226,7 @@ SPELUNKBOT_API double GetRunp(void)
 //	return 0;
 //}
 //
-//#pragma endregion
+#pragma endregion
 
 #pragma region Bot Logic
 

@@ -55,9 +55,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Archive">
-      <UniqueIdentifier>{47ec7097-ce14-4c33-bdd2-dd2cfa171c33}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -114,12 +111,6 @@
     <ClInclude Include="WalkAction.h">
       <Filter>Header Files\Bots\DebugBot\Actions</Filter>
     </ClInclude>
-    <ClInclude Include="WalkUpAction.h">
-      <Filter>Header Files\Bots\DebugBot\Actions</Filter>
-    </ClInclude>
-    <ClInclude Include="HangDropAction.h">
-      <Filter>Header Files\Bots\DebugBot\Actions</Filter>
-    </ClInclude>
     <ClInclude Include="JumpAboveAction.h">
       <Filter>Header Files\Bots\DebugBot\Actions</Filter>
     </ClInclude>
@@ -155,12 +146,6 @@
     </ClInclude>
     <ClInclude Include="JumpAction.h">
       <Filter>Header Files\Bots\DebugBot\Actions</Filter>
-    </ClInclude>
-    <ClInclude Include="JumpToLadderAction.h">
-      <Filter>Archive</Filter>
-    </ClInclude>
-    <ClInclude Include="JumpActionStary.h">
-      <Filter>Archive</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -215,12 +200,6 @@
     <ClCompile Include="WalkAction.cpp">
       <Filter>Source Files\Bots\DebugBot\Actions</Filter>
     </ClCompile>
-    <ClCompile Include="WalkUpAction.cpp">
-      <Filter>Source Files\Bots\DebugBot\Actions</Filter>
-    </ClCompile>
-    <ClCompile Include="HangDropAction.cpp">
-      <Filter>Source Files\Bots\DebugBot\Actions</Filter>
-    </ClCompile>
     <ClCompile Include="JumpAboveAction.cpp">
       <Filter>Source Files\Bots\DebugBot\Actions</Filter>
     </ClCompile>
@@ -256,12 +235,6 @@
     </ClCompile>
     <ClCompile Include="JumpFromLadderAction.cpp">
       <Filter>Source Files\Bots\DebugBot\Actions</Filter>
-    </ClCompile>
-    <ClCompile Include="JumpToLadderAction.cpp">
-      <Filter>Archive</Filter>
-    </ClCompile>
-    <ClCompile Include="JumpActionStary.cpp">
-      <Filter>Archive</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

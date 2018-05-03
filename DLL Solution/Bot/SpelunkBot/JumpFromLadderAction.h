@@ -12,7 +12,6 @@ private:
 	int _moveRange;
 	bool _hasMomentum;
 	ACTION_TARGET _actionTarget;
-	Node _targetNode;
 	int _finishedTimer = 0;
 
 	enum STATE { JUMPING, FALLING, CLIMBING, HANGING, FINISHED };
@@ -25,8 +24,6 @@ private:
 public:
 	JumpFromLadderAction(IBot * bot, ACTION_TARGET target, bool hasMomentum, int distX, int distY);
 	JumpFromLadderAction(IBot *bot, int distX, int distY);
-
-
 
 	ordersStruct GetOrders();
 };
