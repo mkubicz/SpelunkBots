@@ -83,6 +83,7 @@ enum DIRECTIONY {
 enum ACTION_TARGET {
 	GROUND,
 	LADDER,
+	LADDERTOP,
 	LEDGE
 };
 
@@ -90,6 +91,7 @@ const std::string ActionTargetStrings[] =
 {
 	"GROUND",
 	"LADDER",
+	"LADDERTOP",
 	"LEDGE"
 };
 
@@ -187,16 +189,20 @@ enum TerrainType
 	spEmptyNode = 0,
 	spStandardTerrain,
 	spLadder,
+	spLadderTop,
 	spExit,
 	spEntrance,
-	spSacAltar,
 	spArrowTrapRight,
 	spArrowTrapLeft,
 	spIsInShop,
 	spIce,
 	spSpike,
 	spSpearTrap,
-	spGameEntrance
+	spGameEntrance,
+	spTree,
+	spTreeBranchLeaf,
+	spSpringTrap,
+	spSacAltar
 };
 
 enum Collectable
@@ -321,6 +327,6 @@ enum Threats
 	spBones = 60,
 	spSmashTrap,
 	spCeilingTrap,
-	spBoulder,
-	spSpringTrap = 99
+	spBoulder
+	//spSpringTrap = 99
 };

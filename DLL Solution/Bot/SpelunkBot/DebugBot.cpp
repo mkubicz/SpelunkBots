@@ -29,13 +29,24 @@ DebugBot::DebugBot()
 
 void DebugBot::InitialiseBotLogicState()
 {	
+	_botLogicState = GATHER_FROM_CC;
+	_secState = WAITING_FOR_PATH;
+
 	//for manual movementaction tests
 	//_botLogicState = IDLE;
 	//_secState = DEBUG;
 
-	_botLogicState = GATHER_FROM_CC;
-	_secState = WAITING_FOR_PATH;
-}
+	//manual action creation goes here
+	//IMovementAction *a;
+	//a = new WalkAction(this, 5);
+	//_actionsQ.push(a);
+	//a = new HangAction(this, xRIGHT);
+	//_actionsQ.push(a);
+	//a = new DropAction(this, 4);
+	//_actionsQ.push(a);
+
+
+}	
 
 void DebugBot::NewLevel()
 {

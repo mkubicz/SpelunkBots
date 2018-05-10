@@ -352,7 +352,7 @@ GMEXPORT double TerrainIsLadder(double x, double y)
 */
 GMEXPORT double TerrainIsGoal(double x, double y)
 {
-	spmap[(int)x][(int)y] = 3;
+	spmap[(int)x][(int)y] = 4;
 	return 0;
 }
 
@@ -366,7 +366,7 @@ GMEXPORT double TerrainIsGoal(double x, double y)
 */
 GMEXPORT double TerrainIsStart(double x, double y)
 {
-	spmap[(int)x][(int)y] = 4;
+	spmap[(int)x][(int)y] = 5;
 	return 0;
 }
 
@@ -380,7 +380,7 @@ GMEXPORT double TerrainIsStart(double x, double y)
 */
 GMEXPORT double TerrainIsAltar(double x, double y)
 {
-	spmap[(int)x][(int)y] = 5;
+	spmap[(int)x][(int)y] = 16;
 	return 0;
 }
 
@@ -537,6 +537,35 @@ GMEXPORT double TerrainIsTreeBranchLeaf(double x, double y)
 	spmap[(int)x][(int)y] = 14;
 	return 0;
 }
+
+/**
+* \brief TerrainIsSpringTrap sets a node to be a spring trap.
+*
+* @param x The x location of the node
+* @param y The y location of the node
+*
+* \note This function should not be used or changed whem implementing a bot.
+*/
+GMEXPORT double TerrainIsSpringTrap(double x, double y)
+{
+	spmap[(int)x][(int)y] = 15;
+	return 0;
+}
+
+/**
+* \brief TerrainIsLadderTop sets a node to be a ladder top.
+*
+* @param x The x location of the node
+* @param y The y location of the node
+*
+* \note This function should not be used or changed whem implementing a bot.
+*/
+GMEXPORT double TerrainIsLadderTop(double x, double y)
+{
+	spmap[(int)x][(int)y] = 3;
+	return 0;
+}
+
 
 /**
  * \brief TerrainIsEmpty sets a node to be empty.
@@ -1751,7 +1780,7 @@ GMEXPORT double GetNextPathYPos(double x, double y, double usingPixelCoords)
 */
 GMEXPORT double IsNodePassable(double x, double y, double usingPixelCoords)
 {
-	int passableTypes[] = {0, 2, 3, 4, 12 };
+	int passableTypes[] = {0, 2, 3, 4, 5, 12, 14 };
 
 	if (usingPixelCoords)
 		ConvertToNodeCoordinates(x, y);

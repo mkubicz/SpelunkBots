@@ -78,8 +78,8 @@ bool IMovementAction::IsNearLadderTop(int playerPosX, int playerPosY)
 	int playerNodeX = (int)_bot->GetPlayerPositionXNode();
 	int playerNodeY = (int)_bot->GetPlayerPositionYNode();
 
-	if (_bot->GetNodeState(playerNodeX, playerNodeY, NODE_COORDS) != spLadder &&
-		_bot->GetNodeState(playerNodeX, playerNodeY + 1, NODE_COORDS) == spLadder)
+	if (_bot->GetNodeState(playerNodeX, playerNodeY, NODE_COORDS) != spLadderTop &&
+		_bot->GetNodeState(playerNodeX, playerNodeY + 1, NODE_COORDS) == spLadderTop)
 		return true;
 
 	return false;

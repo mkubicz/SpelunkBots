@@ -42,9 +42,12 @@ ordersStruct DropAction::GetOrders()
 			//if you are right above ground don't jump; instead walk off
 			if (!_bot->IsNodePassable(_bot->GetPlayerPositionXNode(), _bot->GetPlayerPositionYNode() + 1, NODE_COORDS))
 				orders.jump = false;
+
+			_state = FALLING;
 		}
-		else
+		else if (_bot->GetSpelunkerState() == spSTANDING && _bot->GetNodeState(playerPosX, playerPosY + 16, PIXEL_COORDS) == spLadderTop)
 		{
+			orders.duck = true;
 			_state = FALLING;
 		}
 		break;

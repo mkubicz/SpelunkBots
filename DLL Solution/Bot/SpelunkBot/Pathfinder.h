@@ -13,8 +13,8 @@ public:
 
 	void InitializeGrid();
 
-	std::vector<MapSearchNode*> CalculateNeighboursList(MapSearchNode* node, MVSTATE mvstate);
-	std::vector<Node> CalculateNeighboursList(Node node, MVSTATE mvstate);
+	std::vector<MapSearchNode*> CalculateNeighboursList(MapSearchNode* node, MVSTATE mvstate, ACTION_TARGET target);
+	std::vector<Node> CalculateNeighboursList(Node node, MVSTATE mvstate, ACTION_TARGET target);
 
 	MapSearchNode* GetNodeFromGrid(int x, int y);
 	
@@ -65,6 +65,7 @@ private:
 	std::vector<Node> CalculateNeighboursHanging(Node node);
 	std::vector<Node> CalculateNeighboursClimbing(Node node);
 	std::vector<Node> CalculateNeighboursStanding(Node node);
+	std::vector<Node> CalculateNeighboursStandingLT(Node node);
 	std::vector<Node> CalculateNeighboursClimbingWithMomentum(Node node);
 
 	//tarjan's algorithm
@@ -83,5 +84,6 @@ private:
 	bool Pelna(int x, int y); //node is impassable
 	bool Ladder(int x, int y); //node contains a ladder
 	bool Ladder(MapSearchNode* n); //node contains a ladder
+	bool LadderTop(int x, int y); //node contains a laddertop
 	void AddNeighboursLR(int x, int y, bool right, std::vector<Node>* neighbours);
 };
