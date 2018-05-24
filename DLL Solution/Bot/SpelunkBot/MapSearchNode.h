@@ -28,7 +28,11 @@ private:
 	//used in FindExplorationTargets
 	bool _visited = false;
 
+	//result of tarjan's algorithm
 	int _CCnr;
+
+	//result of djikstra's algorithm
+	int _dist;
 
 public:
 	MapSearchNode();

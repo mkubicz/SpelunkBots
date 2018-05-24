@@ -120,5 +120,8 @@ bool IsJumpWithRunning(int distX, int distY, ACTION_TARGET jumpTarget)
 	if (abs(distX) == 3 && distY == -1 && jumpTarget == LEDGE)
 		withRunning = true;
 
+	if (abs(distX) == 4 && distY == 1)
+		withRunning = true;
+
 	return withRunning;
 }

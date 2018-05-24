@@ -14,6 +14,7 @@ ClimbAction::ClimbAction(IBot * bot, int distY)
 void ClimbAction::AddDistance(int distance)
 {
 	_distY += distance;
+	_targetNode = Node(_targetNode.GetX(), _targetNode.GetY() + distance);
 }
 
 ordersStruct ClimbAction::GetOrders()

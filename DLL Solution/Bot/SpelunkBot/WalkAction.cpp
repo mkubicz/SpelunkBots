@@ -21,6 +21,7 @@ WalkAction::WalkAction(IBot * bot, int distance, bool run)
 void WalkAction::AddDistance(int distance)
 {
 	_distance += distance;
+	_targetNode = Node(_targetNode.GetX() + distance, _targetNode.GetY());
 }
 
 ordersStruct WalkAction::GetOrders()

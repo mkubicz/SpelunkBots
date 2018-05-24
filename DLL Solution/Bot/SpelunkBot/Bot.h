@@ -49,11 +49,11 @@ SPELUNKBOT_API double NewLevel(void);
 ////Game objects management methods
 ////Copied from Spelunkbots to here for easier access to the lists of enemies and collectables
 ///*
-//	ResestEnemies removes all enemies from the enemiesList vector.
+//	ResestEnemies removes all enemies from the _enemiesList vector.
 //*/
 //SPELUNKBOT_API double ResetEnemies();
 ///*
-//	NodeContainsEnemy adds an enemy to the enemiesList vector.
+//	NodeContainsEnemy adds an enemy to the _enemiesList vector.
 //*/
 //SPELUNKBOT_API double NodeContainsEnemy(double x, double y, double type, double id);
 ///*

@@ -53,6 +53,7 @@ public:
 	MOVEMENTACTION ActionType();
 	DIRECTIONX GetDirectionX();
 	DIRECTIONY GetDirectionY();
+	Node GetTargetNode();
 	
 	virtual ordersStruct GetOrders() =0;
 

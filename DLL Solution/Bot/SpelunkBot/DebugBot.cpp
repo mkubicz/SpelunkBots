@@ -365,9 +365,16 @@ void DebugBot::BotLogic()
 		//czy to potrzebne? mo¿e jednak mo¿na liczyæ za ka¿dym razem?
 		if (_botLogicState == GATHER_FROM_CC || _botLogicState == EXPLORE_CC)
 		{
+			_objectManager->UpdateGameObjectLists();
+			_objectManager->ItemsDebug();
+			_objectManager->EnemiesDebug();
+
 			_pathfinder->CalculateConnectedComponents();
 			_pathfinder->SCCDebug();
 			currentCCnr = _pathfinder->GetCCnr((int)_playerPositionXNode, (int)_playerPositionYNode);
+
+			_pathfinder->Dijkstra((int)_playerPositionXNode, (int)_playerPositionYNode);
+			_pathfinder->DijkstraDebug();
 		}
 
 		switch (_botLogicState)
@@ -377,43 +384,50 @@ void DebugBot::BotLogic()
 			break;
 		case GATHER_FROM_CC:
 		{
-			std::vector<collectableObject> collectablesList = _objectManager->GetCollectables();
-			collectableObject c;
+			std::vector<Item> itemsList = _objectManager->GetTreasures();
+			Item *closest = NULL;
 
-			//mo¿na potem dodawaæ do kolejki zaczynaj¹c od najkrótszej œcie¿ki
-			//tylko to wymaga przeliczania œcie¿ek do mo¿liwych celów za ka¿dy cel który chcemy dodaæ
-			for (int i = 0; i < collectablesList.size(); i++)
+			if (_pathsQ.empty())
 			{
-				c = collectablesList[i];
-				if (_pathfinder->GetCCnr(c.x, c.y) == currentCCnr &&
-					!IsPathToTargetSheduled(c.x, c.y))
+				for (int i = 0; i < itemsList.size(); i++)
+				{
+					if (_pathfinder->GetCCnr(itemsList[i].GetX(), itemsList[i].GetY()) == currentCCnr)
+					{
+						if (closest == NULL)
+							closest = &itemsList[i];
+						else if (_pathfinder->GetDijDist(itemsList[i].GetX(), itemsList[i].GetY()) < _pathfinder->GetDijDist(closest->GetX(), closest->GetY()))
+							closest = &itemsList[i];
+					}
+				}
+
+				if (closest == NULL)
+					_botLogicState = EXPLORE_CC;
+				else
 				{
 					Node start = GetStartNodeForNextPath();
-					if (_pathfinder->TryToCalculatePath(start.GetX(), start.GetY(), c.x, c.y))
+					if (_pathfinder->TryToCalculatePath(start.GetX(), start.GetY(), closest->GetX(), closest->GetY()))
+					{
 						_pathsQ.push_back(_pathfinder->GetPathListNode());
+					}
 				}
 			}
-
-			if (!_pathsQ.empty())
+			else
 			{
 				_waitTimer = 10;
 				_botLogicWaiting = true;
 			}
-			else
-				_botLogicState = EXPLORE_CC;
 
 			break;
 		}
 		case EXPLORE_CC:
 		{
-			std::vector<collectableObject> collectablesList = _objectManager->GetCollectables();
-			collectableObject c;
+			std::vector<Item> itemsList = _objectManager->GetTreasures();
+			Item *item;
 			bool collectableFound = false;
-			for (int i = 0; i < collectablesList.size(); i++)
+			for (int i = 0; i < itemsList.size(); i++)
 			{
-				c = collectablesList[i];
-				if (_pathfinder->GetCCnr(c.x, c.y) == currentCCnr &&
-					!IsPathToTargetSheduled(c.x, c.y))
+				item = &itemsList[i];
+				if (_pathfinder->GetCCnr(item->GetX(), item->GetY()) == currentCCnr)
 				{
 					collectableFound = true;
 					break;
@@ -466,9 +480,9 @@ void DebugBot::BotLogic()
 		case PICK_TARGET_IN_NEXT_CC:
 		{
 			bool targetFound = false;
-			for each (collectableObject c in _objectManager->GetCollectables())
+			for each (Item i in _objectManager->GetTreasures())
 			{
-				if (_pathfinder->TryToCalculatePath((int)_playerPositionXNode, (int)_playerPositionYNode, c.x, c.y))
+				if (_pathfinder->TryToCalculatePath((int)_playerPositionXNode, (int)_playerPositionYNode, i.GetX(), i.GetY()))
 				{
 					targetFound = true;
 					_pathsQ.push_back(_pathfinder->GetPathListNode());
@@ -557,8 +571,6 @@ void DebugBot::BotLogic()
 
 void DebugBot::Update()
 {
-	//UPDATING INFO ABOUT ENEMIES AND COLLECTABLES
-	_objectManager->UpdateGameObjectLists();
 
 	//PRINTING DEBUG INFO TO FILES
 	if (_debugTimer < 0)
@@ -569,78 +581,70 @@ void DebugBot::Update()
 	}
 	_debugTimer -= 1;
 
-	_objectManager->CollectablesDebug();
-	_objectManager->EnemiesDebug();
 
-	switch (_secState)
+	bool ready = false;
+
+	while (!ready)
 	{
-	case DebugBot::sIDLE:
-		break;
-	case DebugBot::EXECUTING_COMMANDS:
-		if (!_actionsQ.empty())
+		switch (_secState)
 		{
-			ordersStruct orders = (_actionsQ.front())->GetOrders();
-
-			ExecuteOrders(orders);
-
-			if ((_actionsQ.front())->ActionDone())
+		case DebugBot::sIDLE:
+			break;
+		case DebugBot::EXECUTING_COMMANDS:
+			if (!_actionsQ.empty())
 			{
-				delete _actionsQ.front();
-				_actionsQ.pop();
-				ClearOrders();
-			
-				//exploration breaking
-				//if (_pathsQ.front().first.exploration && _breakExploration)
+				ordersStruct orders = (_actionsQ.front())->GetOrders();
+				ExecuteOrders(orders);
+				ready = true;
+
+				if ((_actionsQ.front())->ActionDone())
+				{
+					delete _actionsQ.front();
+					_actionsQ.pop();
+					ClearOrders();
+					ready = false;
+				}
+			}
+			else
+			{
+				_pathsQ.pop_front();
+				_secState = WAITING_FOR_PATH;
+			}
+			break;
+		case DebugBot::WAITING_FOR_PATH:
+			if (!_pathsQ.empty())
+			{
+				CreateCommands(_pathsQ.front());
+				_secState = EXECUTING_COMMANDS;
+			}
+			else
+				ready = true;
+			break;
+		case DebugBot::DEBUG:
+			if (!_actionsQ.empty())
+			{
+				ordersStruct orders = (_actionsQ.front())->GetOrders();
+
+				ExecuteOrders(orders);
+
+				if ((_actionsQ.front())->ActionDone())
+				{
+					delete _actionsQ.front();
+					_actionsQ.pop();
+					ClearOrders();
+				}
+
+				//for jump from ladder with momentum testing
+				//if (!_actionsQ.empty())
 				//{
-				//	while (!_actionsQ.empty())
-				//	{
-				//		delete _actionsQ.front();
-				//		_actionsQ.pop();
-				//	}
-				//	_pathsQ.pop_front();
-				//	
-				//	_breakExploration = false;
-				//	_secState = WAITING_FOR_PATH;
+				//	if (_actionsQ.front()->ActionType() == WALK ||
+				//		_actionsQ.front()->ActionType() == CLIMB)
+				//		_runp = true;
 				//}
 			}
+		default:
+			break;
 		}
-		else
-		{
-			_pathsQ.pop_front();
-			_secState = WAITING_FOR_PATH;
-		}
-		break;
-	case DebugBot::WAITING_FOR_PATH:
-		if (!_pathsQ.empty())
-		{
-			CreateCommands(_pathsQ.front());
-			_secState = EXECUTING_COMMANDS;
-		}
-		break;
-	case DebugBot::DEBUG:
-		if (!_actionsQ.empty())
-		{
-			ordersStruct orders = (_actionsQ.front())->GetOrders();
-
-			ExecuteOrders(orders);
-					
-			if ((_actionsQ.front())->ActionDone())
-			{
-				delete _actionsQ.front();
-				_actionsQ.pop();
-				ClearOrders();
-			}
-
-			//for jump from ladder with momentum testing
-			//if (!_actionsQ.empty())
-			//{
-			//	if (_actionsQ.front()->ActionType() == WALK ||
-			//		_actionsQ.front()->ActionType() == CLIMB)
-			//		_runp = true;
-			//}
-		}
-	default:
-		break;
 	}
 
 }

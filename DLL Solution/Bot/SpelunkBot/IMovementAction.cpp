@@ -38,6 +38,11 @@ DIRECTIONY IMovementAction::GetDirectionY()
 	return _directionY;
 }
 
+Node IMovementAction::GetTargetNode()
+{
+	return _targetNode;
+}
+
 
 Node IMovementAction::CalculateTargetNode(int distXNode, int distYNode)
 {

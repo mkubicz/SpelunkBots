@@ -88,6 +88,7 @@
     <ClInclude Include="DropAction.h" />
     <ClInclude Include="HangAction.h" />
     <ClInclude Include="IMovementAction.h" />
+    <ClInclude Include="Item.h" />
     <ClInclude Include="JordanBot.h" />
     <ClInclude Include="Bot.h" />
     <ClInclude Include="DiscoveryDan.h" />
@@ -103,9 +104,11 @@
     <ClInclude Include="NotSoSolidSnake.h" />
     <ClInclude Include="ObjectManager.h" />
     <ClInclude Include="Pathfinder.h" />
+    <ClInclude Include="PickUpItemAction.h" />
     <ClInclude Include="SeanBean.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="ThrowItemAction.h" />
     <ClInclude Include="Utilities.h" />
     <ClInclude Include="WalkAction.h" />
     <ClInclude Include="WalkOffLedgeAction.h" />
@@ -119,6 +122,7 @@
     <ClCompile Include="DropAction.cpp" />
     <ClCompile Include="HangAction.cpp" />
     <ClCompile Include="IMovementAction.cpp" />
+    <ClCompile Include="Item.cpp" />
     <ClCompile Include="JordanBot.cpp" />
     <ClCompile Include="DiscoveryDan.cpp" />
     <ClCompile Include="dllmain.cpp">
@@ -142,11 +146,13 @@
     <ClCompile Include="NotSoSolidSnake.cpp" />
     <ClCompile Include="ObjectManager.cpp" />
     <ClCompile Include="Pathfinder.cpp" />
+    <ClCompile Include="PickUpItemAction.cpp" />
     <ClCompile Include="SeanBean.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="ThrowItemAction.cpp" />
     <ClCompile Include="Utilities.cpp" />
     <ClCompile Include="WalkAction.cpp" />
     <ClCompile Include="WalkOffLedgeAction.cpp" />

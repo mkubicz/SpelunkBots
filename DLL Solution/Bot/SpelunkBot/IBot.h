@@ -64,6 +64,9 @@ typedef double(__cdecl *GetNextPathYPosPROC)(double x, double y, double usingPix
 typedef double(__cdecl *IsEnemyInNodePROC)(double x, double y, double usingPixelCoords);
 typedef double(__cdecl *IsCollectableInNodePROC)(double x, double y, double usingPixelCoords);
 typedef double(__cdecl *IsNodePassablePROC)(double x, double y, double usingPixelCoords);
+typedef bool(__cdecl *IsArrowTrapDisarmedPROC)(int x, int y);
+typedef int(__cdecl *GetHeldItemIDPROC)();
+typedef bool(__cdecl *IsHoldingItemPROC)();
 
 typedef double(__cdecl *DisplayLevelLayoutPROC)();
 typedef bool(__cdecl *IsFacingLeftPROC)();
@@ -187,6 +190,9 @@ public:
 	IsEnemyInNodePROC IsEnemyInNode;
 	IsCollectableInNodePROC IsCollectableInNode;
 	IsNodePassablePROC IsNodePassable;
+	IsArrowTrapDisarmedPROC IsArrowTrapDisarmed;
+	GetHeldItemIDPROC GetHeldItemID;
+	IsHoldingItemPROC IsHoldingItem;
 
 	DisplayLevelLayoutPROC DisplayLevelLayout;
 	IsFacingLeftPROC IsFacingLeft;

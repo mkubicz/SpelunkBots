@@ -116,6 +116,8 @@ void JumpAction::SetMovementRange()
 		case 4:
 			if (_distY == -1)
 				_moveRange = 24;
+			if (_distY == 1)
+				_moveRange = 24;
 			break;
 		case 5:
 			if (_distY == 0 || _distY == 1 || _distY == 2)

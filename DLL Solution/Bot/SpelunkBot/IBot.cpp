@@ -117,6 +117,9 @@ void IBot::InitialiseDLLFunctions()
 	IsEnemyInNode = (IsEnemyInNodePROC)GetProcAddress(spelunkbots_hModule, "IsEnemyInNode");
 	IsCollectableInNode = (IsCollectableInNodePROC)GetProcAddress(spelunkbots_hModule, "IsCollectableInNode");
 	IsNodePassable = (IsNodePassablePROC)GetProcAddress(spelunkbots_hModule, "IsNodePassable");
+	IsArrowTrapDisarmed = (IsArrowTrapDisarmedPROC)GetProcAddress(spelunkbots_hModule, "IsArrowTrapDisarmed");
+	GetHeldItemID = (GetHeldItemIDPROC)GetProcAddress(spelunkbots_hModule, "GetHeldItemID");
+	IsHoldingItem = (IsHoldingItemPROC)GetProcAddress(spelunkbots_hModule, "IsHoldingItem");
 	
 	DisplayLevelLayout = (DisplayLevelLayoutPROC)GetProcAddress(spelunkbots_hModule, "DisplayLevelLayout");
 	IsFacingLeft = (IsFacingLeftPROC)GetProcAddress(spelunkbots_hModule, "IsFacingLeft");
@@ -140,7 +143,14 @@ void IBot::Reset()
 	_goRight = false;
 	_goLeft = false;
 	_jump = false;
+	_duck = false;
+	_lookUp = false;
+	_runp = false;
 	_attack = false;
+	_bombp = false;
+	_ropep = false;
+	_payp = false;
+	_itemp = false;
 }
 
 void IBot::UpdateBotPosition(double nodeX, double nodeY)

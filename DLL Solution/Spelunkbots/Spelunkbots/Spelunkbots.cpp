@@ -85,6 +85,26 @@ double spTimeInLevel;
 double spHitPoints;
 double spMoney;
 
+enum TerrainType
+{
+	spEmptyNode = 0,
+	spStandardTerrain,
+	spLadder,
+	spLadderTop,
+	spExit,
+	spEntrance,
+	spArrowTrapRight,
+	spArrowTrapLeft,
+	spIsInShop,
+	spIce,
+	spSpike,
+	spSpearTrap,
+	spGameEntrance,
+	spTree,
+	spTreeBranchLeaf,
+	spSpringTrap,
+	spSacAltar
+};
 
 // hold arrays of each type of object in here 
 // means user can query the nearest object, or all of them
@@ -108,8 +128,11 @@ double spiderWebs[X_NODES][Y_NODES];
 double pushBlocks[X_NODES][Y_NODES];
 double bats[X_NODES][Y_NODES];
 
+int _heldItemID = 0;
+
 std::vector<collectableObject> collectablesList;
 std::vector<enemyObject> enemiesList;
+vector<pair<int, int>> disarmedArrowTraps;
 
 double hasResetMap = 0;
 
@@ -338,7 +361,7 @@ GMEXPORT double DestroyFog(double x, double y)
 */
 GMEXPORT double TerrainIsLadder(double x, double y)
 {
-	spmap[(int)x][(int)y] = 2;
+	spmap[(int)x][(int)y] = spLadder;
 	return 0;
 }
 
@@ -352,7 +375,7 @@ GMEXPORT double TerrainIsLadder(double x, double y)
 */
 GMEXPORT double TerrainIsGoal(double x, double y)
 {
-	spmap[(int)x][(int)y] = 4;
+	spmap[(int)x][(int)y] = spExit;
 	return 0;
 }
 
@@ -366,7 +389,7 @@ GMEXPORT double TerrainIsGoal(double x, double y)
 */
 GMEXPORT double TerrainIsStart(double x, double y)
 {
-	spmap[(int)x][(int)y] = 5;
+	spmap[(int)x][(int)y] = spEntrance;
 	return 0;
 }
 
@@ -380,7 +403,7 @@ GMEXPORT double TerrainIsStart(double x, double y)
 */
 GMEXPORT double TerrainIsAltar(double x, double y)
 {
-	spmap[(int)x][(int)y] = 16;
+	spmap[(int)x][(int)y] = spSacAltar;
 	return 0;
 }
 
@@ -394,7 +417,7 @@ GMEXPORT double TerrainIsAltar(double x, double y)
 */
 GMEXPORT double TerrainIsArrowTrapRight(double x, double y)
 {
-	spmap[(int)x][(int)y] = 6;
+	spmap[(int)x][(int)y] = spArrowTrapRight;
 	return 0;
 }
 
@@ -408,7 +431,7 @@ GMEXPORT double TerrainIsArrowTrapRight(double x, double y)
 */
 GMEXPORT double TerrainIsArrowTrapLeft(double x, double y)
 {
-	spmap[(int)x][(int)y] = 7;
+	spmap[(int)x][(int)y] = spArrowTrapLeft;
 	return 0;
 }
 
@@ -422,7 +445,7 @@ GMEXPORT double TerrainIsArrowTrapLeft(double x, double y)
 */
 GMEXPORT double TerrainIsShopKeeperArea(double x, double y)
 {
-	spmap[(int)x][(int)y] = 8;
+	spmap[(int)x][(int)y] = spIsInShop;
 	return 0;
 }
 
@@ -436,7 +459,7 @@ GMEXPORT double TerrainIsShopKeeperArea(double x, double y)
 */
 GMEXPORT double TerrainIsIce(double x, double y)
 {
-	spmap[(int)x][(int)y] = 9;
+	spmap[(int)x][(int)y] = spIce;
 	return 0;
 }
 
@@ -450,7 +473,7 @@ GMEXPORT double TerrainIsIce(double x, double y)
 */
 GMEXPORT double TerrainIsSpike(double x, double y)
 {
-	spmap[(int)x][(int)y] = 10;
+	spmap[(int)x][(int)y] = spSpike;
 	return 0;
 }
 
@@ -464,7 +487,7 @@ GMEXPORT double TerrainIsSpike(double x, double y)
 */
 GMEXPORT double TerrainIsSpearTrap(double x, double y)
 {
-	spmap[(int)x][(int)y] = 11;
+	spmap[(int)x][(int)y] = spSpearTrap;
 	return 0;
 }
 
@@ -506,7 +529,7 @@ GMEXPORT double TerrainIsLava(double x, double y)
 */
 GMEXPORT double TerrainIsGameEntrance(double x, double y)
 {
-	spmap[(int)x][(int)y] = 12;
+	spmap[(int)x][(int)y] = spGameEntrance;
 	return 0;
 }
 
@@ -520,7 +543,7 @@ GMEXPORT double TerrainIsGameEntrance(double x, double y)
 */
 GMEXPORT double TerrainIsTree(double x, double y)
 {
-	spmap[(int)x][(int)y] = 13;
+	spmap[(int)x][(int)y] = spTree;
 	return 0;
 }
 
@@ -534,7 +557,7 @@ GMEXPORT double TerrainIsTree(double x, double y)
 */
 GMEXPORT double TerrainIsTreeBranchLeaf(double x, double y)
 {
-	spmap[(int)x][(int)y] = 14;
+	spmap[(int)x][(int)y] = spTreeBranchLeaf;
 	return 0;
 }
 
@@ -548,7 +571,7 @@ GMEXPORT double TerrainIsTreeBranchLeaf(double x, double y)
 */
 GMEXPORT double TerrainIsSpringTrap(double x, double y)
 {
-	spmap[(int)x][(int)y] = 15;
+	spmap[(int)x][(int)y] = spSpringTrap;
 	return 0;
 }
 
@@ -562,7 +585,7 @@ GMEXPORT double TerrainIsSpringTrap(double x, double y)
 */
 GMEXPORT double TerrainIsLadderTop(double x, double y)
 {
-	spmap[(int)x][(int)y] = 3;
+	spmap[(int)x][(int)y] = spLadderTop;
 	return 0;
 }
 
@@ -615,7 +638,7 @@ GMEXPORT double FillShopkeeperArea(double x, double y)
 	// TODO
 	// find each shopkeeper area in the map
 	// populate sensibly
-	spmap[(int)x][(int)y] = 8;
+	spmap[(int)x][(int)y] = spIsInShop;
 	return 0;
 }
 
@@ -1780,7 +1803,7 @@ GMEXPORT double GetNextPathYPos(double x, double y, double usingPixelCoords)
 */
 GMEXPORT double IsNodePassable(double x, double y, double usingPixelCoords)
 {
-	int passableTypes[] = {0, 2, 3, 4, 5, 12, 14 };
+	int passableTypes[] = {spEmptyNode, spLadder, spLadderTop, spExit, spEntrance, spGameEntrance, spTreeBranchLeaf, spSpringTrap, spSpike, spIce, spIsInShop };
 
 	if (usingPixelCoords)
 		ConvertToNodeCoordinates(x, y);
@@ -2152,6 +2175,78 @@ GMEXPORT int GetRopes()
 GMEXPORT int GetBombs()
 {
 	return spBombs;
+}
+
+
+/**
+* \brief ArrowTrapDisarmed Marks an arrow trap as disarmed. 
+*
+* @param x x coordinate of the arrowtrap.
+* @param y y coordinate of the arrowtrap.
+*
+* \note This function should not be changed or used when implementing a bot.
+*/
+GMEXPORT double ArrowTrapDisarmed(double x, double y)
+{
+	ConvertToNodeCoordinates(x, y);
+	disarmedArrowTraps.push_back(make_pair((int)x, (int)y));
+	return 0;
+}
+
+/**
+* \brief ResetDisarmedArrowTraps Resets disarmed traps for a new level. 
+*
+* \note This function should not be changed or used when implementing a bot.
+*/
+GMEXPORT double ResetDisarmedArrowTraps()
+{
+	disarmedArrowTraps.clear();
+	return 0;
+}
+
+/**
+* \brief GetBombs Returns true if there is an arrow trap in x,y coordinates and it is disarmed.
+* \note To be used by the bot.
+*/
+GMEXPORT bool IsArrowTrapDisarmed(int x, int y)
+{
+	for (int i = 0; i < disarmedArrowTraps.size(); i++)
+		if (disarmedArrowTraps[i].first == x &&
+			disarmedArrowTraps[i].second == y)
+			return true;
+	
+	return false;
+}
+
+/**
+* \brief SetHeldItemID Sets ID of item currently in Spelunkers hands.
+*
+* \note This function should not be changed or used when implementing a bot.
+*/
+GMEXPORT double SetHeldItemID(double ID)
+{
+	_heldItemID = ID;
+	return 0;
+}
+
+/**
+* \brief GetHeldItemID Gets ID of item currently in Spelunkers hands.
+*
+* \note To be used by the bot.
+*/
+GMEXPORT int GetHeldItemID()
+{
+	return _heldItemID;
+}
+
+/**
+* \brief GetHeldItemID Returns true if Spelunker is holding something in his hands.
+*
+* \note To be used by the bot.
+*/
+GMEXPORT int IsHoldingItem()
+{
+	return GetHeldItemID() != 0;
 }
 
 #pragma endregion

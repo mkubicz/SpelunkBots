@@ -19,16 +19,10 @@
 //#include "Node.h"
 #include <time.h>
 
+#pragma region Constants and structs
+
 const int NODE_COORDS = 0;
 const int PIXEL_COORDS = 1;
-
-const int NONE = -1;
-
-//const int LEFT = 0;
-//const int RIGHT = 1;
-//
-//const int DOWN = 0;
-//const int UP = 1;
 
 const int NORUN = 0;
 const int RUN = 1;
@@ -68,6 +62,10 @@ struct moveTarget {
 		: moveTarget(c.x, c.y) {};
 };
 
+#pragma endregion
+
+#pragma region Enums
+
 enum DIRECTIONX {
 	xLEFT = -1,
 	xNONE = 0,
@@ -87,15 +85,6 @@ enum ACTION_TARGET {
 	LEDGE
 };
 
-const std::string ActionTargetStrings[] =
-{
-	"GROUND",
-	"LADDER",
-	"LADDERTOP",
-	"LEDGE"
-};
-
-
 enum MOVEMENTACTION
 {
 	IDLE,
@@ -104,7 +93,6 @@ enum MOVEMENTACTION
 	HANG,
 	DROP,
 	HANGDROP,
-	WALKUP,
 	CLIMBFROMHANG,
 	CLIMB,
 	JUMPABOVERIGHT, //jumpabove is split to left/right because its target is always right above spelunkers head, so we cant infer the direction from it
@@ -112,49 +100,6 @@ enum MOVEMENTACTION
 	JUMP,
 	JUMPFROMLADDER,
 	WALKOFFLEDGE,
-};
-
-
-const std::string MVactionStrings[] =
-{ 
-	"IDLE",
-	"CENTRALIZE",
-	"WALK",
-	"HANG",
-	"DROP",
-	"HANGDROP",
-	"WALKUP",
-	"CLIMBFROMHANG",
-	"CLIMB",
-	"JUMPABOVERIGHT",
-	"JUMPABOVELEFT",
-	"JUMP",
-	"JUMPFROMLADDER",
-	"WALKOFFLEDGE"
-};
-
-const std::string BotLogicStrings[] = 
-{ 
-	"IDLE",
-	"EXIT",
-	"WAITING",
-	"GATHER_FROM_CC",
-	"EXPLORE_CC",
-	"PICK_TARGET_IN_NEXT_CC",
-	"MOVE_TO_NEXT_CC",
-	"SEARCH_FOR_EXIT",
-	"GO_TO_EXIT",
-	"EXIT_REACHED",
-	"UNREACHABLE_EXIT",
-	"NO_EXIT_EXPLORE",
-	"NO_EXIT_ERROR"
-
-};
-
-
-enum VariableType
-{
-	TYPE_BOOLEAN = 0, TYPE_STRING, TYPE_DOUBLE
 };
 
 enum SpState
@@ -205,7 +150,20 @@ enum TerrainType
 	spSacAltar
 };
 
-enum Collectable
+enum ItemKind
+{
+	JunkLight,
+	JunkHeavy,
+	Treasure,
+	Weapon,
+	Equipable,
+	Other,
+	NotInGame
+};
+
+
+
+enum ItemType
 {
 	spGoldBar = 1,
 	spGoldBars,
@@ -246,22 +204,18 @@ enum Collectable
 	spRopeBag,
 
 	// TODO IMPLEMENT THESE
-	//spRope = 36;
-	spBomb = 37,
+	spRope,
+	spBomb,
 	spFireFrogBomb,
 	spRock,
 	spDice,
 
 	spMattockHead,
-
-	// spBasketball = 42;
-
-	spShotgun = 43,
-
+	spBasketball,
+	spShotgun,
 	spPistol,
 	spWebCannon,
 	spTeleporter,
-
 	spBow,
 	spMachete,
 	spSceptre,
@@ -269,15 +223,13 @@ enum Collectable
 	spJar,
 	spSkull,
 	spArrow,
-
 	spFishBone,
 	spFlare,
 	spGoldIdol,
 	spCrystalSkull,
 	spLampItem,
 
-	spDamsel = 64,
-
+	spDamsel,
 	spBlock,
 	spPushBlock,
 	spDarkFall
@@ -330,3 +282,131 @@ enum Threats
 	spBoulder
 	//spSpringTrap = 99
 };
+
+#pragma endregion
+
+#pragma region String maps
+
+const std::string ItemTypeStrings[] =
+{
+	"nothing",
+	"GoldBar",
+	"GoldBars",
+	"Emerald",
+	"EmeraldBig",
+	"Sapphire",
+	"SapphireBig",
+	"Ruby",
+	"RubyBig",
+	"Diamond",
+	"GoldNugget",
+	"GoldChunk",
+	"Chest",
+	"LockedChest",
+	"Key",
+	"Crate",
+	"FlareCrate",
+	"BombBag",
+	"BombBox",
+	"Paste",
+	"RopePile",
+	"Parachute",
+	"Compass",
+	"SpringShoes",
+	"SpikeShoes",
+	"Jordans",
+	"Specs",
+	"Udjat",
+	"Crown",
+	"Kapala",
+	"Ankh",
+	"Gloves",
+	"Mitt",
+	"Jetpack",
+	"Cape",
+	"RopeBag",
+	"Rope",
+	"Bomb",
+	"FireFrogBomb",
+	"Rock",
+	"Dice",
+	"MattockHead",
+	"Basketball",
+	"Shotgun",
+	"Pistol",
+	"WebCannon",
+	"Teleporter",
+	"Bow",
+	"Machete",
+	"Sceptre",
+	"Mattock",
+	"Jar",
+	"Skull",
+	"Arrow",
+	"FishBone",
+	"Flare",
+	"GoldIdol",
+	"CrystalSkull",
+	"LampItem",
+	"Damsel",
+	"Block",
+	"PushBlock",
+	"DarkFall"
+};
+
+const std::string ItemKindStrings[] =
+{
+	"JunkLight",
+	"JunkHeavy",
+	"Treasure",
+	"Weapon",
+	"Equipable",
+	"Other",
+	"NotInGame"
+};
+
+const std::string ActionTargetStrings[] =
+{
+	"GROUND",
+	"LADDER",
+	"LADDERTOP",
+	"LEDGE"
+};
+
+
+const std::string MVactionStrings[] =
+{
+	"IDLE",
+	"CENTRALIZE",
+	"WALK",
+	"HANG",
+	"DROP",
+	"HANGDROP",
+	"CLIMBFROMHANG",
+	"CLIMB",
+	"JUMPABOVERIGHT",
+	"JUMPABOVELEFT",
+	"JUMP",
+	"JUMPFROMLADDER",
+	"WALKOFFLEDGE"
+};
+
+const std::string BotLogicStrings[] =
+{
+	"IDLE",
+	"EXIT",
+	"WAITING",
+	"GATHER_FROM_CC",
+	"EXPLORE_CC",
+	"PICK_TARGET_IN_NEXT_CC",
+	"MOVE_TO_NEXT_CC",
+	"SEARCH_FOR_EXIT",
+	"GO_TO_EXIT",
+	"EXIT_REACHED",
+	"UNREACHABLE_EXIT",
+	"NO_EXIT_EXPLORE",
+	"NO_EXIT_ERROR"
+
+};
+
+#pragma endregion

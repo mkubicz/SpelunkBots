@@ -147,6 +147,15 @@
     <ClInclude Include="JumpAction.h">
       <Filter>Header Files\Bots\DebugBot\Actions</Filter>
     </ClInclude>
+    <ClInclude Include="Item.h">
+      <Filter>Header Files\Bots\DebugBot\ObjectManager</Filter>
+    </ClInclude>
+    <ClInclude Include="PickUpItemAction.h">
+      <Filter>Header Files\Bots\DebugBot\Actions</Filter>
+    </ClInclude>
+    <ClInclude Include="ThrowItemAction.h">
+      <Filter>Header Files\Bots\DebugBot\Actions</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -218,9 +227,6 @@
     <ClCompile Include="ClimbFromHangAction.cpp">
       <Filter>Source Files\Bots\DebugBot\Actions</Filter>
     </ClCompile>
-    <ClCompile Include="HangAction.cpp">
-      <Filter>Source Files\Bots\DebugBot\Actions</Filter>
-    </ClCompile>
     <ClCompile Include="DropAction.cpp">
       <Filter>Source Files\Bots\DebugBot\Actions</Filter>
     </ClCompile>
@@ -234,6 +240,18 @@
       <Filter>Source Files\Bots\DebugBot\Actions</Filter>
     </ClCompile>
     <ClCompile Include="JumpFromLadderAction.cpp">
+      <Filter>Source Files\Bots\DebugBot\Actions</Filter>
+    </ClCompile>
+    <ClCompile Include="HangAction.cpp">
+      <Filter>Source Files\Bots\DebugBot\Actions</Filter>
+    </ClCompile>
+    <ClCompile Include="Item.cpp">
+      <Filter>Source Files\Bots\DebugBot\ObjectManager</Filter>
+    </ClCompile>
+    <ClCompile Include="PickUpItemAction.cpp">
+      <Filter>Source Files\Bots\DebugBot\Actions</Filter>
+    </ClCompile>
+    <ClCompile Include="ThrowItemAction.cpp">
       <Filter>Source Files\Bots\DebugBot\Actions</Filter>
     </ClCompile>
   </ItemGroup>

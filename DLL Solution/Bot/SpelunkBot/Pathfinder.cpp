@@ -36,11 +36,15 @@ void Pathfinder::InitializeGrid()
 	for (int i = 0; i < X_NODES; i++)
 		for (int j = 0; j < Y_NODES; j++)
 			_grid[i][j] = new MapSearchNode(i,j);
+
+	_exit = Node(-1, -1);
+	_exitFound = false;
 }
 
 #pragma endregion
 
 #pragma region Simplicity/node state methods
+
 
 bool Pathfinder::Pusta(int x, int y)
 {
@@ -68,6 +72,177 @@ bool Pathfinder::LadderTop(int x, int y)
 	return _bot->GetNodeState(x, y, NODE_COORDS) == spLadderTop;
 }
 
+bool Pathfinder::Spikes(int x, int y)
+{
+	return _bot->GetNodeState(x, y, NODE_COORDS) == spSpike;
+}
+
+bool Pathfinder::ArrowTrapR(int x, int y)
+{
+	return _bot->GetNodeState(x, y, NODE_COORDS) == spArrowTrapRight;
+}
+
+bool Pathfinder::ArrowTrapL(int x, int y)
+{
+	return _bot->GetNodeState(x, y, NODE_COORDS) == spArrowTrapLeft;
+}
+
+bool Pathfinder::TikiTrap(int x, int y)
+{
+	return _bot->GetNodeState(x, y, NODE_COORDS) == spSpearTrap;
+}
+
+std::vector<Node> Pathfinder::GetPathBetweenNodes(Node start, Node end, MOVEMENTACTION used_action)
+{
+	std::vector<Node> path;
+
+	int startX, startY, endX, endY, x ,y;
+	startX = start.GetX();
+	startY = start.GetY();
+	endX = end.GetX();
+	endY = end.GetY();
+	DIRECTIONX dirX;
+	DIRECTIONY dirY;
+	bool tick;
+
+	switch (used_action)
+	{
+	case IDLE:
+	case CENTRALIZE:
+	case WALK:
+	case CLIMB:
+		path.push_back(end);
+		break;
+	case HANG:
+		path.push_back(Node(endX, endY - 1));
+		path.push_back(end);
+		break;
+	case CLIMBFROMHANG:
+		path.push_back(Node(startX, startY - 1));
+		path.push_back(end);
+		break;
+
+	case DROP:
+		if (startY > endY) cout << "Error in GetPathBetweenNodes: Upwards drop.";
+		else
+		{
+			y = startY;
+			while (y != endY)
+			{
+				y++;
+				path.push_back(Node(endX, y));
+			}
+		}
+
+		break;
+	case JUMPABOVERIGHT:
+		path.push_back(Node(startX + 1, startY));
+		path.push_back(Node(startX + 1, startY - 1));
+		path.push_back(Node(startX + 1, startY - 2));
+		path.push_back(end);
+		break;
+	case JUMPABOVELEFT:
+		path.push_back(Node(startX - 1, startY));
+		path.push_back(Node(startX - 1, startY - 1));
+		path.push_back(Node(startX - 1, startY - 2));
+		path.push_back(end);
+		break;
+
+	case JUMP:
+	case JUMPFROMLADDER:
+		if (endX - startX > 0) dirX = xRIGHT;
+		else if (endX == startX) dirX = xNONE;
+		else dirX = xLEFT;
+
+		if (endY - startY > 0) dirY = yDOWN;
+		else if (endX == startX) dirY = yNONE;
+		else dirY = yUP;
+
+		if (dirX == xNONE)
+		{
+			x = startX;
+			y = startY;
+			while (y != endY)
+			{
+				y < endY ? y++ : y--;
+				path.push_back(Node(x, y));
+			}
+		}
+		else
+		{
+			x = dirX == xRIGHT ? startX + 1 : startX - 1;
+			y = startY - 1;
+			path.push_back(Node(x, y));
+
+			if (x != endX)
+			{
+				dirX == xRIGHT ? x++ : x--;
+				y--;
+				path.push_back(Node(x, y));
+
+				tick = false;
+				while (x != endX)
+				{
+					dirX == xRIGHT ? x++ : x--;
+					if (tick) y++;
+					path.push_back(Node(x, y));
+
+					tick = tick ? false : true;
+				}
+			}
+
+			while (y != endY)
+			{
+				y < endY ? y++ : y--;
+				path.push_back(Node(x, y));
+			}
+		}
+		break;
+	case WALKOFFLEDGE:
+		if (endX - startX > 0) dirX = xRIGHT;
+		else if (endX == startX) dirX = xNONE;
+		else dirX = xLEFT;
+
+		if (dirX == xNONE)
+		{
+			y = startY;
+			while (y != endY)
+			{
+				y < endY ? y++ : y--;
+				path.push_back(Node(x, y));
+			}
+		}
+		else
+		{
+			x = dirX == xRIGHT ? startX + 1 : startX - 1;
+			y = startY;
+			path.push_back(Node(x, y));
+
+			tick = true;
+			while (x != endX)
+			{
+				dirX == xRIGHT ? x++ : x--;
+				if (tick) y++;
+				path.push_back(Node(x, y));
+
+				tick = tick ? false : true;
+			}
+
+			while (y != endY)
+			{
+				y < endY ? y++ : y--;
+				path.push_back(Node(x, y));
+			}
+		}
+		break;
+	default:
+		path.push_back(end);
+		break;
+	}
+
+	return path;
+}
+
 bool Pathfinder::IsOutOfBounds(int x, int y)
 {
 	if (x < 0 || x >= X_NODES ||
@@ -79,15 +254,26 @@ bool Pathfinder::IsOutOfBounds(int x, int y)
 
 bool Pathfinder::CanStandInNode(int x, int y)
 {
-	if (!IsInFog(x, y) && !IsInFog(x, y + 1))
-		return _bot->IsNodePassable(x, y, NODE_COORDS) && !_bot->IsNodePassable(x, y + 1, NODE_COORDS);
-	else
-		return false;
+	return !IsInFog(x, y) && !IsInFog(x, y + 1) &&
+		_bot->IsNodePassable(x, y, NODE_COORDS) &&
+		(!_bot->IsNodePassable(x, y + 1, NODE_COORDS) || LadderTop(x, y + 1));
+
 }
 
 bool Pathfinder::CanStandInNode(MapSearchNode* n)
 {
 	return CanStandInNode(n->_x, n->_y);
+}
+
+bool Pathfinder::CanHangInNode(MapSearchNode * n)
+{
+	return !IsInFog(n) && Pusta(n->_x, n->_y) && Pusta(n->_x, n->_y - 1) &&
+		((Pelna(n->_x + 1, n->_y) && Pusta(n->_x + 1, n->_y - 1)) || (Pelna(n->_x - 1, n->_y) && Pusta(n->_x - 1, n->_y - 1)));
+}
+
+bool Pathfinder::IsNodeValidBotPosition(MapSearchNode * n)
+{
+	return CanStandInNode(n) || Ladder(n) || CanHangInNode(n);
 }
 
 bool Pathfinder::IsInFog(MapSearchNode * n)
@@ -104,6 +290,16 @@ bool Pathfinder::IsFogOnMap()
 	return false;
 }
 
+int Pathfinder::CalculateDistance(MapSearchNode * n, MapSearchNode * m)
+{
+	return abs(n->_x - m->_x) + abs(n->_y - m->_y);
+}
+
+int Pathfinder::CalculateDistance(Node * n, Node * m)
+{
+	return abs(n->GetX() - m->GetX()) + abs(n->GetX() - m->GetY());
+}
+
 bool Pathfinder::IsInFog(int x, int y)
 {
 	return _bot->GetFogState(x, y, NODE_COORDS);
@@ -111,14 +307,24 @@ bool Pathfinder::IsInFog(int x, int y)
 
 bool Pathfinder::isCloseToFog(int x, int y, int closeness)
 {
-	//shorter check; might not be enough
-	if ((!IsOutOfBounds(x + closeness, y) && _bot->GetFogState(x + closeness, y, NODE_COORDS) == 1) ||
-		(!IsOutOfBounds(x, y + closeness) && _bot->GetFogState(x, y + closeness, NODE_COORDS) == 1) ||
-		(!IsOutOfBounds(x - closeness, y) && _bot->GetFogState(x - closeness, y, NODE_COORDS) == 1) ||
-		(!IsOutOfBounds(x, y - closeness) && _bot->GetFogState(x, y - closeness, NODE_COORDS) == 1))
-		return true;
+	for (int i = 1; i <= closeness; i++)
+		if ((!IsOutOfBounds(x + i, y) && _bot->GetFogState(x + i, y, NODE_COORDS) == 1) ||
+			(!IsOutOfBounds(x, y + i) && _bot->GetFogState(x, y + i, NODE_COORDS) == 1) ||
+			(!IsOutOfBounds(x - i, y) && _bot->GetFogState(x - i, y, NODE_COORDS) == 1) ||
+			(!IsOutOfBounds(x, y - i) && _bot->GetFogState(x, y - i, NODE_COORDS) == 1))
+			return true;
 
 	return false;
+
+
+	////shorter check; might not be enough
+	//if ((!IsOutOfBounds(x + closeness, y) && _bot->GetFogState(x + closeness, y, NODE_COORDS) == 1) ||
+	//	(!IsOutOfBounds(x, y + closeness) && _bot->GetFogState(x, y + closeness, NODE_COORDS) == 1) ||
+	//	(!IsOutOfBounds(x - closeness, y) && _bot->GetFogState(x - closeness, y, NODE_COORDS) == 1) ||
+	//	(!IsOutOfBounds(x, y - closeness) && _bot->GetFogState(x, y - closeness, NODE_COORDS) == 1))
+	//	return true;
+
+	//return false;
 
 #pragma region prev, slower version
 	/*
@@ -353,6 +559,147 @@ bool Pathfinder::WalkOffLedgePathClear(int x1, int y1, int x2, int y2, DIRECTION
 
 #pragma endregion
 
+#pragma region Traps
+
+void Pathfinder::DeleteUnsafeNeighbours(Node origin, std::vector<Node> &neighbours)
+{
+	DeleteUnsafeNeighboursSpikes(origin, neighbours);
+	DeleteUnsafeNeighboursTikiTrap(origin, neighbours);
+	DeleteUnsafeNeighboursArrowTrap(origin, neighbours);
+}
+
+void Pathfinder::DeleteUnsafeNeighboursSpikes(Node origin, std::vector<Node> &neighbours)
+{
+	int x, y, distX, distY;
+	ACTION_TARGET target;
+	MOVEMENTACTION action;
+	bool unsafe;
+
+	std::vector<Node>::iterator it = neighbours.begin();
+	while (it != neighbours.end())
+	{
+		x = it->GetX();
+		y = it->GetY();
+		distX = x - origin.GetX();
+		distY = y - origin.GetY();
+		target = it->GetActionTarget();
+		action = it->GetActionToReach();
+		unsafe = false;
+
+		//WALKOFFLEDGE is super unsafe because it hasn't been reworked
+		if (action == WALKOFFLEDGE && (Spikes(x - 1, y) || Spikes(x, y) || Spikes(x + 1, y)))
+			unsafe = true;
+
+		//drop
+		if (action == DROP && distY > 0 && Spikes(x, y) && target == GROUND)
+			unsafe = true;
+
+		//jump
+		if ((action == JUMP || action == JUMPFROMLADDER) && target == GROUND)
+		{
+			if (Spikes(x, y)) unsafe = true;
+
+			//far jumps can catch nearby spikes sometimes
+			if (distY == 1 && (distX == 7 || distX == 8) && Spikes(x - 1, y))
+				unsafe = true;
+			if (distY == 1 && (distX == -7 || distX == -8) && Spikes(x + 1, y))
+				unsafe = true;
+
+			if (distY == 2 && distX == 8 && Spikes(x - 1, y))
+				unsafe = true;
+			if (distY == 2 && distX == -8 && Spikes(x + 1, y))
+				unsafe = true;
+		}
+
+
+		if (unsafe) it = neighbours.erase(it);
+		else it++;
+	}
+}
+
+void Pathfinder::DeleteUnsafeNeighboursTikiTrap(Node origin, std::vector<Node> &neighbours)
+{
+	int x, y, distX, distY;
+	ACTION_TARGET target;
+	MOVEMENTACTION action;
+	bool unsafe;
+
+	std::vector<Node>::iterator it = neighbours.begin();
+	while (it != neighbours.end())
+	{
+		x = it->GetX();
+		y = it->GetY();
+		distX = x - origin.GetX();
+		distY = y - origin.GetY();
+		target = it->GetActionTarget();
+		action = it->GetActionToReach();
+		unsafe = false;
+
+		if (TikiTrap(x + 1, y) || TikiTrap(x - 1, y)) unsafe = true;
+
+		if (unsafe) it = neighbours.erase(it);
+		else it++;
+	}
+}
+
+void Pathfinder::DeleteUnsafeNeighboursArrowTrap(Node origin, std::vector<Node> &neighbours)
+{
+	int x, y, distX, distY;
+	ACTION_TARGET target;
+	MOVEMENTACTION action;
+	bool unsafe;
+
+	std::vector<Node>::iterator it = neighbours.begin();
+	while (it != neighbours.end())
+	{
+		x = it->GetX();
+		y = it->GetY();
+		distX = x - origin.GetX();
+		distY = y - origin.GetY();
+		target = it->GetActionTarget();
+		action = it->GetActionToReach();
+		unsafe = false;
+
+		std::vector<Node> path = GetPathBetweenNodes(origin, *it, action);
+
+
+		for (auto n : path)
+		{
+			for (int i = 1; i <= 4; i++)
+			{
+				if (ArrowTrapR(n.GetX() - i, n.GetY()) && !_bot->IsArrowTrapDisarmed(n.GetX() - i, n.GetY()))
+				{
+					unsafe = true;
+					break;
+				}
+				else if (Pusta(x - i, y))
+					continue;
+				else break;
+			}
+
+			for (int i = 1; i <= 4; i++)
+			{
+				if (ArrowTrapL(n.GetX() + i, n.GetY()) && !_bot->IsArrowTrapDisarmed(n.GetX() + i, n.GetY()))
+				{
+					unsafe = true;
+					break;
+				}
+				else if (Pusta(x + i, y))
+					continue;
+				else break;
+			}
+
+			if (unsafe) break;
+		}
+
+
+		if (unsafe) it = neighbours.erase(it);
+		else it++;
+	}
+}
+
+#pragma endregion
+
 #pragma region Calculating neighbours
 
 void Pathfinder::AddNeighboursLR(int x, int y, bool right, std::vector<Node> *neighbours)
@@ -433,9 +780,9 @@ void Pathfinder::AddNeighboursLR(int x, int y, bool right, std::vector<Node> *ne
 	}
 }
 
-vector<Node> Pathfinder::CalculateNeighboursHanging(Node node)
+std::vector<Node> Pathfinder::CalculateNeighboursHanging(Node node)
 {
-	vector<Node> neighbours;
+	std::vector<Node> neighbours;
 	int x = node.GetX();
 	int y = node.GetY();
 	int MAX;
@@ -470,9 +817,9 @@ vector<Node> Pathfinder::CalculateNeighboursHanging(Node node)
 	return neighbours;
 }
 
-vector<Node> Pathfinder::CalculateNeighboursClimbing(Node node)
+std::vector<Node> Pathfinder::CalculateNeighboursClimbing(Node node)
 {
-	vector<Node> neighbours;
+	std::vector<Node> neighbours;
 	int x = node.GetX();
 	int y = node.GetY();
 	int MAX, MAXx, MAXy;
@@ -617,7 +964,7 @@ vector<Node> Pathfinder::CalculateNeighboursClimbing(Node node)
 	return neighbours;
 }
 
-vector<Node> Pathfinder::CalculateNeighboursClimbingWithMomentum(Node node)
+std::vector<Node> Pathfinder::CalculateNeighboursClimbingWithMomentum(Node node)
 {
 	std::vector<Node> neighbours;
 	int x = node.GetX();
@@ -799,9 +1146,9 @@ vector<Node> Pathfinder::CalculateNeighboursClimbingWithMomentum(Node node)
 	return neighbours;
 }
 
-vector<Node> Pathfinder::CalculateNeighboursStanding(Node node)
+std::vector<Node> Pathfinder::CalculateNeighboursStanding(Node node)
 {
-	vector<Node> neighbours;
+	std::vector<Node> neighbours;
 	int x = node.GetX();
 	int y = node.GetY();
 	int MAX;
@@ -984,27 +1331,28 @@ vector<Node> Pathfinder::CalculateNeighboursStanding(Node node)
 	//right
 	if (Pusta(x + 1, y) && Pusta(x + 1, y + 1))
 	{
-		if (Pelna(x + 1, y + 2)) neighbours.push_back(Node{ x + 1, y + 1, HANGDROP });
-		else
-		{
+		//if there are problems with hanging on a ladder with ground just below, restore hangdrop action
+		//if (Pelna(x + 1, y + 2)) neighbours.push_back(Node{ x + 1, y + 1, HANGDROP });
+		//else
+		//{
 			if (Ladder(x + 1, y + 1) || LadderTop(x + 1, y + 1))
 				neighbours.push_back(Node{ x + 1, y + 1, HANG, LADDER, mvCLIMBING });
 			else
 				neighbours.push_back(Node{ x + 1, y + 1, HANG, LEDGE, mvHANGING });
-		}
+		//}
 	}
 
 	//left
 	if (Pusta(x - 1, y) && Pusta(x - 1, y + 1))
 	{
-		if (Pelna(x - 1, y + 2)) neighbours.push_back(Node{ x - 1, y + 1, HANGDROP });
-		else
-		{
+		//if (Pelna(x - 1, y + 2)) neighbours.push_back(Node{ x - 1, y + 1, HANGDROP });
+		//else
+		//{
 			if (Ladder(x - 1, y + 1) || LadderTop(x - 1, y + 1))
 				neighbours.push_back(Node{ x - 1, y + 1, HANG, LADDER, mvCLIMBING });
 			else
 				neighbours.push_back(Node{ x - 1, y + 1, HANG, LEDGE, mvHANGING });
-		}
+		//}
 	}
 
 
@@ -1168,9 +1516,9 @@ vector<Node> Pathfinder::CalculateNeighboursStanding(Node node)
 	return neighbours;
 }
 
-vector<Node> Pathfinder::CalculateNeighboursStandingLT(Node node)
+std::vector<Node> Pathfinder::CalculateNeighboursStandingLT(Node node)
 {
-	vector<Node> neighbours;
+	std::vector<Node> neighbours;
 	int x = node.GetX();
 	int y = node.GetY();
 
@@ -1208,9 +1556,9 @@ vector<Node> Pathfinder::CalculateNeighboursStandingLT(Node node)
 	return neighbours;
 }
 
-vector<Node> Pathfinder::CalculateNeighboursList(Node node, MVSTATE mvstate, ACTION_TARGET prevActionTarget)
+std::vector<Node> Pathfinder::CalculateNeighboursList(Node node, MVSTATE mvstate, ACTION_TARGET prevActionTarget)
 {
-	vector<Node> neighbours;
+	std::vector<Node> neighbours;
 	
 	switch (mvstate)
 	{
@@ -1234,6 +1582,8 @@ vector<Node> Pathfinder::CalculateNeighboursList(Node node, MVSTATE mvstate, ACT
 		break;
 	}
 
+	DeleteUnsafeNeighbours(node, neighbours);
+
 	//delete any accidental out of bounds neighbours or neighbours in fog
 	for (int i = 0; i < neighbours.size(); i++)
 	{
@@ -1250,11 +1600,11 @@ vector<Node> Pathfinder::CalculateNeighboursList(Node node, MVSTATE mvstate, ACT
 	return neighbours;
 }
 
-vector<MapSearchNode*> Pathfinder::CalculateNeighboursList(MapSearchNode* node, MVSTATE mvstate, ACTION_TARGET target)
+std::vector<MapSearchNode*> Pathfinder::CalculateNeighboursList(MapSearchNode* node, MVSTATE mvstate, ACTION_TARGET target)
 {
-	vector<MapSearchNode*> neighbours;
+	std::vector<MapSearchNode*> neighbours;
 
-	vector<Node> n = CalculateNeighboursList(Node{ node->_x, node->_y }, mvstate, target);
+	std::vector<Node> n = CalculateNeighboursList(Node{ node->_x, node->_y }, mvstate, target);
 	for (int i = 0; i < n.size(); i++)
 	{
 		_grid[n[i].GetX()][n[i].GetY()]->_actionToReachCandidate = n[i].GetActionToReach();
@@ -1286,6 +1636,7 @@ void Pathfinder::TarjanDFS(MapSearchNode* n)
 		{
 			//we need to save mvstate which is saved as candidate during neighbour-finding
 			m->_mvState = m->_mvStateCandidate;
+			m->_actionTarget = m->_actionTargetCandidate;
 
 			TarjanDFS(m);
 			_tar_VLow[n->_x][n->_y] = min(_tar_VLow[n->_x][n->_y], _tar_VLow[m->_x][m->_y]);
@@ -1441,6 +1792,59 @@ Node Pathfinder::GetExit()
 bool Pathfinder::IsExitFound()
 {
 	return _exitFound;
+}
+
+#pragma endregion
+
+#pragma region Dijkstra
+
+void Pathfinder::Dijkstra(int x, int y)
+{
+	for (int i = 0; i < X_NODES; i++)
+		for (int j = 0; j < Y_NODES; j++)
+		{
+			_grid[i][j]->_dist = INT_MAX;
+			_dij_visited[i][j] = false;
+		}
+
+
+	_grid[x][y]->_dist = 0;
+	_dij_visited[x][y] = true;
+
+	while (!_dij_pQ.empty())
+		_dij_pQ.pop();
+
+	_dij_pQ.push(_grid[x][y]);
+
+	while (!_dij_pQ.empty())
+	{
+		MapSearchNode *n = _dij_pQ.top();
+		_dij_pQ.pop();
+
+		//break if you reach unreachable nodes
+		if (n->_dist == INT_MAX) break;
+
+		vector<MapSearchNode*> neighbours = CalculateNeighboursList(n, n->GetMvState(), n->GetActionTarget());
+
+		for (MapSearchNode* m : neighbours)
+		{
+			if (!_dij_visited[m->_x][m->_y])
+				if (n->_dist + CalculateDistance(n, m) < m->_dist)
+				{
+					m->_dist = n->_dist + CalculateDistance(n, m);
+					m->_mvState = m->_mvStateCandidate;
+					m->_actionTarget = m->_actionTargetCandidate;
+					_dij_pQ.push(m);
+					_dij_visited[m->_x][m->_y] = true;
+				}
+		}
+
+	}
+}
+
+int Pathfinder::GetDijDist(int x, int y)
+{
+	return _grid[x][y]->_dist;
 }
 
 #pragma endregion
@@ -1807,7 +2211,6 @@ std::vector<Node> Pathfinder::FindExplorationTargets(int x1, int y1)
 
 void Pathfinder::NeighboursDebug(int x, int y, bool hasMomentum)
 {
-
 	ofstream fileStream;
 	fileStream.open(".\\Pathfinder\\neighbours.txt");
 
@@ -1823,13 +2226,20 @@ void Pathfinder::NeighboursDebug(int x, int y, bool hasMomentum)
 
 	std::vector<Node> neighbours = CalculateNeighboursList(Node{ x,y }, mvState, target);
 
-
 	for (int i = 0; i < neighbours.size(); i++)
 	{
 		fileStream << " X: " << neighbours[i].GetX();
 		fileStream << " Y: " << neighbours[i].GetY();
 		fileStream << " " << MVactionStrings[neighbours[i].GetActionToReach()];
 		fileStream << " " << ActionTargetStrings[neighbours[i].GetActionTarget()];
+		fileStream << endl;
+
+		auto path = GetPathBetweenNodes(Node{ x,y }, neighbours[i], neighbours[i].GetActionToReach());
+		fileStream << "Path: ";
+		for (int j = 0; j < path.size(); j++)
+		{
+			fileStream << "(" << path[j].GetX()  << ", " << path[j].GetY() << ") ";
+		}
 		fileStream << endl;
 	}
 
@@ -1862,6 +2272,50 @@ void Pathfinder::SCCDebug()
 			{
 				fileStream << '#'; //mapFog[j][i];
 			}
+			fileStream << " ";
+		}
+		fileStream << "\n";
+	}
+	fileStream.close();
+}
+
+void Pathfinder::DijkstraDebug()
+{
+	ofstream fileStream;
+	fileStream.open(".\\Pathfinder\\level_layoutDijkstra.txt");
+	for (int j = 0; j < Y_NODES; j++)
+	{
+		for (int i = 0; i < X_NODES; i++)
+		{
+			int nodeState = _bot->GetNodeState(i, j, NODE_COORDS);
+			if (nodeState == -1)
+			{
+				fileStream << '#'; //mapFog[j][i];
+			}
+			else if (IsNodeValidBotPosition(_grid[i][j]))
+			{
+				if (_grid[i][j]->_dist == INT_MAX) fileStream << 'M';
+				else 
+				{
+					if (_grid[i][j]->_dist == 0) fileStream << '*';
+					else if (_grid[i][j]->_dist <= 5) fileStream << 'a';
+					else if (_grid[i][j]->_dist <= 10) fileStream << 'b';
+					else if (_grid[i][j]->_dist <= 15) fileStream << 'c';
+					else if (_grid[i][j]->_dist <= 20) fileStream << 'd';
+					else if (_grid[i][j]->_dist <= 25) fileStream << 'e';
+					else if (_grid[i][j]->_dist <= 30) fileStream << 'f';
+					else if (_grid[i][j]->_dist <= 35) fileStream << 'g';
+					else if (_grid[i][j]->_dist <= 40) fileStream << 'h';
+					else if (_grid[i][j]->_dist <= 45) fileStream << 'i';
+					else if (_grid[i][j]->_dist <= 50) fileStream << 'j';
+					else if (_grid[i][j]->_dist <= 55) fileStream << 'k';
+					else if (_grid[i][j]->_dist <= 60) fileStream << 'l';
+					else fileStream << 'x';
+				}
+			}
+			else
+				fileStream << nodeState;
+
 			fileStream << " ";
 		}
 		fileStream << "\n";

@@ -24,7 +24,7 @@ private:
 	ObjectManager* _objectManager;
 	std::thread _botLogicThread;
 	
-	std::vector<collectableObject> _collectablesList;
+	//std::vector<collectableObject> _collectablesList;
 	std::deque<std::vector<Node>> _pathsQ;
 
 	enum SECONDARY_STATE { sIDLE, NEW_TARGET, UNREACHABLE_TARGET, EXECUTING_COMMANDS,
@@ -50,6 +50,7 @@ private:
 	//pathQ methods
 	bool IsPathToTargetSheduled(int x, int y);
 	Node GetStartNodeForNextPath();
+	bool PathNearlyCompleted();
 
 	//debug
 	int _debugTimer;

@@ -1,17 +1,23 @@
 #pragma once
 #include "stdafx.h"
 #include "IBot.h"
+#include "Item.h"
 
 class ObjectManager
 {
 public:
 	ObjectManager(IBot *bot);
 
-	std::vector<collectableObject> GetCollectables();
+	std::vector<Item> GetItems();
+	Item * GetItemByID(int id);
+	std::vector<Item> GetTreasures();
+
 	std::vector<enemyObject> GetEnemies();
+
+
 	void UpdateGameObjectLists();
 	
-	void CollectablesDebug();
+	void ItemsDebug();
 	void EnemiesDebug();
 
 	/*
@@ -22,10 +28,9 @@ public:
 	*/
 private:
 	IBot* _bot;
-	std::vector<collectableObject> collectablesList;
-	std::vector<enemyObject> enemiesList;
-
-
+	//std::vector<collectableObject> _collectablesList;
+	std::vector<Item> _itemsList;
+	std::vector<enemyObject> _enemiesList;
 
 
 };

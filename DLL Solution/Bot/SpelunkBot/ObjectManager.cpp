@@ -11,55 +11,77 @@ ObjectManager::ObjectManager(IBot *bot)
 	_bot = bot;
 }
 
-std::vector<collectableObject> ObjectManager::GetCollectables()
+std::vector<Item> ObjectManager::GetItems()
 {
-	return collectablesList;
+	return _itemsList;
+}
+
+Item * ObjectManager::GetItemByID(int id)
+{
+	for (Item item : _itemsList)
+		if (item.GetID() == id)
+			return &item;
+
+	return NULL;
+}
+
+std::vector<Item> ObjectManager::GetTreasures()
+{
+	std::vector<Item> treasures;
+
+	for (Item item : _itemsList)
+		if (item.GetKind() == Treasure)
+			treasures.push_back(item);
+
+	return treasures;
 }
 
 std::vector<enemyObject> ObjectManager::GetEnemies()
 {
-	return enemiesList;
+	return _enemiesList;
 }
 
 void ObjectManager::UpdateGameObjectLists()
 {
-	enemiesList.clear();
+	_enemiesList.clear();
 	enemyObject* e = _bot->GetNextEnemy();
 	while (e != NULL)
 	{
 		//top left corner of enemy is on the list, so we make it a center by adding 0.5 to x and y coordinates
 		//(most enemies are roughly 1 node wide and long)
 		enemyObject enemy = enemyObject{ e->type, e->id, e->x + 0.5, e->y + 0.5 };
-		enemiesList.push_back(enemy);
+		_enemiesList.push_back(enemy);
 
 		e = _bot->GetNextEnemy();
 	}
 	
 
-	collectablesList.clear();
+	_itemsList.clear();
 	collectableObject* c = _bot->GetNextCollectable();
 	while (c != NULL)
 	{
-		collectableObject collectable = collectableObject{ c->type, c->id, c->x, c->y };
-		collectablesList.push_back(collectable);
+		//collectableObject collectable = collectableObject{ c->type, c->id, c->x, c->y };
+		Item item = Item(c->x, c->y, (ItemType)c->type, c->id);
+		_itemsList.push_back(item);
 
 		c = _bot->GetNextCollectable();
 	}
 }
 
-void ObjectManager::CollectablesDebug()
+void ObjectManager::ItemsDebug()
 {
 	ofstream fileStream;
 	fileStream.open(".\\ObjectManager\\collectables.txt");
 
-	fileStream << "ObjectManager Collectables: " << endl;
+	fileStream << "ObjectManager Items: " << endl;
 
-	for (int i = 0; i < collectablesList.size(); i++)
+	for (int i = 0; i < _itemsList.size(); i++)
 	{
-		fileStream << "TYPE: " << collectablesList[i].type;
-		fileStream << " X: " << collectablesList[i].x;
-		fileStream << " Y: " << collectablesList[i].y;
-		fileStream << " ID: " << collectablesList[i].id;
+		fileStream << "X: " << _itemsList[i].GetX();
+		fileStream << " Y: " << _itemsList[i].GetY();
+		fileStream << " TYPE: " << ItemTypeStrings[_itemsList[i].GetType()];
+		fileStream << " KIND: " << ItemKindStrings[_itemsList[i].GetKind()];
+		fileStream << " ID: " << _itemsList[i].GetID();
 		fileStream << endl;
 	}
 
@@ -73,21 +95,23 @@ void ObjectManager::EnemiesDebug()
 
 	fileStream << "ObjectManager Enemies: " << endl;
 
-	for (int i = 0; i < enemiesList.size(); i++)
+	for (int i = 0; i < _enemiesList.size(); i++)
 	{
-		fileStream << "TYPE: " << enemiesList[i].type;
-		fileStream << " X: " << enemiesList[i].x;
-		fileStream << " Y: " << enemiesList[i].y;
-		fileStream << " ID: " << enemiesList[i].id;
+		fileStream << "TYPE: " << _enemiesList[i].type;
+		fileStream << " X: " << _enemiesList[i].x;
+		fileStream << " Y: " << _enemiesList[i].y;
+		fileStream << " ID: " << _enemiesList[i].id;
 		fileStream << endl;
 	}
 
 	fileStream.close();
 }
 
+
+
 //void ObjectManager::ResetEnemies()
 //{
-//	enemiesList.clear();
+//	_enemiesList.clear();
 //}
 //
 //void ObjectManager::NodeContainsEnemy(double x, double y, double type, double id)
@@ -97,18 +121,18 @@ void ObjectManager::EnemiesDebug()
 //	object.y = y;
 //	object.type = type;
 //	object.id = id;
-//	enemiesList.push_back(object);
+//	_enemiesList.push_back(object);
 //}
 //
 //void ObjectManager::UpdateEnemyAtNode(double x, double y, double id)
 //{
-//	int cSize = enemiesList.size();
+//	int cSize = _enemiesList.size();
 //	for (int i = 0; i < cSize; i++)
 //	{
-//		if (enemiesList.at(i).id == id)
+//		if (_enemiesList.at(i).id == id)
 //		{
-//			enemiesList.at(i).x = x;
-//			enemiesList.at(i).y = y;
+//			_enemiesList.at(i).x = x;
+//			_enemiesList.at(i).y = y;
 //			return;
 //		}
 //	}
@@ -116,12 +140,12 @@ void ObjectManager::EnemiesDebug()
 //
 //void ObjectManager::RemoveEnemyWithID(double id)
 //{
-//	int cSize = enemiesList.size();
+//	int cSize = _enemiesList.size();
 //	for (int i = 0; i < cSize; i++)
 //	{
-//		if (enemiesList.at(i).id == id)
+//		if (_enemiesList.at(i).id == id)
 //		{
-//			enemiesList.erase(enemiesList.begin() + i);
+//			_enemiesList.erase(_enemiesList.begin() + i);
 //			return;
 //		}
 //	}
