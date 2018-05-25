@@ -2,6 +2,7 @@
 #include "IBot.h"
 #include "MapSearchNode.h"
 #include "Node.h"
+#include "Item.h"
 #include <map>
 #include <stack>
 #include <functional>
@@ -18,6 +19,7 @@ public:
 	std::vector<Node> CalculateNeighboursList(Node node, MVSTATE mvstate, ACTION_TARGET target);
 
 	MapSearchNode* GetNodeFromGrid(int x, int y);
+	Node ToNode(MapSearchNode *n);
 	
 	bool TryToCalculatePath(int x1, int y1, int x2, int y2);
 	std::vector<MapSearchNode*> GetPathList();
@@ -36,9 +38,15 @@ public:
 	void CalculateConnectedComponents();
 	std::vector<MapSearchNode*> GetAllNodesFromCC(int ccnr);
 	int GetCCnr(int nodeX, int nodeY);
+	int GetCCnr(Node n);
+	int GetCCnr(MapSearchNode n);
+	int GetCCnr(Item item);
 
 	void Dijkstra(int x, int y);
+	std::vector<MapSearchNode*> GetDijPath(int targetX, int targetY);
+	std::vector<Node> GetDijPathNode(int targetX, int targetY);
 	int GetDijDist(int x, int y);
+	int GetDijDist(Item i);
 
 	bool isCloseToFog(int x, int y, int closeness);
 	bool isCloseToFog(MapSearchNode *n, int closeness);
@@ -68,9 +76,11 @@ private:
 	Node _exit;
 
 	//used by neighbour searching
+	bool DownJumpPathClear(int x1, int y1, int x2, int y2, DIRECTIONX direction, bool fromLadder);
 	bool DownJumpPathClear(int x1, int y1, int x2, int y2, DIRECTIONX direction);
 	bool WalkOffLedgePathClear(int x1, int y1, int x2, int y2, DIRECTIONX direction);
 	bool HorizontalJumpPathClear(int x, int y, int dist, DIRECTIONX direction);
+
 
 	//neighbours
 	std::vector<Node> CalculateNeighboursHanging(Node node);
@@ -83,7 +93,7 @@ private:
 	//traps
 	void DeleteUnsafeNeighbours(Node origin, std::vector<Node> &neighbours);
 	void DeleteUnsafeNeighboursSpikes(Node origin, std::vector<Node>& neighbours);
-	void DeleteUnsafeNeighboursTikiTrap(Node origin, std::vector<Node>& neighbours);
+	void DeleteUnsafeNeighboursSpearTrap(Node origin, std::vector<Node>& neighbours);
 	void DeleteUnsafeNeighboursArrowTrap(Node origin, std::vector<Node>& neighbours);
 
 	//tarjan's algorithm
@@ -102,7 +112,7 @@ private:
 	{
 		bool operator() (MapSearchNode* n1, MapSearchNode* n2)
 		{
-			return n1->_dist > n2->_dist;
+			return n1->_dij_dist > n2->_dij_dist;
 			//return _dij_dists[n1->_x][n1->_y] < _dij_dists[n1->_x][n1->_y];
 		}
 	};
@@ -121,7 +131,7 @@ private:
 	bool Spikes(int x, int y);
 	bool ArrowTrapR(int x, int y);
 	bool ArrowTrapL(int x, int y);
-	bool TikiTrap(int x, int y);
+	bool SpearTrap(int x, int y);
 
 	std::vector<Node> GetPathBetweenNodes(Node start, Node end, MOVEMENTACTION used_action);
 };

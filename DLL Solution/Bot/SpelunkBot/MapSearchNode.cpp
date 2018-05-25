@@ -29,7 +29,8 @@ MapSearchNode::MapSearchNode(int x, int y)
 	_visited = false;
 
 	_CCnr = 0;
-	_dist = INT_MAX;
+	_dij_dist = INT_MAX;
+	_dij_prev = NULL;
 }
 
 int MapSearchNode::GetX()

@@ -152,13 +152,13 @@ enum TerrainType
 
 enum ItemKind
 {
-	JunkLight,
-	JunkHeavy,
-	Treasure,
-	Weapon,
-	Equipable,
-	Other,
-	NotInGame
+	spJunkLight,
+	spJunkHeavy,
+	spTreasure,
+	spWeapon,
+	spEquipable,
+	spOther,
+	spNotInGame
 };
 
 

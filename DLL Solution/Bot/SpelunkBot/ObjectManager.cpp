@@ -6,15 +6,73 @@
 
 using namespace std;
 
-ObjectManager::ObjectManager(IBot *bot)
+ObjectManager::ObjectManager(IBot *bot, Pathfinder *pathfinder)
 {
 	_bot = bot;
+	_pathfinder = pathfinder;
 }
 
 std::vector<Item> ObjectManager::GetItems()
 {
 	return _itemsList;
 }
+
+std::vector<Item> ObjectManager::GetItems(ItemKind kind)
+{
+	std::vector<Item> items;
+	
+	for (int i = 0; i < _itemsList.size(); i++)
+		if (_itemsList[i].GetKind() == kind)
+			items.push_back(_itemsList[i]);
+
+	return items;
+}
+
+std::vector<Item> ObjectManager::GetItems(ItemType type)
+{
+	std::vector<Item> items;
+
+	for (int i = 0; i < _itemsList.size(); i++)
+		if (_itemsList[i].GetType() == type)
+			items.push_back(_itemsList[i]);
+
+	return items;
+}
+
+std::vector<Item> ObjectManager::GetItems(int ccnr)
+{
+	std::vector<Item> items;
+
+	for (int i = 0; i < _itemsList.size(); i++)
+		if (_pathfinder->GetCCnr(_itemsList[i]) == ccnr)
+			items.push_back(_itemsList[i]);
+
+	return items;
+}
+
+std::vector<Item> ObjectManager::GetItems(ItemKind kind, int ccnr)
+{
+	std::vector<Item> items;
+
+	for (int i = 0; i < _itemsList.size(); i++)
+		if (_pathfinder->GetCCnr(_itemsList[i]) == ccnr && _itemsList[i].GetKind() == kind)
+			items.push_back(_itemsList[i]);
+
+	return items;
+}
+
+
+std::vector<Item> ObjectManager::GetItems(ItemType type, int ccnr)
+{
+	std::vector<Item> items;
+
+	for (int i = 0; i < _itemsList.size(); i++)
+		if (_pathfinder->GetCCnr(_itemsList[i]) == ccnr && _itemsList[i].GetType() == type)
+			items.push_back(_itemsList[i]);
+
+	return items;
+}
+
 
 Item * ObjectManager::GetItemByID(int id)
 {
@@ -30,7 +88,7 @@ std::vector<Item> ObjectManager::GetTreasures()
 	std::vector<Item> treasures;
 
 	for (Item item : _itemsList)
-		if (item.GetKind() == Treasure)
+		if (item.GetKind() == spTreasure)
 			treasures.push_back(item);
 
 	return treasures;

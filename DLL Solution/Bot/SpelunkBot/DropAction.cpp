@@ -54,7 +54,7 @@ ordersStruct DropAction::GetOrders()
 	case FALLING:
 		//grabbing ladders
 		if (_actionTarget == LADDER &&
-			WithinRangeFromTarget(playerPosY, MiddleYPixel(_targetNode), 8))
+			WithinRangeFromTarget(playerPosY, MiddleYPixel(_targetNode), 4))
 			orders.lookUp = true;
 		
 		if (_bot->GetSpelunkerState() == spCLIMBING)

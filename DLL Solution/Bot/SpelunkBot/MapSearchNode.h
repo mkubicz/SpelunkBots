@@ -32,7 +32,8 @@ private:
 	int _CCnr;
 
 	//result of djikstra's algorithm
-	int _dist;
+	int _dij_dist;
+	MapSearchNode *_dij_prev;
 
 public:
 	MapSearchNode();

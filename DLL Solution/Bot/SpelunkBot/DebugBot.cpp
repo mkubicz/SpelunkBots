@@ -23,7 +23,7 @@
 DebugBot::DebugBot()
 {
 	_pathfinder = new Pathfinder(this);
-	_objectManager = new ObjectManager(this);
+	_objectManager = new ObjectManager(this, _pathfinder);
 	NewLevel();
 }
 
@@ -87,7 +87,7 @@ DebugBot::~DebugBot()
 
 #pragma endregion
 
-#pragma region pathQ methods
+#pragma region pathQ 
 
 Node DebugBot::GetStartNodeForNextPath()
 {
@@ -119,7 +119,7 @@ bool DebugBot::IsPathToTargetSheduled(int x, int y)
 
 #pragma endregion
 
-#pragma region actionsQ methods
+#pragma region actionsQ
 
 void DebugBot::ExecuteOrders(ordersStruct orders)
 {
@@ -281,7 +281,7 @@ void DebugBot::AddActionToActionQueue(MOVEMENTACTION action, ACTION_TARGET jumpT
 
 #pragma endregion
 
-#pragma region Bot logic methods
+#pragma region Bot logic
 
 void DebugBot::BotLogicStateDebug()
 {
@@ -361,21 +361,20 @@ void DebugBot::BotLogic()
 			continue;
 		}
 
-
 		//czy to potrzebne? mo¿e jednak mo¿na liczyæ za ka¿dym razem?
-		if (_botLogicState == GATHER_FROM_CC || _botLogicState == EXPLORE_CC)
-		{
-			_objectManager->UpdateGameObjectLists();
-			_objectManager->ItemsDebug();
-			_objectManager->EnemiesDebug();
-
+		//if (_botLogicState == GATHER_FROM_CC || _botLogicState == EXPLORE_CC)
+		//{
 			_pathfinder->CalculateConnectedComponents();
 			_pathfinder->SCCDebug();
 			currentCCnr = _pathfinder->GetCCnr((int)_playerPositionXNode, (int)_playerPositionYNode);
 
+			_objectManager->UpdateGameObjectLists();
+			_objectManager->ItemsDebug();
+			_objectManager->EnemiesDebug();
+
 			_pathfinder->Dijkstra((int)_playerPositionXNode, (int)_playerPositionYNode);
 			_pathfinder->DijkstraDebug();
-		}
+		//}
 
 		switch (_botLogicState)
 		{
@@ -384,31 +383,29 @@ void DebugBot::BotLogic()
 			break;
 		case GATHER_FROM_CC:
 		{
-			std::vector<Item> itemsList = _objectManager->GetTreasures();
+			std::vector<Item> itemsList = _objectManager->GetItems(spTreasure, currentCCnr);
 			Item *closest = NULL;
 
 			if (_pathsQ.empty())
 			{
+				//tak bym chcia³:
+				//closest = FindClosestItem(itemsList);
+				//albo mo¿na te¿ przekonwertowaæ je na jakiœ typ Target czy coœ, idk
+
 				for (int i = 0; i < itemsList.size(); i++)
 				{
-					if (_pathfinder->GetCCnr(itemsList[i].GetX(), itemsList[i].GetY()) == currentCCnr)
-					{
-						if (closest == NULL)
-							closest = &itemsList[i];
-						else if (_pathfinder->GetDijDist(itemsList[i].GetX(), itemsList[i].GetY()) < _pathfinder->GetDijDist(closest->GetX(), closest->GetY()))
-							closest = &itemsList[i];
-					}
+					if (closest == NULL)
+						closest = &itemsList[i];
+					else if (_pathfinder->GetDijDist(itemsList[i]) < _pathfinder->GetDijDist(*closest))
+						closest = &itemsList[i];
 				}
 
-				if (closest == NULL)
+				if (closest == NULL || _pathfinder->GetDijDist(*closest) == INT_MAX)
 					_botLogicState = EXPLORE_CC;
 				else
 				{
-					Node start = GetStartNodeForNextPath();
-					if (_pathfinder->TryToCalculatePath(start.GetX(), start.GetY(), closest->GetX(), closest->GetY()))
-					{
-						_pathsQ.push_back(_pathfinder->GetPathListNode());
-					}
+					_pathsQ.push_back(_pathfinder->GetDijPathNode(closest->GetX(), closest->GetY()));
+
 				}
 			}
 			else
@@ -421,19 +418,9 @@ void DebugBot::BotLogic()
 		}
 		case EXPLORE_CC:
 		{
-			std::vector<Item> itemsList = _objectManager->GetTreasures();
-			Item *item;
-			bool collectableFound = false;
-			for (int i = 0; i < itemsList.size(); i++)
-			{
-				item = &itemsList[i];
-				if (_pathfinder->GetCCnr(item->GetX(), item->GetY()) == currentCCnr)
-				{
-					collectableFound = true;
-					break;
-				}
-			}
-			if (collectableFound)
+			std::vector<Item> itemsList = _objectManager->GetItems(spTreasure, currentCCnr);
+
+			if (!itemsList.empty())
 			{
 				//mo¿na tu dodaæ przerywanie eksploracji
 				//na razie wydaje sie to problematyczne, a korzyœci daje znikome
@@ -459,9 +446,7 @@ void DebugBot::BotLogic()
 
 				if (exploratonTargetFound)
 				{
-					Node start = GetStartNodeForNextPath();
-					if (_pathfinder->TryToCalculatePath(start.GetX(), start.GetY(), e->GetX(), e->GetY()))
-						_pathsQ.push_back(_pathfinder->GetPathListNode());
+					_pathsQ.push_back(_pathfinder->GetDijPathNode(e->GetX(), e->GetY()));
 				}
 				else
 				{
@@ -522,13 +507,22 @@ void DebugBot::BotLogic()
 		case SEARCH_FOR_EXIT:
 			if (_pathfinder->IsExitFound())
 			{
-				if (_pathfinder->TryToCalculatePath((int)_playerPositionXNode, (int)_playerPositionYNode, _pathfinder->GetExit().GetX(), _pathfinder->GetExit().GetY()))
+				Node exit = _pathfinder->GetExit();
+				if (_pathfinder->GetDijDist(exit.GetX(), exit.GetY()) != INT_MAX)
 				{
-					_pathsQ.push_back(_pathfinder->GetPathListNode());
+					_pathsQ.push_back(_pathfinder->GetDijPathNode(exit.GetX(), exit.GetY()));
 					_botLogicState = GO_TO_EXIT;
 				}
 				else
 					_botLogicState = UNREACHABLE_EXIT;
+
+				//if (_pathfinder->TryToCalculatePath((int)_playerPositionXNode, (int)_playerPositionYNode, _pathfinder->GetExit().GetX(), _pathfinder->GetExit().GetY()))
+				//{
+				//	_pathsQ.push_back(_pathfinder->GetPathListNode());
+				//	_botLogicState = GO_TO_EXIT;
+				//}
+				//else
+				//	_botLogicState = UNREACHABLE_EXIT;
 			}
 			else
 			{
