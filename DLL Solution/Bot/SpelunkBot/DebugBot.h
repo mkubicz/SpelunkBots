@@ -25,11 +25,11 @@ private:
 	std::thread _botLogicThread;
 	
 	//std::vector<collectableObject> _collectablesList;
-	std::deque<std::vector<Node>> _pathsQ;
+	std::deque<std::vector<MapNode*>> _pathsQ;
 
 	enum SECONDARY_STATE { sIDLE, NEW_TARGET, UNREACHABLE_TARGET, EXECUTING_COMMANDS,
 						   CREATING_COMMANDS, FINISHED, WAITING_FOR_PATH, DEBUG };
-	enum BOTLOGIC_STATE { IDLE, EXIT, WAITING, GATHER_FROM_CC, EXPLORE_CC, PICK_TARGET_IN_NEXT_CC,
+	enum BOTLOGIC_STATE { IDLE, START, EXIT, WAITING, GATHER_FROM_CC, EXPLORE_CC, PICK_TARGET_IN_NEXT_CC,
 						  MOVE_TO_NEXT_CC, SEARCH_FOR_EXIT, GO_TO_EXIT, EXIT_REACHED, UNREACHABLE_EXIT,
 						  NO_EXIT_EXPLORE, NO_EXIT_ERROR };
 	BOTLOGIC_STATE _botLogicState;
@@ -38,7 +38,7 @@ private:
 	bool _botLogicWaiting = false;
 	int _waitTimer = 0;
 
-	void CreateCommands(std::vector<Node> path);
+	void CreateCommands(std::vector<MapNode*> path);
 	void AddActionToActionQueue(MOVEMENTACTION action, ACTION_TARGET jumpTarget, MVSTATE mvState, int distX, int distY);
 	void ClearOrders();
 
@@ -49,7 +49,7 @@ private:
 
 	//pathQ methods
 	bool IsPathToTargetSheduled(int x, int y);
-	Node GetStartNodeForNextPath();
+	MapNode GetStartNodeForNextPath();
 	bool PathNearlyCompleted();
 
 	//debug

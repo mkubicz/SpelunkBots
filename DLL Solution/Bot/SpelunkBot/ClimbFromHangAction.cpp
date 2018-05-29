@@ -18,7 +18,7 @@ ordersStruct ClimbFromHangAction::GetOrders()
 	if (!_actionInProgress)
 	{
 		int offset = _directionX == xRIGHT ? 1 : -1;
-		_targetNode = CalculateTargetNode(offset, -1);
+		CalculateTargetNode(offset, -1);
 
 		_actionInProgress = true;
 	}
@@ -37,11 +37,11 @@ ordersStruct ClimbFromHangAction::GetOrders()
 		}
 		
 		if (IsStandingStill(playerPosX, playerPosY, _prevPlayerPosX, _prevPlayerPosY))
-			Centralize(&orders, MiddlePixelOfNode(_targetNode.GetX()));
+			Centralize(&orders, _targetNode.GetMidXpixel());
 	}
 
-	if (closeToTarget(playerPosX, MiddlePixelOfNode(_targetNode.GetX())) && 
-		MiddlePixelOfNode(_targetNode.GetY() == playerPosY)) _actionDone = true;
+	if (closeToTarget(playerPosX, _targetNode.GetMidXpixel()) && 
+		_targetNode.GetMidYpixel() == playerPosY) _actionDone = true;
 
 
 	_prevPlayerPosX = playerPosX;

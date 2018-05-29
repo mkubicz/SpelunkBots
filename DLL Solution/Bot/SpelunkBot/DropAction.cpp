@@ -26,7 +26,7 @@ ordersStruct DropAction::GetOrders()
 
 	if (!_actionInProgress)
 	{
-		_targetNode = CalculateTargetNode(0, _distY);
+		CalculateTargetNode(0, _distY);
 		_actionInProgress = true;
 	}
 
@@ -54,23 +54,23 @@ ordersStruct DropAction::GetOrders()
 	case FALLING:
 		//grabbing ladders
 		if (_actionTarget == LADDER &&
-			WithinRangeFromTarget(playerPosY, MiddleYPixel(_targetNode), 4))
+			WithinRangeFromTarget(playerPosY, _targetNode.GetMidYpixel(), 8))
 			orders.lookUp = true;
 		
 		if (_bot->GetSpelunkerState() == spCLIMBING)
 			_state = CLIMBING;
 		break;
 	case CLIMBING:
-		if (playerPosY != MiddleYPixel(_targetNode))
+		if (playerPosY != _targetNode.GetMidYpixel())
 		{
-			if (playerPosY > MiddleYPixel(_targetNode))
+			if (playerPosY > _targetNode.GetMidYpixel())
 				orders.lookUp = true;
-			if (playerPosY < MiddleYPixel(_targetNode))
+			if (playerPosY < _targetNode.GetMidYpixel())
 				orders.duck = true;
 		}
 
 		//prevents the bot from walking off the ladder accidentally
-		if (!_bot->IsNodePassable(_targetNode.GetX(), _targetNode.GetY() + 1, NODE_COORDS) && closeToTarget(playerPosY, MiddleYPixel(_targetNode)))
+		if (!_bot->IsNodePassable(_targetNode.GetX(), _targetNode.GetY() + 1, NODE_COORDS) && closeToTarget(playerPosY, _targetNode.GetMidYpixel()))
 			_actionDone = true;
 	}
 
@@ -79,11 +79,11 @@ ordersStruct DropAction::GetOrders()
 	switch (_actionTarget)
 	{
 	case GROUND:
-		if ((_bot->GetSpelunkerState() == spSTANDING || _bot->GetSpelunkerState() == spDUCKING) && playerPosY == MiddleYPixel(_targetNode))
+		if ((_bot->GetSpelunkerState() == spSTANDING || _bot->GetSpelunkerState() == spDUCKING) && playerPosY == _targetNode.GetMidYpixel())
 			_actionDone = true;
 		break;
 	case LADDER:
-		if (_bot->GetSpelunkerState() == spCLIMBING && playerPosY == MiddleYPixel(_targetNode))
+		if (_bot->GetSpelunkerState() == spCLIMBING && playerPosY == _targetNode.GetMidYpixel())
 			_actionDone = true;
 		break;
 	case LEDGE:

@@ -40,12 +40,12 @@ public:
 	MapSearchNode(int x, int y);
 	int GetX();
 	int GetY();
-	double GetGScore(MapSearchNode *p);
-	double GetHScore(MapSearchNode *p);
-	double GetFScore();
+	double CalculateGScore(MapSearchNode *parentCandidate);
+	double CalculateHScore(MapSearchNode *destination);
+	double CalculateFScore();
 	MOVEMENTACTION GetActionToReach();
 	ACTION_TARGET GetActionTarget();
 	MVSTATE GetMvState();
 
-	void ComputeScores(MapSearchNode * end);
+	void ComputeScores(MapSearchNode * destination);
 }; 

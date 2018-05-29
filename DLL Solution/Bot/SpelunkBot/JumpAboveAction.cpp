@@ -24,9 +24,9 @@ ordersStruct JumpAboveAction::GetOrders()
 	{
 		_startingPosY = playerPosY;
 
-		_targetNode = CalculateTargetNode(0, -2);
-		_targetXmid = MiddlePixelOfNode(_targetNode.GetX());
-		_targetYmid = MiddlePixelOfNode(_targetNode.GetY());
+		CalculateTargetNode(0, -2);
+		_targetXmid = _targetNode.GetMidXpixel();
+		_targetYmid = _targetNode.GetMidYpixel();
 		_targetXside = _directionX == xRIGHT ? _targetXmid + (PIXELS_IN_NODE / 2) : _targetXmid - (PIXELS_IN_NODE / 2);
 
 		_actionInProgress = true;

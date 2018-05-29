@@ -2,7 +2,7 @@
 #include "Item.h"
 
 Item::Item(double x, double y, ItemType type, int id)
-	: _x(x), _y(y), _id(id), _type(type)
+	: _coords(Coords(x, y, NODE)), _id(id), _type(type)
 {
 	SetKind(type);
 }
@@ -14,12 +14,17 @@ Item::Item(double x, double y, ItemType type)
 
 double Item::GetX()
 {
-	return _x;
+	return _coords.GetXnode();
 }
 
 double Item::GetY()
 {
-	return _y;
+	return _coords.GetYnode();
+}
+
+Coords Item::GetCoords()
+{
+	return _coords;
 }
 
 int Item::GetID()

@@ -49,7 +49,7 @@ ordersStruct WalkOffLedgeAction::GetOrders()
 
 	if (!_actionInProgress)
 	{
-		_targetNode = CalculateTargetNode(_distX, _distY);
+		CalculateTargetNode(_distX, _distY);
 
 		int nodenr = (int)_bot->GetPlayerPositionXNode();
 		_startPosXside = _directionX == xRIGHT ? (nodenr * PIXELS_IN_NODE) + PIXELS_IN_NODE : (nodenr * PIXELS_IN_NODE);
@@ -61,7 +61,7 @@ ordersStruct WalkOffLedgeAction::GetOrders()
 
 	//flying through hard ladder tops
 	if ((_state == FREEFALLING || _state == FALLING) &&
-		IsNearLadderTop(playerPosX, playerPosY))
+		IsNearLadderTop())
 		orders.duck = true;
 
 
@@ -77,20 +77,20 @@ ordersStruct WalkOffLedgeAction::GetOrders()
 		case FALLING:
 			_directionX == xRIGHT ? orders.goRight = true : orders.goLeft = true;
 
-			if (closeToTargetFall(playerPosX, MiddleXPixel(_targetNode), _running, _distY))
+			if (closeToTargetFall(playerPosX, _targetNode.GetMidXpixel(), _running, _distY))
 				_state = FREEFALLING;
 
 			break;
 		case FREEFALLING:
-			if (MiddleYPixel(_targetNode) == playerPosY) _state = LANDED;
+			if (_targetNode.GetMidYpixel() == playerPosY) _state = LANDED;
 
 			break;
 		case LANDED:
-			if (closeToTarget(playerPosX, MiddleXPixel(_targetNode))) _actionDone = true;
+			if (closeToTarget(playerPosX, _targetNode.GetMidXpixel())) _actionDone = true;
 
-			if (playerPosX > MiddleXPixel(_targetNode))
+			if (playerPosX > _targetNode.GetMidXpixel())
 				orders.goLeft = true;
-			if (playerPosX < MiddleXPixel(_targetNode))
+			if (playerPosX < _targetNode.GetMidXpixel())
 				orders.goRight = true;
 
 			break;

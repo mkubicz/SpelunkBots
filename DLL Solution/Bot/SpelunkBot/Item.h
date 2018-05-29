@@ -1,11 +1,11 @@
 #pragma once
+#include "Coords.h"
 
 class Item
 {
 
 private:
-	double _x;
-	double _y;
+	Coords _coords;
 	int _id;
 	ItemType _type;
 	ItemKind _kind;
@@ -18,6 +18,7 @@ public:
 
 	double GetX();
 	double GetY();
+	Coords GetCoords();
 	int GetID();
 	ItemType GetType();
 	ItemKind GetKind();

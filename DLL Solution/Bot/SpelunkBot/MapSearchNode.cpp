@@ -43,13 +43,13 @@ int MapSearchNode::GetY()
 	return _y;
 }
 
-double MapSearchNode::GetGScore(MapSearchNode *parent)
+double MapSearchNode::CalculateGScore(MapSearchNode *parent)
 {
 	//manhattan
 	return parent->_gScore + abs(parent->_x - _x) + abs(parent->_y - _y);
 }
 
-double MapSearchNode::GetHScore(MapSearchNode *destination)
+double MapSearchNode::CalculateHScore(MapSearchNode *destination)
 {
 	/*
 	float xDist = ((x) - (p->x));
@@ -59,7 +59,7 @@ double MapSearchNode::GetHScore(MapSearchNode *destination)
 	return abs(destination->_x - _x) + abs(destination->_y - _y);
 }
 
-double MapSearchNode::GetFScore()
+double MapSearchNode::CalculateFScore()
 {
 	//return _fScore;
 	return _gScore + _hScore;
@@ -80,9 +80,9 @@ MVSTATE MapSearchNode::GetMvState()
 	return _mvState;
 }
 
-void MapSearchNode::ComputeScores(MapSearchNode * end)
+void MapSearchNode::ComputeScores(MapSearchNode * destination)
 {
-	_gScore = GetGScore(_parent);
-	_hScore = GetHScore(end);
+	_gScore = CalculateGScore(_parent);
+	_hScore = CalculateHScore(destination);
 	//_fScore = _gScore + _hScore;
 }

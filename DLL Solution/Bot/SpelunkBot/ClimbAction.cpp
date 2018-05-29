@@ -14,7 +14,7 @@ ClimbAction::ClimbAction(IBot * bot, int distY)
 void ClimbAction::AddDistance(int distance)
 {
 	_distY += distance;
-	_targetNode = Node(_targetNode.GetX(), _targetNode.GetY() + distance);
+	_targetNode = Coords(_targetNode.GetX(), _targetNode.GetY() + distance);
 }
 
 ordersStruct ClimbAction::GetOrders()
@@ -26,15 +26,15 @@ ordersStruct ClimbAction::GetOrders()
 
 	if (!_actionInProgress)
 	{
-		_targetNode = CalculateTargetNode(0, _distY);
+		CalculateTargetNode(0, _distY);
 		_actionInProgress = true;
 	}
 
-	if (playerPosY != MiddleYPixel(_targetNode))
+	if (playerPosY != _targetNode.GetMidYpixel())
 	{
-		if (playerPosY > MiddleYPixel(_targetNode))
+		if (playerPosY > _targetNode.GetMidYpixel())
 			orders.lookUp = true;
-		if (playerPosY < MiddleYPixel(_targetNode))
+		if (playerPosY < _targetNode.GetMidYpixel())
 			orders.duck = true;
 	}
 	else

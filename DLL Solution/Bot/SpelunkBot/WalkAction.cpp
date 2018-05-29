@@ -21,7 +21,7 @@ WalkAction::WalkAction(IBot * bot, int distance, bool run)
 void WalkAction::AddDistance(int distance)
 {
 	_distance += distance;
-	_targetNode = Node(_targetNode.GetX() + distance, _targetNode.GetY());
+	_targetNode = Coords(_targetNode.GetX() + distance, _targetNode.GetY());
 }
 
 ordersStruct WalkAction::GetOrders()
@@ -33,7 +33,7 @@ ordersStruct WalkAction::GetOrders()
 	{
 		int nodenr = (int)_bot->GetPlayerPositionXNode();
 
-		_targetNode = CalculateTargetNode(_distance, 0);
+		CalculateTargetNode(_distance, 0);
 
 		_actionInProgress = true;
 	}
@@ -42,7 +42,7 @@ ordersStruct WalkAction::GetOrders()
 
 	_directionX == xRIGHT ? orders.goRight = true : orders.goLeft = true;
 
-	if (closeToTarget(_bot->GetPlayerPositionX(), MiddleXPixel(_targetNode)))
+	if (closeToTarget(_bot->GetPlayerPositionX(), _targetNode.GetMidXpixel()))
 		_actionDone = true;
 
 

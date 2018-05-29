@@ -55,6 +55,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\Bots\DebugBot\Nodes">
+      <UniqueIdentifier>{b98e7ac3-fba1-4e7f-bfe6-5f964c712a06}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Bots\DebugBot\Nodes">
+      <UniqueIdentifier>{83af6175-99bc-46d1-8c63-a42af682bcc9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -114,9 +120,6 @@
     <ClInclude Include="JumpAboveAction.h">
       <Filter>Header Files\Bots\DebugBot\Actions</Filter>
     </ClInclude>
-    <ClInclude Include="MapSearchNode.h">
-      <Filter>Header Files\Bots\DebugBot\Pathfinding</Filter>
-    </ClInclude>
     <ClInclude Include="Pathfinder.h">
       <Filter>Header Files\Bots\DebugBot\Pathfinding</Filter>
     </ClInclude>
@@ -141,9 +144,6 @@
     <ClInclude Include="ClimbAction.h">
       <Filter>Header Files\Bots\DebugBot\Actions</Filter>
     </ClInclude>
-    <ClInclude Include="Node.h">
-      <Filter>Header Files\Bots\DebugBot</Filter>
-    </ClInclude>
     <ClInclude Include="JumpAction.h">
       <Filter>Header Files\Bots\DebugBot\Actions</Filter>
     </ClInclude>
@@ -155,6 +155,12 @@
     </ClInclude>
     <ClInclude Include="ThrowItemAction.h">
       <Filter>Header Files\Bots\DebugBot\Actions</Filter>
+    </ClInclude>
+    <ClInclude Include="MapNode.h">
+      <Filter>Header Files\Bots\DebugBot\Nodes</Filter>
+    </ClInclude>
+    <ClInclude Include="Coords.h">
+      <Filter>Header Files\Bots\DebugBot\Nodes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -212,9 +218,6 @@
     <ClCompile Include="JumpAboveAction.cpp">
       <Filter>Source Files\Bots\DebugBot\Actions</Filter>
     </ClCompile>
-    <ClCompile Include="MapSearchNode.cpp">
-      <Filter>Source Files\Bots\DebugBot\Pathfinder</Filter>
-    </ClCompile>
     <ClCompile Include="Pathfinder.cpp">
       <Filter>Source Files\Bots\DebugBot\Pathfinder</Filter>
     </ClCompile>
@@ -233,9 +236,6 @@
     <ClCompile Include="ClimbAction.cpp">
       <Filter>Source Files\Bots\DebugBot\Actions</Filter>
     </ClCompile>
-    <ClCompile Include="Node.cpp">
-      <Filter>Source Files\Bots\DebugBot</Filter>
-    </ClCompile>
     <ClCompile Include="JumpAction.cpp">
       <Filter>Source Files\Bots\DebugBot\Actions</Filter>
     </ClCompile>
@@ -253,6 +253,12 @@
     </ClCompile>
     <ClCompile Include="ThrowItemAction.cpp">
       <Filter>Source Files\Bots\DebugBot\Actions</Filter>
+    </ClCompile>
+    <ClCompile Include="MapNode.cpp">
+      <Filter>Source Files\Bots\DebugBot\Nodes</Filter>
+    </ClCompile>
+    <ClCompile Include="Coords.cpp">
+      <Filter>Source Files\Bots\DebugBot\Nodes</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

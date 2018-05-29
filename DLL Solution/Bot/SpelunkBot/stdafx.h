@@ -66,6 +66,13 @@ struct moveTarget {
 
 #pragma region Enums
 
+enum COORD_TYPE
+{
+	NODE,
+	PIXEL,
+	NODE_ROUNDDOWN
+};
+
 enum DIRECTIONX {
 	xLEFT = -1,
 	xNONE = 0,

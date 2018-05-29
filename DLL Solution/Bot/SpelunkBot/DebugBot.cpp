@@ -12,7 +12,6 @@
 #include "DropAction.h"
 #include "JumpAction.h"
 #include "JumpFromLadderAction.h"
-#include "JumpToLadderAction.h"
 #include "ClimbAction.h"
 
 #include <fstream>
@@ -29,7 +28,7 @@ DebugBot::DebugBot()
 
 void DebugBot::InitialiseBotLogicState()
 {	
-	_botLogicState = GATHER_FROM_CC;
+	_botLogicState = START;
 	_secState = WAITING_FOR_PATH;
 
 	//for manual movementaction tests
@@ -89,13 +88,13 @@ DebugBot::~DebugBot()
 
 #pragma region pathQ 
 
-Node DebugBot::GetStartNodeForNextPath()
+MapNode DebugBot::GetStartNodeForNextPath()
 {
-	Node start;
+	MapNode start;
 	if (_pathsQ.empty())
-		start = Node((int)_playerPositionXNode, (int)_playerPositionYNode);
+		start = MapNode((int)_playerPositionXNode, (int)_playerPositionYNode);
 	else
-		start = Node(_pathsQ.back().back().GetX(), _pathsQ.back().back().GetY()); //target of most recently added path is our start node
+		start = MapNode(_pathsQ.back().back()->GetX(), _pathsQ.back().back()->GetY()); //target of most recently added path is our start node
 
 	return start;
 }
@@ -106,8 +105,8 @@ bool DebugBot::IsPathToTargetSheduled(int x, int y)
 
 	for (int j = 0; j < _pathsQ.size(); j++)
 	{
-		if (_pathsQ[j].back().GetX() == x &&
-			_pathsQ[j].back().GetY() == y)
+		if (_pathsQ[j].back()->GetX() == x &&
+			_pathsQ[j].back()->GetY() == y)
 		{
 			ok = true;
 			break;
@@ -151,7 +150,7 @@ void DebugBot::ClearOrders()
 	_itemp = false;
 }
 
-void DebugBot::CreateCommands(std::vector<Node> path)
+void DebugBot::CreateCommands(std::vector<MapNode*> path)
 {
 	int currX, currY, targetX, targetY, distX, distY;
 	MOVEMENTACTION prevAction = MOVEMENTACTION::IDLE;
@@ -166,14 +165,14 @@ void DebugBot::CreateCommands(std::vector<Node> path)
 		//first node in a path is start node
 		if (i == 0) continue;
 
-		targetX = path[i].GetX();
-		targetY = path[i].GetY();
+		targetX = path[i]->GetX();
+		targetY = path[i]->GetY();
 		distX = targetX - currX;
 		distY = targetY - currY;
 
-		action = path[i].GetActionToReach();
-		actionTarget = path[i].GetActionTarget();
-		mvState = path[i - 1].GetMvState();
+		action = path[i]->GetActionToReach();
+		actionTarget = path[i]->GetActionTarget();
+		mvState = path[i - 1]->GetMvState();
 
 		AddActionToActionQueue(action, actionTarget, mvState, distX, distY);
 
@@ -346,12 +345,14 @@ void DebugBot::BotLogic()
 {
 	using namespace std::chrono_literals;
 	int currentCCnr;
+	Coords playerC;
 
 	while (true)
 	{
 		if (_botLogicState == EXIT) return;
 
-		BotLogicStateDebug();
+		playerC = Coords(_playerPositionXNode, _playerPositionYNode, NODE);
+
 		if (!_pathfinder->IsExitFound())
 			_pathfinder->TryToFindExit();
 
@@ -364,16 +365,17 @@ void DebugBot::BotLogic()
 		//czy to potrzebne? mo¿e jednak mo¿na liczyæ za ka¿dym razem?
 		//if (_botLogicState == GATHER_FROM_CC || _botLogicState == EXPLORE_CC)
 		//{
+			BotLogicStateDebug();
 			_pathfinder->CalculateConnectedComponents();
 			_pathfinder->SCCDebug();
-			currentCCnr = _pathfinder->GetCCnr((int)_playerPositionXNode, (int)_playerPositionYNode);
+			currentCCnr = _pathfinder->GetCCnr(playerC);
 
 			_objectManager->UpdateGameObjectLists();
 			_objectManager->ItemsDebug();
 			_objectManager->EnemiesDebug();
 
-			_pathfinder->Dijkstra((int)_playerPositionXNode, (int)_playerPositionYNode);
-			_pathfinder->DijkstraDebug();
+			_pathfinder->Dijkstra(playerC);
+			_pathfinder->DijkstraDebug(true);
 		//}
 
 		switch (_botLogicState)
@@ -381,6 +383,10 @@ void DebugBot::BotLogic()
 		case IDLE:
 			std::this_thread::sleep_for(100ms);
 			break;
+		case START:
+			//a little delay so map updates itself before bot starts to search for stuff
+			std::this_thread::sleep_for(100ms);
+			_botLogicState = GATHER_FROM_CC;
 		case GATHER_FROM_CC:
 		{
 			std::vector<Item> itemsList = _objectManager->GetItems(spTreasure, currentCCnr);
@@ -396,15 +402,15 @@ void DebugBot::BotLogic()
 				{
 					if (closest == NULL)
 						closest = &itemsList[i];
-					else if (_pathfinder->GetDijDist(itemsList[i]) < _pathfinder->GetDijDist(*closest))
+					else if (_pathfinder->GetDijDist(itemsList[i].GetCoords()) < _pathfinder->GetDijDist(closest->GetCoords()))
 						closest = &itemsList[i];
 				}
 
-				if (closest == NULL || _pathfinder->GetDijDist(*closest) == INT_MAX)
+				if (closest == NULL || _pathfinder->GetDijDist(closest->GetCoords()) == INT_MAX)
 					_botLogicState = EXPLORE_CC;
 				else
 				{
-					_pathsQ.push_back(_pathfinder->GetDijPathNode(closest->GetX(), closest->GetY()));
+					_pathsQ.push_back(_pathfinder->GetDijPath(closest->GetCoords()));
 
 				}
 			}
@@ -431,12 +437,12 @@ void DebugBot::BotLogic()
 
 			if (_pathsQ.empty())
 			{
-				std::vector<MapSearchNode*> nodes = _pathfinder->GetAllNodesFromCC(currentCCnr);
-				MapSearchNode * e;
+				std::vector<MapNode*> nodes = _pathfinder->GetAllNodesFromCC(currentCCnr);
+				MapNode * e;
 				bool exploratonTargetFound = false;
 				for (int i = 0; i < nodes.size(); i++)
 				{
-					if (_pathfinder->isCloseToFog(nodes[i], 5))
+					if (_pathfinder->isCloseToFog(nodes[i]->GetCoords(), 5))
 					{
 						e = nodes[i];
 						exploratonTargetFound = true;
@@ -446,7 +452,7 @@ void DebugBot::BotLogic()
 
 				if (exploratonTargetFound)
 				{
-					_pathsQ.push_back(_pathfinder->GetDijPathNode(e->GetX(), e->GetY()));
+					_pathsQ.push_back(_pathfinder->GetDijPath(e->GetCoords()));
 				}
 				else
 				{
@@ -467,24 +473,24 @@ void DebugBot::BotLogic()
 			bool targetFound = false;
 			for each (Item i in _objectManager->GetTreasures())
 			{
-				if (_pathfinder->TryToCalculatePath((int)_playerPositionXNode, (int)_playerPositionYNode, i.GetX(), i.GetY()))
+				if (_pathfinder->TryToCalculatePath(playerC, i.GetCoords()))
 				{
 					targetFound = true;
-					_pathsQ.push_back(_pathfinder->GetPathListNode());
+					_pathsQ.push_back(_pathfinder->GetPathList());
 					_botLogicState = MOVE_TO_NEXT_CC;
 					break;
 				}
 			}
 			if (targetFound) break;
 
-			Node e;
-			if (_pathfinder->TryToFindExplorationTarget((int)_playerPositionXNode, (int)_playerPositionYNode))
+			Coords e;
+			if (_pathfinder->TryToFindExplorationTarget(playerC))
 			{
 				e = _pathfinder->GetExplorationTarget();
-				if (_pathfinder->TryToCalculatePath((int)_playerPositionXNode, (int)_playerPositionYNode, e.GetX(), e.GetY()))
+				if (_pathfinder->TryToCalculatePath(playerC, e))
 				{
 					targetFound = true;
-					_pathsQ.push_back(_pathfinder->GetPathListNode());
+					_pathsQ.push_back(_pathfinder->GetPathList());
 					_botLogicState = MOVE_TO_NEXT_CC;
 					break;
 				}
@@ -507,22 +513,15 @@ void DebugBot::BotLogic()
 		case SEARCH_FOR_EXIT:
 			if (_pathfinder->IsExitFound())
 			{
-				Node exit = _pathfinder->GetExit();
-				if (_pathfinder->GetDijDist(exit.GetX(), exit.GetY()) != INT_MAX)
+				Coords exit = _pathfinder->GetExit();
+				if (_pathfinder->GetDijDist(exit) != INT_MAX)
 				{
-					_pathsQ.push_back(_pathfinder->GetDijPathNode(exit.GetX(), exit.GetY()));
+					_pathsQ.push_back(_pathfinder->GetDijPath(exit));
 					_botLogicState = GO_TO_EXIT;
 				}
 				else
 					_botLogicState = UNREACHABLE_EXIT;
 
-				//if (_pathfinder->TryToCalculatePath((int)_playerPositionXNode, (int)_playerPositionYNode, _pathfinder->GetExit().GetX(), _pathfinder->GetExit().GetY()))
-				//{
-				//	_pathsQ.push_back(_pathfinder->GetPathListNode());
-				//	_botLogicState = GO_TO_EXIT;
-				//}
-				//else
-				//	_botLogicState = UNREACHABLE_EXIT;
 			}
 			else
 			{
@@ -534,8 +533,7 @@ void DebugBot::BotLogic()
 
 			break;
 		case GO_TO_EXIT:
-			if ((int)_playerPositionXNode == _pathfinder->GetExit().GetX() &&
-				(int)_playerPositionYNode == _pathfinder->GetExit().GetY())
+			if (playerC == _pathfinder->GetExit())
 				_botLogicState = EXIT_REACHED;
 			else
 			{
@@ -565,12 +563,13 @@ void DebugBot::BotLogic()
 
 void DebugBot::Update()
 {
+	Coords playerc = Coords((int)_playerPositionXNode, (int)_playerPositionYNode);
 
 	//PRINTING DEBUG INFO TO FILES
 	if (_debugTimer < 0)
 	{
 		bool hasMomentum = false;
-		_pathfinder->NeighboursDebug((int)_playerPositionXNode, (int)_playerPositionYNode, hasMomentum);
+		_pathfinder->NeighboursDebug(playerc, hasMomentum);
 		_debugTimer = 10;
 	}
 	_debugTimer -= 1;

@@ -9,9 +9,7 @@ IMovementAction::IMovementAction(IBot* bot)
 	_actionInProgress = false;
 	_directionX = DIRECTIONX::xNONE;
 	_directionY = DIRECTIONY::yNONE;
-	//_targetX = bot->GetPlayerPositionX();
-	//_targetY = bot->GetPlayerPositionY();
-	_targetNode = Node();
+	_targetNode = Coords();
 }
 
 IMovementAction::~IMovementAction()
@@ -38,34 +36,33 @@ DIRECTIONY IMovementAction::GetDirectionY()
 	return _directionY;
 }
 
-Node IMovementAction::GetTargetNode()
+Coords IMovementAction::GetTargetNode()
 {
 	return _targetNode;
 }
 
-
-Node IMovementAction::CalculateTargetNode(int distXNode, int distYNode)
+void IMovementAction::CalculateTargetNode(int distXNode, int distYNode)
 {
-	return Node(_bot->GetPlayerPositionXNode() + distXNode, _bot->GetPlayerPositionYNode() + distYNode);
+	_targetNode = Coords(_bot->GetPlayerPositionXNode() + distXNode, _bot->GetPlayerPositionYNode() + distYNode, NODE_ROUNDDOWN);
 }
 
-bool IMovementAction::ShouldTryToGrabLadder(int targetX, int targetY)
+bool IMovementAction::ShouldTryToGrabLadder()
 {
 	int playerPosX = (int)_bot->GetPlayerPositionX();
 	int playerPosY = (int)_bot->GetPlayerPositionY();
 
-	if (WithinRangeFromTarget(playerPosX, MiddlePixelOfNode(targetX), PIXELS_IN_NODE))
+	if (WithinRangeFromTarget(playerPosX, _targetNode.GetMidXpixel(), PIXELS_IN_NODE))
 	{
 		if (_directionY == yUP)
 		{
-			if (WithinRangeFromTarget(playerPosY, MiddlePixelOfNode(targetY), PIXELS_IN_NODE))
+			if (WithinRangeFromTarget(playerPosY, _targetNode.GetMidYpixel(), PIXELS_IN_NODE))
 				return true;
 		}
 		else
 		{
 			//while falling down, the bot will try to grab the ladder even if he overshoots the target
-			if (WithinRangeFromTarget(playerPosY, MiddlePixelOfNode(targetY), PIXELS_IN_NODE) ||
-				playerPosY > MiddlePixelOfNode(targetY))
+			if (WithinRangeFromTarget(playerPosY, _targetNode.GetMidYpixel(), PIXELS_IN_NODE) ||
+				playerPosY > _targetNode.GetMidYpixel())
 				return true;
 		}
 	}
@@ -73,12 +70,7 @@ bool IMovementAction::ShouldTryToGrabLadder(int targetX, int targetY)
 	return false;
 }
 
-bool IMovementAction::ShouldTryToGrabLadder(Node targetNode)
-{
-	return ShouldTryToGrabLadder(targetNode.GetX(), targetNode.GetY());
-}
-
-bool IMovementAction::IsNearLadderTop(int playerPosX, int playerPosY)
+bool IMovementAction::IsNearLadderTop()
 {
 	int playerNodeX = (int)_bot->GetPlayerPositionXNode();
 	int playerNodeY = (int)_bot->GetPlayerPositionYNode();
@@ -89,7 +81,6 @@ bool IMovementAction::IsNearLadderTop(int playerPosX, int playerPosY)
 
 	return false;
 }
-
 
 void IMovementAction::Centralize(ordersStruct * orders, int centralizingPoint)
 {

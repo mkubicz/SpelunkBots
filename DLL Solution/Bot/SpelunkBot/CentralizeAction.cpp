@@ -23,11 +23,14 @@ ordersStruct CentralizeAction::GetOrders()
 	if (!_actionInProgress)
 	{
 		if (_centralizingPoint == -1)
-			_centralizingPoint = MiddlePixelOfNode((int)_bot->GetPlayerPositionXNode());
+		{
+			Coords startNode = Coords(_bot->GetPlayerPositionXNode(), _bot->GetPlayerPositionYNode(), NODE_ROUNDDOWN);
+			_centralizingPoint = startNode.GetMidXpixel();
+		}
 
 		int distXNode = abs(ConvertToNodeCoordinates(_centralizingPoint) - (int)_bot->GetPlayerPositionXNode());
 
-		_targetNode = CalculateTargetNode(distXNode, 0);
+		CalculateTargetNode(distXNode, 0);
 
 		_actionInProgress = true;
 	}

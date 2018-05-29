@@ -1,7 +1,6 @@
 #pragma once
 #include "IBot.h"
-#include "MapSearchNode.h"
-#include "Node.h"
+#include "MapNode.h"
 #include "Item.h"
 #include <map>
 #include <stack>
@@ -15,65 +14,53 @@ public:
 
 	void InitializeGrid();
 
-	std::vector<MapSearchNode*> CalculateNeighboursList(MapSearchNode* node, MVSTATE mvstate, ACTION_TARGET target);
-	std::vector<Node> CalculateNeighboursList(Node node, MVSTATE mvstate, ACTION_TARGET target);
+	std::vector<MapNode> CalculateNeighbours(MapNode node, MVSTATE mvstate, ACTION_TARGET target);
+	std::vector<MapNode*> CalculateNeighboursInGrid(MapNode* node, MVSTATE mvstate, ACTION_TARGET target);
 
-	MapSearchNode* GetNodeFromGrid(int x, int y);
-	Node ToNode(MapSearchNode *n);
+	MapNode* GetNodeFromGrid(Coords c);
 	
-	bool TryToCalculatePath(int x1, int y1, int x2, int y2);
-	std::vector<MapSearchNode*> GetPathList();
-	std::vector<Node> GetPathListNode();
-	int GetPathLength(std::vector<Node> path);
+	bool TryToCalculatePath(Coords c1, Coords c2);
+	std::vector<MapNode*> GetPathList();
+	int GetPathLength(std::vector<MapNode*> path);
 	int GetPathLength();
 
-	bool TryToFindExplorationTarget(int x, int y);
-	Node GetExplorationTarget();
-	std::vector<Node> FindExplorationTargets(int x1, int y1);
+	bool TryToFindExplorationTarget(Coords startc);
+	Coords GetExplorationTarget();
 
 	void TryToFindExit();
-	Node GetExit();
+	Coords GetExit();
 	bool IsExitFound();
 
 	void CalculateConnectedComponents();
-	std::vector<MapSearchNode*> GetAllNodesFromCC(int ccnr);
-	int GetCCnr(int nodeX, int nodeY);
-	int GetCCnr(Node n);
-	int GetCCnr(MapSearchNode n);
-	int GetCCnr(Item item);
+	std::vector<MapNode*> GetAllNodesFromCC(int ccnr);
+	int GetCCnr(Coords coords);
 
-	void Dijkstra(int x, int y);
-	std::vector<MapSearchNode*> GetDijPath(int targetX, int targetY);
-	std::vector<Node> GetDijPathNode(int targetX, int targetY);
-	int GetDijDist(int x, int y);
-	int GetDijDist(Item i);
+	void Dijkstra(Coords startc);
+	std::vector<MapNode*> GetDijPath(Coords targetC);
+	int GetDijDist(Coords c);
 
-	bool isCloseToFog(int x, int y, int closeness);
-	bool isCloseToFog(MapSearchNode *n, int closeness);
-	bool IsOutOfBounds(int x, int y);
-	bool CanStandInNode(int x, int y);
-	bool CanStandInNode(MapSearchNode * n);
-	bool CanHangInNode(MapSearchNode * n);
-	bool IsNodeValidBotPosition(MapSearchNode * n);
-	bool IsInFog(int x, int y);
-	bool IsInFog(MapSearchNode * n);
+	bool isCloseToFog(Coords c, int closeness);
+	bool IsOutOfBounds(Coords c);
+	bool CanStandInNode(Coords c);
+	bool CanHangInNode(Coords c);
+	bool IsNodeValidBotPosition(Coords c);
+	bool IsInFog(Coords c);
+	int CalculateDistance(Coords c1, Coords c2);
 	bool IsFogOnMap();
-	int CalculateDistance(MapSearchNode *n, MapSearchNode *m);
-	int CalculateDistance(Node * n, Node * m);
 
-	void NeighboursDebug(int x, int y, bool hasMomentum);
+	void NeighboursDebug(Coords c, bool hasMomentum);
 	void SCCDebug();
-	void DijkstraDebug();
+	void DijkstraDebug(bool exact);
 
 private:	
 	IBot* _bot;
-	std::map<int, std::map<int, MapSearchNode*> > _grid;
+	std::map<int, std::map<int, MapNode*> > _grid;
 
-	std::vector<MapSearchNode*> _pathList;
-	Node _explorationTarget;
+	std::vector<MapNode*> _pathList;
+	Coords _explorationTarget;
 
 	bool _exitFound = false;
-	Node _exit;
+	Coords _exit;
 
 	//used by neighbour searching
 	bool DownJumpPathClear(int x1, int y1, int x2, int y2, DIRECTIONX direction, bool fromLadder);
@@ -83,18 +70,18 @@ private:
 
 
 	//neighbours
-	std::vector<Node> CalculateNeighboursHanging(Node node);
-	std::vector<Node> CalculateNeighboursClimbing(Node node);
-	std::vector<Node> CalculateNeighboursClimbingWithMomentum(Node node);
-	std::vector<Node> CalculateNeighboursStanding(Node node);
-	std::vector<Node> CalculateNeighboursStandingLT(Node node);
-	void AddNeighboursLR(int x, int y, bool right, std::vector<Node>* neighbours);
+	std::vector<MapNode> CalculateNeighboursHanging(MapNode node);
+	std::vector<MapNode> CalculateNeighboursClimbing(MapNode node);
+	std::vector<MapNode> CalculateNeighboursClimbingWithMomentum(MapNode node);
+	std::vector<MapNode> CalculateNeighboursStanding(MapNode node);
+	std::vector<MapNode> CalculateNeighboursStandingLT(MapNode node);
+	void AddNeighboursLR(int x, int y, bool right, std::vector<MapNode> *neighbours);
 
 	//traps
-	void DeleteUnsafeNeighbours(Node origin, std::vector<Node> &neighbours);
-	void DeleteUnsafeNeighboursSpikes(Node origin, std::vector<Node>& neighbours);
-	void DeleteUnsafeNeighboursSpearTrap(Node origin, std::vector<Node>& neighbours);
-	void DeleteUnsafeNeighboursArrowTrap(Node origin, std::vector<Node>& neighbours);
+	void DeleteUnsafeNeighbours(MapNode origin, std::vector<MapNode> &neighbours);
+	void DeleteUnsafeNeighboursSpikes(MapNode origin, std::vector<MapNode>& neighbours);
+	void DeleteUnsafeNeighboursSpearTrap(MapNode origin, std::vector<MapNode>& neighbours);
+	void DeleteUnsafeNeighboursArrowTrap(MapNode origin, std::vector<MapNode>& neighbours);
 
 	//tarjan's algorithm
 	int _tar_cvn;
@@ -102,36 +89,43 @@ private:
 	int _tar_VN[X_NODES][Y_NODES];
 	int _tar_VLow[X_NODES][Y_NODES];
 	bool _tar_VS[X_NODES][Y_NODES];
-	std::stack<MapSearchNode*> _tar_S;
-	std::vector<std::vector<MapSearchNode*>> _tar_CClist;
-	std::map<int, std::vector<MapSearchNode*>> _tar_CCmap;
-	void TarjanDFS(MapSearchNode* n);
+	std::stack<MapNode*> _tar_S;
+	std::vector<std::vector<MapNode*>> _tar_CClist;
+	std::map<int, std::vector<MapNode*>> _tar_CCmap;
+	void TarjanDFS(MapNode* n);
 
 	//dijkstra's algorithm
 	struct _dij_MSNodeCmp
 	{
-		bool operator() (MapSearchNode* n1, MapSearchNode* n2)
+		bool operator() (MapNode* n1, MapNode* n2)
 		{
 			return n1->_dij_dist > n2->_dij_dist;
 			//return _dij_dists[n1->_x][n1->_y] < _dij_dists[n1->_x][n1->_y];
 		}
 	};
-	std::priority_queue<MapSearchNode*, std::vector<MapSearchNode*>, _dij_MSNodeCmp> _dij_pQ;
+	std::priority_queue<MapNode*, std::vector<MapNode*>, _dij_MSNodeCmp> _dij_pQ;
 	//static int _dij_dists[X_NODES][Y_NODES];
 	bool _dij_visited[X_NODES][Y_NODES];
 	static int _dij_prev[X_NODES][Y_NODES];
 
 
 	//for simplicity
-	bool Pusta(int x, int y); //node is passable
-	bool Pelna(int x, int y); //node is impassable
-	bool Ladder(int x, int y); //node contains a ladder
-	bool Ladder(MapSearchNode* n); //node contains a ladder
-	bool LadderTop(int x, int y); //node contains a laddertop
+	bool Impassable(int x, int y);
+	bool Impassable(Coords c);
+	bool Passable(int x, int y);
+	bool Passable(Coords c);
+	bool Ladder(int x, int y);
+	bool Ladder(Coords c);
+	bool LadderTop(int x, int y);
+	bool LadderTop(Coords c);
 	bool Spikes(int x, int y);
+	bool Spikes(Coords c);
 	bool ArrowTrapR(int x, int y);
+	bool ArrowTrapR(Coords c);
 	bool ArrowTrapL(int x, int y);
+	bool ArrowTrapL(Coords c);
 	bool SpearTrap(int x, int y);
+	bool SpearTrap(Coords c);
 
-	std::vector<Node> GetPathBetweenNodes(Node start, Node end, MOVEMENTACTION used_action);
+	std::vector<Coords> GetPathBetweenNodes(Coords start, Coords end, MOVEMENTACTION used_action);
 };

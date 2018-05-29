@@ -68,20 +68,20 @@ bool WentThrough(int x1, int x2, DIRECTIONX direction)
 }
 
 
-int MiddleXPixel(Node node)
-{
-	return ConvertToPixelCoordinates(node.GetX()) + 8;
-}
-
-int MiddleYPixel(Node node)
-{
-	return ConvertToPixelCoordinates(node.GetY()) + 8;
-}
-
-int MiddlePixelOfNode(int nodenr)
-{
-	return ConvertToPixelCoordinates(nodenr + 0.5);
-}
+//int MiddleXPixel(Node node)
+//{
+//	return ConvertToPixelCoordinates(node.GetX()) + 8;
+//}
+//
+//int MiddleYPixel(Node node)
+//{
+//	return ConvertToPixelCoordinates(node.GetY()) + 8;
+//}
+//
+//int MiddlePixelOfNode(int nodenr)
+//{
+//	return ConvertToPixelCoordinates(nodenr + 0.5);
+//}
 
 int EdgeOfNodeX(int nodenr, DIRECTIONX direction)
 {

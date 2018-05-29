@@ -1,7 +1,7 @@
 #pragma once
 
 //forward declarations
-class Node;
+//class Node;
 enum DIRECTIONX;
 enum ACTION_TARGET;
 enum MVSTATE;
@@ -18,10 +18,10 @@ bool closeToTarget(int playerPositionX, int targetPositionX);
 bool WentThrough(int x1, int x2, DIRECTIONX direction);
 bool WithinRangeFromTarget(int posPixel, int targetPixel, int pixelRange);
 
-int MiddleXPixel(Node node);
-int MiddleYPixel(Node node);
+//int MiddleXPixel(Node node);
+//int MiddleYPixel(Node node);
 int EdgeOfNodeX(int nodenr, DIRECTIONX direction);
-int MiddlePixelOfNode(int nodenr);
+//int MiddlePixelOfNode(int nodenr);
 
 bool IsBotAgainstTheWall(int playerPositionX, bool goingRight);
 bool IsJumpWithRunning(int distX, int distY, ACTION_TARGET jumpTarget);

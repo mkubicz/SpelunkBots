@@ -15,7 +15,7 @@ ordersStruct HangAction::GetOrders()
 	if (!_actionInProgress)
 	{
 		int offset = _directionX == xRIGHT ? 1 : -1;
-		_targetNode = CalculateTargetNode(offset, 1);
+		CalculateTargetNode(offset, 1);
 
 		_actionInProgress = true;
 	}

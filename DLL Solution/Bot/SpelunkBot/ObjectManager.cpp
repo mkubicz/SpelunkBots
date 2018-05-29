@@ -44,7 +44,7 @@ std::vector<Item> ObjectManager::GetItems(int ccnr)
 	std::vector<Item> items;
 
 	for (int i = 0; i < _itemsList.size(); i++)
-		if (_pathfinder->GetCCnr(_itemsList[i]) == ccnr)
+		if (_pathfinder->GetCCnr(_itemsList[i].GetCoords()) == ccnr)
 			items.push_back(_itemsList[i]);
 
 	return items;
@@ -55,7 +55,7 @@ std::vector<Item> ObjectManager::GetItems(ItemKind kind, int ccnr)
 	std::vector<Item> items;
 
 	for (int i = 0; i < _itemsList.size(); i++)
-		if (_pathfinder->GetCCnr(_itemsList[i]) == ccnr && _itemsList[i].GetKind() == kind)
+		if (_pathfinder->GetCCnr(_itemsList[i].GetCoords()) == ccnr && _itemsList[i].GetKind() == kind)
 			items.push_back(_itemsList[i]);
 
 	return items;
@@ -67,7 +67,7 @@ std::vector<Item> ObjectManager::GetItems(ItemType type, int ccnr)
 	std::vector<Item> items;
 
 	for (int i = 0; i < _itemsList.size(); i++)
-		if (_pathfinder->GetCCnr(_itemsList[i]) == ccnr && _itemsList[i].GetType() == type)
+		if (_pathfinder->GetCCnr(_itemsList[i].GetCoords()) == ccnr && _itemsList[i].GetType() == type)
 			items.push_back(_itemsList[i]);
 
 	return items;

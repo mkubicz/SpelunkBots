@@ -3,7 +3,7 @@
 
 //teoretycznie mo¿na zrobiæ forward declaration zamiast include
 #include "IBot.h"
-#include "Node.h"
+#include "Coords.h"
 
 struct ordersStruct
 {
@@ -30,12 +30,11 @@ protected:
 	bool _actionInProgress;
 	DIRECTIONX _directionX;
 	DIRECTIONY _directionY;
-	Node _targetNode;
+	Coords _targetNode;
 
-	Node CalculateTargetNode(int distXNode, int distYNode);
-	bool ShouldTryToGrabLadder(int targetX, int targetY);
-	bool ShouldTryToGrabLadder(Node targetNode);
-	bool IsNearLadderTop(int playerPosX, int playerPosY);
+	void CalculateTargetNode(int distXNode, int distYNode);
+	bool ShouldTryToGrabLadder();
+	bool IsNearLadderTop();
 
 	int _centralizeMoveTimer = 0;
 	int _centralizeBreakTimer = 0;
@@ -53,7 +52,7 @@ public:
 	MOVEMENTACTION ActionType();
 	DIRECTIONX GetDirectionX();
 	DIRECTIONY GetDirectionY();
-	Node GetTargetNode();
+	Coords GetTargetNode();
 	
 	virtual ordersStruct GetOrders() =0;
 
