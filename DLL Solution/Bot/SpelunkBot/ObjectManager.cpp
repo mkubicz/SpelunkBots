@@ -165,6 +165,12 @@ void ObjectManager::EnemiesDebug()
 	fileStream.close();
 }
 
+void ObjectManager::NewLevel()
+{
+	_itemsList.clear();
+	_enemiesList.clear();
+}
+
 
 
 //void ObjectManager::ResetEnemies()

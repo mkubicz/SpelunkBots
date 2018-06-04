@@ -1,9 +1,6 @@
 #include "stdafx.h"
 #include "Pathfinder.h"
-#include <list>
-#include <algorithm>
-#include <fstream>
-#include <ostream>
+
 
 using namespace std;
 
@@ -327,6 +324,11 @@ bool Pathfinder::IsFogOnMap()
 	return false;
 }
 
+Coords Pathfinder::GetBotCoords()
+{
+	return Coords(_bot->GetPlayerPositionXNode(), _bot->GetPlayerPositionYNode(), NODE);
+}
+
 //int Pathfinder::CalculateDistance(MapSearchNode * n, MapSearchNode * m)
 //{
 //	return abs(n->_x - m->_x) + abs(n->_y - m->_y);
@@ -447,6 +449,11 @@ bool Pathfinder::HorizontalJumpPathClear(int x, int y, int dist, DIRECTIONX dire
 	}
 
 	return ok;
+}
+
+void Pathfinder::NewLevel()
+{
+	InitializeGrid();
 }
 
 bool Pathfinder::DownJumpPathClear(int x1, int y1, int x2, int y2, DIRECTIONX direction, bool fromLadder)
@@ -1831,9 +1838,23 @@ MapNode* Pathfinder::GetNodeFromGrid(Coords c)
 //	return Node(n->_x, n->_y, n->_actionToReach, n->_actionToReachTarget, n->GetMvState());
 //}
 
-std::vector<MapNode*> Pathfinder::GetPathList()
+std::vector<MapNode*> Pathfinder::GetPathFromGrid()
 {
 	return _pathList;
+}
+
+std::vector<MapNode> Pathfinder::GetPath()
+{
+	std::vector<MapNode> pathCopy;
+
+	for (int i = 0; i < _pathList.size(); i++)
+	{
+		//dzia³a dobrze, mo¿e byæ problem z rzeczami wykorzystuj¹cymi dynamiczn¹ pamiêæ, ale ja i tak ich nie u¿ywam
+		MapNode n = MapNode(*_pathList[i]);
+		pathCopy.push_back(n);
+	}
+
+	return pathCopy;
 }
 
 //std::vector<Node> Pathfinder::GetPathListNode()
@@ -1852,7 +1873,7 @@ Coords Pathfinder::GetExplorationTarget()
 
 int Pathfinder::GetPathLength()
 {
-	return GetPathLength(GetPathList());
+	return GetPathLength(GetPathFromGrid());
 }
 
 int Pathfinder::GetPathLength(std::vector<MapNode*> path)

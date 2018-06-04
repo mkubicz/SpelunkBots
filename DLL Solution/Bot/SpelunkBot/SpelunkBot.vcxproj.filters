@@ -61,6 +61,12 @@
     <Filter Include="Header Files\Bots\DebugBot\Nodes">
       <UniqueIdentifier>{83af6175-99bc-46d1-8c63-a42af682bcc9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Bots\DebugBot\Scheduling">
+      <UniqueIdentifier>{86ba8bc3-8711-43ab-95ad-e05877fe7301}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Bots\DebugBot\Scheduling">
+      <UniqueIdentifier>{61ade55c-7058-4008-91dd-636ae11f62db}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -162,6 +168,15 @@
     <ClInclude Include="Coords.h">
       <Filter>Header Files\Bots\DebugBot\Nodes</Filter>
     </ClInclude>
+    <ClInclude Include="PathInfo.h">
+      <Filter>Header Files\Bots\DebugBot\Scheduling</Filter>
+    </ClInclude>
+    <ClInclude Include="PathScheduler.h">
+      <Filter>Header Files\Bots\DebugBot\Scheduling</Filter>
+    </ClInclude>
+    <ClInclude Include="AllActions.h">
+      <Filter>Header Files\Bots\DebugBot\Actions</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -259,6 +274,12 @@
     </ClCompile>
     <ClCompile Include="Coords.cpp">
       <Filter>Source Files\Bots\DebugBot\Nodes</Filter>
+    </ClCompile>
+    <ClCompile Include="PathInfo.cpp">
+      <Filter>Source Files\Bots\DebugBot\Scheduling</Filter>
+    </ClCompile>
+    <ClCompile Include="PathScheduler.cpp">
+      <Filter>Source Files\Bots\DebugBot\Scheduling</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -3,7 +3,9 @@
 #include "IMovementAction.h"
 #include "Pathfinder.h"
 #include "ObjectManager.h"
-
+#include "PathScheduler.h"
+#include <fstream>
+#include <ostream>
 #include <thread>
 #include <chrono>
 
@@ -19,13 +21,14 @@ public:
 	void NewLevel() override;
 
 private:
-	std::queue<IMovementAction*> _actionsQ;
+	//std::queue<IMovementAction*> _actionsQ;
 	Pathfinder* _pathfinder;
 	ObjectManager* _objectManager;
+	PathScheduler* _pathScheduler;
 	std::thread _botLogicThread;
 	
 	//std::vector<collectableObject> _collectablesList;
-	std::deque<std::vector<MapNode*>> _pathsQ;
+	//std::deque<std::vector<MapNode*>> _pathsQ;
 
 	enum SECONDARY_STATE { sIDLE, NEW_TARGET, UNREACHABLE_TARGET, EXECUTING_COMMANDS,
 						   CREATING_COMMANDS, FINISHED, WAITING_FOR_PATH, DEBUG };
@@ -35,11 +38,11 @@ private:
 	BOTLOGIC_STATE _botLogicState;
 	BOTLOGIC_STATE _prevState;
 	SECONDARY_STATE _secState;
-	bool _botLogicWaiting = false;
-	int _waitTimer = 0;
+	bool _botLogicWaiting;
+	int _waitTimer;
 
-	void CreateCommands(std::vector<MapNode*> path);
-	void AddActionToActionQueue(MOVEMENTACTION action, ACTION_TARGET jumpTarget, MVSTATE mvState, int distX, int distY);
+	//void CreateCommands(std::vector<MapNode*> path);
+	//void AddActionToActionQueue(MOVEMENTACTION action, ACTION_TARGET jumpTarget, MVSTATE mvState, int distX, int distY);
 	void ClearOrders();
 
 	//botlogic methods
@@ -48,9 +51,8 @@ private:
 	void BotLogicWaiting();
 
 	//pathQ methods
-	bool IsPathToTargetSheduled(int x, int y);
-	MapNode GetStartNodeForNextPath();
-	bool PathNearlyCompleted();
+	//bool IsPathToTargetSheduled(int x, int y);
+	//bool PathNearlyCompleted();
 
 	//debug
 	int _debugTimer;

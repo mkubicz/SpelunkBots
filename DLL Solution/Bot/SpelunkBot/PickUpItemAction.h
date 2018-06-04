@@ -1,5 +1,4 @@
 #pragma once
-#include "stdafx.h"
 #include "IMovementAction.h"
 
 class PickUpItemAction : public IMovementAction

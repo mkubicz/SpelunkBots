@@ -5,6 +5,10 @@
 #include <map>
 #include <stack>
 #include <functional>
+#include <list>
+#include <algorithm>
+#include <fstream>
+#include <ostream>
 
 class Pathfinder
 {
@@ -12,6 +16,7 @@ public:
 	Pathfinder(IBot* bot);
 	~Pathfinder();
 
+	void NewLevel();
 	void InitializeGrid();
 
 	std::vector<MapNode> CalculateNeighbours(MapNode node, MVSTATE mvstate, ACTION_TARGET target);
@@ -20,7 +25,8 @@ public:
 	MapNode* GetNodeFromGrid(Coords c);
 	
 	bool TryToCalculatePath(Coords c1, Coords c2);
-	std::vector<MapNode*> GetPathList();
+	std::vector<MapNode*> GetPathFromGrid();
+	std::vector<MapNode> GetPath();
 	int GetPathLength(std::vector<MapNode*> path);
 	int GetPathLength();
 
@@ -47,6 +53,8 @@ public:
 	bool IsInFog(Coords c);
 	int CalculateDistance(Coords c1, Coords c2);
 	bool IsFogOnMap();
+
+	Coords GetBotCoords();
 
 	void NeighboursDebug(Coords c, bool hasMomentum);
 	void SCCDebug();

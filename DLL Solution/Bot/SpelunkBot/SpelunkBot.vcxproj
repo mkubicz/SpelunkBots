@@ -80,6 +80,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AllActions.h" />
     <ClInclude Include="BasicBotExampleOne.h" />
     <ClInclude Include="CentralizeAction.h" />
     <ClInclude Include="ClimbAction.h" />
@@ -104,6 +105,8 @@
     <ClInclude Include="NotSoSolidSnake.h" />
     <ClInclude Include="ObjectManager.h" />
     <ClInclude Include="Pathfinder.h" />
+    <ClInclude Include="PathInfo.h" />
+    <ClInclude Include="PathScheduler.h" />
     <ClInclude Include="PickUpItemAction.h" />
     <ClInclude Include="SeanBean.h" />
     <ClInclude Include="stdafx.h" />
@@ -146,6 +149,8 @@
     <ClCompile Include="NotSoSolidSnake.cpp" />
     <ClCompile Include="ObjectManager.cpp" />
     <ClCompile Include="Pathfinder.cpp" />
+    <ClCompile Include="PathScheduler.cpp" />
+    <ClCompile Include="PathInfo.cpp" />
     <ClCompile Include="PickUpItemAction.cpp" />
     <ClCompile Include="SeanBean.cpp" />
     <ClCompile Include="stdafx.cpp">

@@ -1,21 +1,6 @@
 #include "stdafx.h"
 #include "DebugBot.h"
-#include "CentralizeAction.h"
-#include "WalkAction.h"
-#include "WalkUpAction.h"
-#include "HangDropAction.h"
-#include "JumpAboveAction.h"
-#include "JumpActionStary.h"
-#include "WalkOffLedgeAction.h"
-#include "ClimbFromHangAction.h"
-#include "HangAction.h"
-#include "DropAction.h"
-#include "JumpAction.h"
-#include "JumpFromLadderAction.h"
-#include "ClimbAction.h"
 
-#include <fstream>
-#include <ostream>
 
 #pragma region Constructors and initialization
 
@@ -23,6 +8,7 @@ DebugBot::DebugBot()
 {
 	_pathfinder = new Pathfinder(this);
 	_objectManager = new ObjectManager(this, _pathfinder);
+	_pathScheduler = new PathScheduler(this, _pathfinder);
 	NewLevel();
 }
 
@@ -30,7 +16,8 @@ void DebugBot::InitialiseBotLogicState()
 {	
 	_botLogicState = START;
 	_secState = WAITING_FOR_PATH;
-
+	_botLogicWaiting = false;
+	_waitTimer = 0;
 	//for manual movementaction tests
 	//_botLogicState = IDLE;
 	//_secState = DEBUG;
@@ -55,17 +42,19 @@ void DebugBot::NewLevel()
 		_botLogicThread.join();
 
 	//delete any leftover info from previous level 
-	_pathsQ.clear();
-	ClearOrders();
-	while (!_actionsQ.empty())
-	{
-		delete _actionsQ.front();
-		_actionsQ.pop();
-	}
+	//_pathsQ.clear();
+	//ClearOrders();
+	//while (!_actionsQ.empty())
+	//{
+	//	delete _actionsQ.front();
+	//	_actionsQ.pop();
+	//}
 
 	//initialize variables and start new botlogic thread
 	InitialiseVariables();
-	_pathfinder->InitializeGrid();
+	_pathfinder->NewLevel();
+	_objectManager->NewLevel();
+	_pathScheduler->NewLevel();
 
 	InitialiseBotLogicState();
 	_botLogicThread = std::thread(&DebugBot::BotLogic, this);
@@ -76,45 +65,38 @@ DebugBot::~DebugBot()
 	_botLogicState = EXIT;
 	_botLogicThread.join();
 
-	while (!_actionsQ.empty())
-	{
-		delete _actionsQ.front();
-		_actionsQ.pop();
-	}
+	//while (!_actionsQ.empty())
+	//{
+	//	delete _actionsQ.front();
+	//	_actionsQ.pop();
+	//}
 	delete _pathfinder;
+	delete _objectManager;
+	delete _pathScheduler;
 }
 
 #pragma endregion
 
 #pragma region pathQ 
 
-MapNode DebugBot::GetStartNodeForNextPath()
-{
-	MapNode start;
-	if (_pathsQ.empty())
-		start = MapNode((int)_playerPositionXNode, (int)_playerPositionYNode);
-	else
-		start = MapNode(_pathsQ.back().back()->GetX(), _pathsQ.back().back()->GetY()); //target of most recently added path is our start node
 
-	return start;
-}
-
-bool DebugBot::IsPathToTargetSheduled(int x, int y)
-{
-	bool ok = false;
-
-	for (int j = 0; j < _pathsQ.size(); j++)
-	{
-		if (_pathsQ[j].back()->GetX() == x &&
-			_pathsQ[j].back()->GetY() == y)
-		{
-			ok = true;
-			break;
-		}
-	}
-
-	return ok;
-}
+//
+//bool DebugBot::IsPathToTargetSheduled(int x, int y)
+//{
+//	bool ok = false;
+//
+//	for (int j = 0; j < _pathsQ.size(); j++)
+//	{
+//		if (_pathsQ[j].back()->GetX() == x &&
+//			_pathsQ[j].back()->GetY() == y)
+//		{
+//			ok = true;
+//			break;
+//		}
+//	}
+//
+//	return ok;
+//}
 
 #pragma endregion
 
@@ -149,134 +131,134 @@ void DebugBot::ClearOrders()
 	_payp = false;
 	_itemp = false;
 }
-
-void DebugBot::CreateCommands(std::vector<MapNode*> path)
-{
-	int currX, currY, targetX, targetY, distX, distY;
-	MOVEMENTACTION prevAction = MOVEMENTACTION::IDLE;
-	currX = (int)_playerPositionXNode;
-	currY = (int)_playerPositionYNode;
-	MVSTATE mvState;
-	ACTION_TARGET actionTarget;
-	MOVEMENTACTION action;
-
-	for (int i = 0; i < path.size(); i++)
-	{
-		//first node in a path is start node
-		if (i == 0) continue;
-
-		targetX = path[i]->GetX();
-		targetY = path[i]->GetY();
-		distX = targetX - currX;
-		distY = targetY - currY;
-
-		action = path[i]->GetActionToReach();
-		actionTarget = path[i]->GetActionTarget();
-		mvState = path[i - 1]->GetMvState();
-
-		AddActionToActionQueue(action, actionTarget, mvState, distX, distY);
-
-		currX = targetX;
-		currY = targetY;
-		prevAction = action;
-	}
-}
-
-void DebugBot::AddActionToActionQueue(MOVEMENTACTION action, ACTION_TARGET jumpTarget, MVSTATE mvState, int distX, int distY)
-{
-	DIRECTIONX directionX;
-	DIRECTIONY directionY;
-
-	if (distX > 0) directionX = xRIGHT;
-	else if (distX == 0) directionX = xNONE;
-	else directionX = xLEFT;
-
-	if (distY > 0) directionY = yDOWN;
-	else if (distY == 0) directionY = yNONE;
-	else directionY = yUP;
-
-	switch (action)
-	{
-	case IDLE:
-		break;
-	case CENTRALIZE:
-		_actionsQ.push(new CentralizeAction(this));
-		break;
-	case WALK:
-		//if (distX == 2), then bot is walking over a hole which should be runned
-		if (abs(distX) == 2)
-		{
-			_actionsQ.push(new WalkAction(this, distX, RUN));
-			break;
-		}
-
-		if (!_actionsQ.empty())
-		{
-			if (_actionsQ.back()->ActionType() == WALK &&
-				((distX > 0 && _actionsQ.back()->GetDirectionX() == xRIGHT) ||
-				(distX < 0 && _actionsQ.back()->GetDirectionX() == xLEFT)))
-			{
-				//previous action is also a WalkAction, and its going in the same direction,
-				//so we increase its distance instead of creating a new command (ActionBatching™)
-				dynamic_cast<WalkAction*>(_actionsQ.back())->AddDistance(distX);
-				break;
-			}
-		}
-
-		_actionsQ.push(new WalkAction(this, distX));
-
-		break;
-	case HANG:
-		_actionsQ.push(new HangAction(this, directionX));
-		break;
-	case DROP:
-		_actionsQ.push(new DropAction(this, jumpTarget, distY));
-		break;
-	case CLIMBFROMHANG:
-		_actionsQ.push(new ClimbFromHangAction(this, directionX));
-		break;
-	case CLIMB:
-		if (!_actionsQ.empty())
-		{
-			if (_actionsQ.back()->ActionType() == CLIMB &&
-				((distY > 0 && _actionsQ.back()->GetDirectionY() == yDOWN) ||
-				(distY < 0 && _actionsQ.back()->GetDirectionY() == yUP)))
-			{
-				//previous action is also a ClimbAction, and its going in the same direction,
-				//so we increase its distance instead of creating a new command (ActionBatching™)
-				dynamic_cast<ClimbAction*>(_actionsQ.back())->AddDistance(distY);
-				break;
-			}
-		}
-
-		_actionsQ.push(new ClimbAction(this, distY));
-		break;
-	case JUMPABOVERIGHT:
-		_actionsQ.push(new JumpAboveAction(this, xRIGHT));
-		break;
-	case JUMPABOVELEFT:
-		_actionsQ.push(new JumpAboveAction(this, xLEFT));
-		break;
-	case JUMP:
-		_actionsQ.push(new JumpAction(this, jumpTarget, distX, distY));
-		break;
-	case JUMPFROMLADDER:
-		if (mvState == mvCLIMBING_WITH_MOMENTUM)
-			_actionsQ.push(new JumpFromLadderAction(this, jumpTarget, true, distX, distY));
-		else if (mvState == mvCLIMBING)
-			_actionsQ.push(new JumpFromLadderAction(this, jumpTarget, false, distX, distY));
-		else
-			std::cout << "Error: MVSTATE is not CLIMBING when creating JUMPFROMLADDER" << std::endl;
-		break;
-	case WALKOFFLEDGE:
-		//TODO: walkoffledge to ladders
-		//_actionsQ.push(new WalkOffLedgeAction(this, distX, distY, jumpTarget));
-		_actionsQ.push(new WalkOffLedgeAction(this, distX, distY));
-		break;
-	default:
-		break;
-	}
-}
+//
+//void DebugBot::CreateCommands(std::vector<MapNode*> path)
+//{
+//	int currX, currY, targetX, targetY, distX, distY;
+//	MOVEMENTACTION prevAction = MOVEMENTACTION::IDLE;
+//	currX = (int)_playerPositionXNode;
+//	currY = (int)_playerPositionYNode;
+//	MVSTATE mvState;
+//	ACTION_TARGET actionTarget;
+//	MOVEMENTACTION action;
+//
+//	for (int i = 0; i < path.size(); i++)
+//	{
+//		//first node in a path is start node
+//		if (i == 0) continue;
+//
+//		targetX = path[i]->GetX();
+//		targetY = path[i]->GetY();
+//		distX = targetX - currX;
+//		distY = targetY - currY;
+//
+//		action = path[i]->GetActionToReach();
+//		actionTarget = path[i]->GetActionTarget();
+//		mvState = path[i - 1]->GetMvState();
+//
+//		AddActionToActionQueue(action, actionTarget, mvState, distX, distY);
+//
+//		currX = targetX;
+//		currY = targetY;
+//		prevAction = action;
+//	}
+//}
+//
+//void DebugBot::AddActionToActionQueue(MOVEMENTACTION action, ACTION_TARGET jumpTarget, MVSTATE mvState, int distX, int distY)
+//{
+//	DIRECTIONX directionX;
+//	DIRECTIONY directionY;
+//
+//	if (distX > 0) directionX = xRIGHT;
+//	else if (distX == 0) directionX = xNONE;
+//	else directionX = xLEFT;
+//
+//	if (distY > 0) directionY = yDOWN;
+//	else if (distY == 0) directionY = yNONE;
+//	else directionY = yUP;
+//
+//	switch (action)
+//	{
+//	case IDLE:
+//		break;
+//	case CENTRALIZE:
+//		_actionsQ.push(new CentralizeAction(this));
+//		break;
+//	case WALK:
+//		//if (distX == 2), then bot is walking over a hole which should be runned
+//		if (abs(distX) == 2)
+//		{
+//			_actionsQ.push(new WalkAction(this, distX, RUN));
+//			break;
+//		}
+//
+//		if (!_actionsQ.empty())
+//		{
+//			if (_actionsQ.back()->ActionType() == WALK &&
+//				((distX > 0 && _actionsQ.back()->GetDirectionX() == xRIGHT) ||
+//				(distX < 0 && _actionsQ.back()->GetDirectionX() == xLEFT)))
+//			{
+//				//previous action is also a WalkAction, and its going in the same direction,
+//				//so we increase its distance instead of creating a new command (ActionBatching™)
+//				dynamic_cast<WalkAction*>(_actionsQ.back())->AddDistance(distX);
+//				break;
+//			}
+//		}
+//
+//		_actionsQ.push(new WalkAction(this, distX));
+//
+//		break;
+//	case HANG:
+//		_actionsQ.push(new HangAction(this, directionX));
+//		break;
+//	case DROP:
+//		_actionsQ.push(new DropAction(this, jumpTarget, distY));
+//		break;
+//	case CLIMBFROMHANG:
+//		_actionsQ.push(new ClimbFromHangAction(this, directionX));
+//		break;
+//	case CLIMB:
+//		if (!_actionsQ.empty())
+//		{
+//			if (_actionsQ.back()->ActionType() == CLIMB &&
+//				((distY > 0 && _actionsQ.back()->GetDirectionY() == yDOWN) ||
+//				(distY < 0 && _actionsQ.back()->GetDirectionY() == yUP)))
+//			{
+//				//previous action is also a ClimbAction, and its going in the same direction,
+//				//so we increase its distance instead of creating a new command (ActionBatching™)
+//				dynamic_cast<ClimbAction*>(_actionsQ.back())->AddDistance(distY);
+//				break;
+//			}
+//		}
+//
+//		_actionsQ.push(new ClimbAction(this, distY));
+//		break;
+//	case JUMPABOVERIGHT:
+//		_actionsQ.push(new JumpAboveAction(this, xRIGHT));
+//		break;
+//	case JUMPABOVELEFT:
+//		_actionsQ.push(new JumpAboveAction(this, xLEFT));
+//		break;
+//	case JUMP:
+//		_actionsQ.push(new JumpAction(this, jumpTarget, distX, distY));
+//		break;
+//	case JUMPFROMLADDER:
+//		if (mvState == mvCLIMBING_WITH_MOMENTUM)
+//			_actionsQ.push(new JumpFromLadderAction(this, jumpTarget, true, distX, distY));
+//		else if (mvState == mvCLIMBING)
+//			_actionsQ.push(new JumpFromLadderAction(this, jumpTarget, false, distX, distY));
+//		else
+//			std::cout << "Error: MVSTATE is not CLIMBING when creating JUMPFROMLADDER" << std::endl;
+//		break;
+//	case WALKOFFLEDGE:
+//		//TODO: walkoffledge to ladders
+//		//_actionsQ.push(new WalkOffLedgeAction(this, distX, distY, jumpTarget));
+//		_actionsQ.push(new WalkOffLedgeAction(this, distX, distY));
+//		break;
+//	default:
+//		break;
+//	}
+//}
 
 #pragma endregion
 
@@ -305,17 +287,17 @@ void DebugBot::BotLogicWaiting()
 		//	break;
 	case DebugBot::GATHER_FROM_CC:
 		_waitTimer--;
-		if (_waitTimer == 0 || _pathsQ.empty()) _botLogicWaiting = false;
+		if (_waitTimer == 0 || _pathScheduler->NoSheduledPaths()) _botLogicWaiting = false;
 		break;
 	case DebugBot::EXPLORE_CC:
 		_waitTimer--;
-		if (_waitTimer == 0 || _pathsQ.empty()) _botLogicWaiting = false;
+		if (_waitTimer == 0 || _pathScheduler->NoSheduledPaths()) _botLogicWaiting = false;
 		break;
 	case DebugBot::PICK_TARGET_IN_NEXT_CC:
 		break;
 	case DebugBot::MOVE_TO_NEXT_CC:
 		//na razie bez timera, ale w sumie nie zaszkodzi³oby jakby by³
-		if (_pathsQ.empty()) _botLogicWaiting = false;
+		if (_pathScheduler->NoSheduledPaths()) _botLogicWaiting = false;
 		break;
 	case DebugBot::SEARCH_FOR_EXIT:
 		break;
@@ -356,12 +338,6 @@ void DebugBot::BotLogic()
 		if (!_pathfinder->IsExitFound())
 			_pathfinder->TryToFindExit();
 
-		if (_botLogicWaiting)
-		{
-			BotLogicWaiting();
-			continue;
-		}
-
 		//czy to potrzebne? mo¿e jednak mo¿na liczyæ za ka¿dym razem?
 		//if (_botLogicState == GATHER_FROM_CC || _botLogicState == EXPLORE_CC)
 		//{
@@ -378,6 +354,12 @@ void DebugBot::BotLogic()
 			_pathfinder->DijkstraDebug(true);
 		//}
 
+		if (_botLogicWaiting)
+		{
+			BotLogicWaiting();
+			continue;
+		}
+
 		switch (_botLogicState)
 		{
 		case IDLE:
@@ -390,35 +372,64 @@ void DebugBot::BotLogic()
 		case GATHER_FROM_CC:
 		{
 			std::vector<Item> itemsList = _objectManager->GetItems(spTreasure, currentCCnr);
-			Item *closest = NULL;
+			Item* closest = NULL;
 
-			if (_pathsQ.empty())
+			//znajdujemy najbli¿szy item który nie jest ju¿ scheduled, jak takiego nie ma to czekamy,
+			// jak nie ma ju¿ nic scheduled to przechodzimy do daszego stanu.
+
+			Coords start = _pathScheduler->GetStartNodeForNextPath();
+			_pathfinder->Dijkstra(start);
+
+			for (int i = 0; i < itemsList.size(); i++)
 			{
-				//tak bym chcia³:
-				//closest = FindClosestItem(itemsList);
-				//albo mo¿na te¿ przekonwertowaæ je na jakiœ typ Target czy coœ, idk
+				if (_pathScheduler->IsScheduled(itemsList[i].GetCoords()))
+					continue;
 
-				for (int i = 0; i < itemsList.size(); i++)
-				{
-					if (closest == NULL)
-						closest = &itemsList[i];
-					else if (_pathfinder->GetDijDist(itemsList[i].GetCoords()) < _pathfinder->GetDijDist(closest->GetCoords()))
-						closest = &itemsList[i];
-				}
+				if (closest == NULL || _pathfinder->GetDijDist(itemsList[i].GetCoords()) < _pathfinder->GetDijDist(closest->GetCoords()))
+					closest = &itemsList[i];
+			}
 
-				if (closest == NULL || _pathfinder->GetDijDist(closest->GetCoords()) == INT_MAX)
-					_botLogicState = EXPLORE_CC;
-				else
-				{
-					_pathsQ.push_back(_pathfinder->GetDijPath(closest->GetCoords()));
-
-				}
+			if (closest != NULL)
+			{
+				_pathScheduler->TryToSchedulePath(closest->GetCoords());
+			}
+			else if (_pathScheduler->NoSheduledPaths())
+			{
+				_botLogicState = EXPLORE_CC;
 			}
 			else
 			{
 				_waitTimer = 10;
 				_botLogicWaiting = true;
 			}
+
+
+			//if (_pathScheduler->NoSheduledPaths())
+			//{
+			//	//tak bym chcia³:
+			//	//closest = FindClosestItem(itemsList);
+
+			//	for (int i = 0; i < itemsList.size(); i++)
+			//	{
+			//		if (closest == NULL)
+			//			closest = &itemsList[i];
+			//		else if (_pathfinder->GetDijDist(itemsList[i].GetCoords()) < _pathfinder->GetDijDist(closest->GetCoords()))
+			//			closest = &itemsList[i];
+			//	}
+
+
+			//	if (closest == NULL || _pathfinder->GetDijDist(closest->GetCoords()) == INT_MAX)
+			//		_botLogicState = EXPLORE_CC;
+			//	else
+			//	{
+			//		_pathScheduler->TryToSchedulePath(closest->GetCoords());
+			//	}
+			//}
+			//else
+			//{
+			//	_waitTimer = 10;
+			//	_botLogicWaiting = true;
+			//}
 
 			break;
 		}
@@ -435,7 +446,7 @@ void DebugBot::BotLogic()
 				break;
 			}
 
-			if (_pathsQ.empty())
+			if (_pathScheduler->NoSheduledPaths())
 			{
 				std::vector<MapNode*> nodes = _pathfinder->GetAllNodesFromCC(currentCCnr);
 				MapNode * e;
@@ -452,7 +463,7 @@ void DebugBot::BotLogic()
 
 				if (exploratonTargetFound)
 				{
-					_pathsQ.push_back(_pathfinder->GetDijPath(e->GetCoords()));
+					_pathScheduler->TryToSchedulePath(e->GetCoords());
 				}
 				else
 				{
@@ -470,40 +481,24 @@ void DebugBot::BotLogic()
 		}
 		case PICK_TARGET_IN_NEXT_CC:
 		{
-			bool targetFound = false;
-			for each (Item i in _objectManager->GetTreasures())
-			{
-				if (_pathfinder->TryToCalculatePath(playerC, i.GetCoords()))
-				{
-					targetFound = true;
-					_pathsQ.push_back(_pathfinder->GetPathList());
-					_botLogicState = MOVE_TO_NEXT_CC;
-					break;
-				}
-			}
-			if (targetFound) break;
-
+			//a mo¿e po prostu DFS-em znajdŸ pierwszy cel w innej CC?
 			Coords e;
 			if (_pathfinder->TryToFindExplorationTarget(playerC))
 			{
 				e = _pathfinder->GetExplorationTarget();
-				if (_pathfinder->TryToCalculatePath(playerC, e))
+				if (_pathScheduler->TryToSchedulePath(e))
 				{
-					targetFound = true;
-					_pathsQ.push_back(_pathfinder->GetPathList());
 					_botLogicState = MOVE_TO_NEXT_CC;
 					break;
 				}
 			}
-
-			if (targetFound) break;
 
 			_botLogicState = SEARCH_FOR_EXIT;
 
 			break;
 		}
 		case MOVE_TO_NEXT_CC:
-			if (_pathsQ.empty())
+			if (_pathScheduler->NoSheduledPaths())
 				_botLogicState = GATHER_FROM_CC;
 			else
 			{
@@ -514,9 +509,8 @@ void DebugBot::BotLogic()
 			if (_pathfinder->IsExitFound())
 			{
 				Coords exit = _pathfinder->GetExit();
-				if (_pathfinder->GetDijDist(exit) != INT_MAX)
+				if (_pathScheduler->TryToSchedulePath(exit))
 				{
-					_pathsQ.push_back(_pathfinder->GetDijPath(exit));
 					_botLogicState = GO_TO_EXIT;
 				}
 				else
@@ -575,69 +569,8 @@ void DebugBot::Update()
 	_debugTimer -= 1;
 
 
-	bool ready = false;
+	ordersStruct orders = _pathScheduler->GetOrdersFromCurrentAction();
+	ExecuteOrders(orders);
 
-	while (!ready)
-	{
-		switch (_secState)
-		{
-		case DebugBot::sIDLE:
-			break;
-		case DebugBot::EXECUTING_COMMANDS:
-			if (!_actionsQ.empty())
-			{
-				ordersStruct orders = (_actionsQ.front())->GetOrders();
-				ExecuteOrders(orders);
-				ready = true;
-
-				if ((_actionsQ.front())->ActionDone())
-				{
-					delete _actionsQ.front();
-					_actionsQ.pop();
-					ClearOrders();
-					ready = false;
-				}
-			}
-			else
-			{
-				_pathsQ.pop_front();
-				_secState = WAITING_FOR_PATH;
-			}
-			break;
-		case DebugBot::WAITING_FOR_PATH:
-			if (!_pathsQ.empty())
-			{
-				CreateCommands(_pathsQ.front());
-				_secState = EXECUTING_COMMANDS;
-			}
-			else
-				ready = true;
-			break;
-		case DebugBot::DEBUG:
-			if (!_actionsQ.empty())
-			{
-				ordersStruct orders = (_actionsQ.front())->GetOrders();
-
-				ExecuteOrders(orders);
-
-				if ((_actionsQ.front())->ActionDone())
-				{
-					delete _actionsQ.front();
-					_actionsQ.pop();
-					ClearOrders();
-				}
-
-				//for jump from ladder with momentum testing
-				//if (!_actionsQ.empty())
-				//{
-				//	if (_actionsQ.front()->ActionType() == WALK ||
-				//		_actionsQ.front()->ActionType() == CLIMB)
-				//		_runp = true;
-				//}
-			}
-		default:
-			break;
-		}
-	}
 
 }

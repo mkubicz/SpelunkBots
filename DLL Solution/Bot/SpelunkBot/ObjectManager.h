@@ -9,6 +9,8 @@ class ObjectManager
 public:
 	ObjectManager(IBot *bot, Pathfinder *pathfinder);
 
+	void NewLevel();
+
 	Item * GetItemByID(int id);
 	std::vector<Item> GetTreasures();
 	std::vector<Item> GetItems(ItemKind kind, int ccnr);
@@ -38,6 +40,7 @@ private:
 	//std::vector<collectableObject> _collectablesList;
 	std::vector<Item> _itemsList;
 	std::vector<enemyObject> _enemiesList;
+
 
 
 };
