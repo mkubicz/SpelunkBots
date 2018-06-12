@@ -2,12 +2,12 @@
 #include "WalkAction.h"
 #include "Utilities.h"
 
-WalkAction::WalkAction(IBot * bot, int distance)
+WalkAction::WalkAction(std::shared_ptr<IBot> const& bot, int distance)
 	: WalkAction(bot, distance, false)
 {
 }
 
-WalkAction::WalkAction(IBot * bot, int distance, bool run)
+WalkAction::WalkAction(std::shared_ptr<IBot> const& bot, int distance, bool run)
 	: IMovementAction(bot)
 {
 	_actionType = WALK;

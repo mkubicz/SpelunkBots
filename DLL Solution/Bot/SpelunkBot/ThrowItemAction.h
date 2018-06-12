@@ -10,8 +10,8 @@ private:
 	//STATE _state;
 
 public:
-	ThrowItemAction(IBot *bot);
-	ThrowItemAction(IBot *bot, DIRECTIONX dirX, DIRECTIONY dirY);
+	ThrowItemAction(std::shared_ptr<IBot> const& bot);
+	ThrowItemAction(std::shared_ptr<IBot> const& bot, DIRECTIONX dirX, DIRECTIONY dirY);
 
 	ordersStruct GetOrders() override;
 };

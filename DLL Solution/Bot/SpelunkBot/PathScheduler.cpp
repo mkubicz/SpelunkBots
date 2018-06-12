@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "PathScheduler.h"
 
-PathScheduler::PathScheduler(IBot *bot, Pathfinder *pathfinder)
+PathScheduler::PathScheduler(std::shared_ptr<IBot> bot, std::shared_ptr<Pathfinder> pathfinder)
 	: _pathfinder(pathfinder), _bot(bot)
 {
 	_currentAction = NULL;
@@ -22,23 +22,56 @@ bool PathScheduler::TryToInsertPath(Coords target, int i)
 	return TryToAddPath(start, target);
 }
 
+void PathScheduler::PickUpItem(int itemID)
+{
+	std::vector<std::shared_ptr<IMovementAction>> actions;
+	actions.push_back(std::make_shared<PickUpItemAction>(_bot, itemID));
+
+	//_pathInfoQ.push_back(new PathInfo(std::vector<MapNode>(), Coords(-1,-1), actions));
+	_pathInfoQ.push_back(std::make_unique<PathInfo>(std::vector<MapNode>(), Coords(-1, -1), actions));
+}
+
+void PathScheduler::ScheduleAction(std::shared_ptr<IMovementAction> action)
+{
+	std::vector<std::shared_ptr<IMovementAction>> actions;
+	actions.push_back(action);
+
+	//_pathInfoQ.push_back(new PathInfo(std::vector<MapNode>(), Coords(-1,-1), actions));
+	_pathInfoQ.push_back(std::make_unique<PathInfo>(std::vector<MapNode>(), Coords(-1, -1), actions));
+}
+
 bool PathScheduler::TryToAddPath(Coords start, Coords target)
 {
 	if (_pathfinder->TryToCalculatePath(start, target))
 	{
-		std::vector<MapNode> path = _pathfinder->GetPath();
+		std::vector<MapNode> path = _pathfinder->GetPathCopy();
 
-		// TODO: dorób przegl¹danie i modyfikowanie œcie¿ki pod k¹tem niebezpieczeñstw
-		//ModifyPathToDangers(path)
+		std::vector<std::shared_ptr<IMovementAction>> actions = CreateActions(path);
 
-		std::vector<IMovementAction*> actions = CreateActions(path);
-
-		_pathInfoQ.push_back(PathInfo(path, target, actions));
+		//_pathInfoQ.push_back(new PathInfo(path, target, actions));
+		_pathInfoQ.push_back(std::make_unique<PathInfo>(path, target, actions));
 		return true;
 	}
 	else
 		return false;
 }
+
+
+//void PathScheduler::ModifyPathToDangers(std::vector<MapNode>* path)
+//{
+//	std::vector<MapNode>::iterator pathIt = path->begin();
+//	while (pathIt != path->end())
+//	{
+//		if (pathIt->IsArrowTrapOnWay())
+//		{
+//
+//			if ()
+//
+//		}
+//		else pathIt++;
+//	}
+//}
+
 
 ordersStruct PathScheduler::GetOrdersFromCurrentAction()
 {
@@ -46,16 +79,44 @@ ordersStruct PathScheduler::GetOrdersFromCurrentAction()
 
 	UpdateCurrentAction();
 
-	if (_currentAction != NULL)
+	if (_currentAction != nullptr)
 		orders = _currentAction->GetOrders();
 
 	return orders;
 }
 
+void PathScheduler::UpdateCurrentAction()
+{
+	if (_currentAction == nullptr || _currentAction->ActionDone())
+	{
+		_currentAction = GetNextAction();
+	}
+}
+
+std::shared_ptr<IMovementAction> PathScheduler::GetNextAction()
+{
+	if (!_pathInfoQ.empty())
+	{
+		if (!_pathInfoQ.front()->ActionsExhausted())
+		{
+			return _pathInfoQ.front()->GetNextAction();
+		}
+		else
+		{
+			_pathInfoQ.pop_front();
+			return GetNextAction();
+		}
+	}
+	else
+		return nullptr;
+}
+
+
 bool PathScheduler::IsScheduled(Coords target)
 {
-	for each (PathInfo pi in _pathInfoQ)
-		if (pi.GetTarget() == target)
+	//<typ> const& - referencja która nie pozwala zmieniaæ obiektu, tylko odczytywaæ
+	for each (std::unique_ptr<PathInfo> const& pi in _pathInfoQ)
+		if (pi->GetTarget() == target)
 			return true;
 
 	return false;
@@ -74,7 +135,7 @@ bool PathScheduler::NoSheduledPaths()
 Coords PathScheduler::GetCurrentTarget()
 {
 	if (!_pathInfoQ.empty())
-		return _pathInfoQ.front().GetTarget();
+		return _pathInfoQ.front()->GetTarget();
 	else
 		return Coords(-1, -1);
 }
@@ -83,8 +144,8 @@ std::vector<Coords> PathScheduler::GetSheduledTargets()
 {
 	std::vector<Coords> targets;
 
-	for each (PathInfo pi in _pathInfoQ)
-		targets.push_back(pi.GetTarget());
+	for each (auto const& pi in _pathInfoQ)
+		targets.push_back(pi->GetTarget());
 
 	return targets;
 }
@@ -97,7 +158,7 @@ void PathScheduler::ClearSheduledPaths()
 void PathScheduler::NewLevel()
 {
 	_pathInfoQ.clear();
-	delete _currentAction;
+	_currentAction = NULL;
 }
 
 Coords PathScheduler::GetStartNodeForNextPath()
@@ -106,57 +167,15 @@ Coords PathScheduler::GetStartNodeForNextPath()
 	if (_pathInfoQ.empty())
 		start = _pathfinder->GetBotCoords();
 	else
-		start = _pathInfoQ.back().GetTarget(); //target of most recently added path is our start node
+		start = _pathInfoQ.back()->GetTarget(); //target of most recently added path is our start node
 
 	return start;
 }
 
-//Coords PathScheduler::GetStartNodeForNextPath(int i)
-//{
-//	Coords start;
-//
-//	if (_pathInfoQ.size() < i)
-//		return GetStartNodeForNextPath();
-//	else
-//	{
-//		while (_pathInfoQ.size() >= i)
-//			_pathInfoQ.pop_back();
-//		start = _pathInfoQ.back().GetTarget();
-//	}
-//
-//	return start;
-//}
 
-void PathScheduler::UpdateCurrentAction()
+std::vector<std::shared_ptr<IMovementAction>> PathScheduler::CreateActions(std::vector<MapNode> path)
 {
-	if (_currentAction == NULL || _currentAction->ActionDone())
-	{
-		_currentAction = GetNextAction();
-	}
-}
-
-IMovementAction* PathScheduler::GetNextAction()
-{
-	if (!_pathInfoQ.empty())
-	{
-		if (!_pathInfoQ.front().ActionsExhausted())
-		{
-			return _pathInfoQ.front().GetNextAction();
-		}
-		else
-		{
-			_pathInfoQ.pop_front();
-			return GetNextAction();
-		}
-	}
-	else
-		return NULL;
-}
-
-
-std::vector<IMovementAction*> PathScheduler::CreateActions(std::vector<MapNode> path)
-{
-	std::vector<IMovementAction*> actions;
+	std::vector<std::shared_ptr<IMovementAction>> actions;
 	int distX, distY;
 	Coords currC;
 	MVSTATE mvState;
@@ -187,7 +206,7 @@ std::vector<IMovementAction*> PathScheduler::CreateActions(std::vector<MapNode> 
 	return actions;
 }
 
-IMovementAction* PathScheduler::CreateAction(MOVEMENTACTION action, ACTION_TARGET actionTarget, MVSTATE mvState, int distX, int distY)
+std::shared_ptr<IMovementAction> PathScheduler::CreateAction(MOVEMENTACTION action, ACTION_TARGET actionTarget, MVSTATE mvState, int distX, int distY)
 {
 	DIRECTIONX directionX;
 	DIRECTIONY directionY;
@@ -205,17 +224,16 @@ IMovementAction* PathScheduler::CreateAction(MOVEMENTACTION action, ACTION_TARGE
 	case IDLE:
 		break;
 	case CENTRALIZE:
-		return new CentralizeAction(_bot);
+		return std::make_shared<CentralizeAction>(_bot);
 		break;
 	case WALK:
 		//if (distX == 2), then bot is walking over a hole which should be runned
 		if (abs(distX) == 2)
 		{
-			return new WalkAction(_bot, distX, RUN);
+			return std::make_shared<WalkAction>(_bot, distX, RUN);
 			break;
 		}
-
-		//turning off ActionBatching™ for now
+		//turning off ActionBatching™, with the new InstantCommandSwitching™ its not needed
 		//if (!_actionsQ.empty())
 		//{
 		//	if (_actionsQ.back()->ActionType() == WALK &&
@@ -228,21 +246,20 @@ IMovementAction* PathScheduler::CreateAction(MOVEMENTACTION action, ACTION_TARGE
 		//		break;
 		//	}
 		//}
-
-		return new WalkAction(_bot, distX);
+		return std::make_shared<WalkAction>(_bot, distX);
 
 		break;
 	case HANG:
-		return new HangAction(_bot, directionX);
+		return std::make_shared<HangAction>(_bot, directionX);
 		break;
 	case DROP:
-		return new DropAction(_bot, actionTarget, distY);
+		return std::make_shared<DropAction>(_bot, actionTarget, distY);
 		break;
 	case CLIMBFROMHANG:
-		return new ClimbFromHangAction(_bot, directionX);
+		return std::make_shared<ClimbFromHangAction>(_bot, directionX);
 		break;
 	case CLIMB:
-		//turning off ActionBatching™ for now
+		//turning off ActionBatching™, with the new InstantCommandSwitching™ its not needed
 		//if (!_actionsQ.empty())
 		//{
 		//	if (_actionsQ.back()->ActionType() == CLIMB &&
@@ -256,32 +273,34 @@ IMovementAction* PathScheduler::CreateAction(MOVEMENTACTION action, ACTION_TARGE
 		//	}
 		//}
 
-		return new ClimbAction(_bot, distY);
+		return std::make_shared<ClimbAction>(_bot, distY);
 		break;
 	case JUMPABOVERIGHT:
-		return new JumpAboveAction(_bot, xRIGHT);
+		return std::make_shared<JumpAboveAction>(_bot, xRIGHT);
 		break;
 	case JUMPABOVELEFT:
-		return new JumpAboveAction(_bot, xLEFT);
+		return std::make_shared<JumpAboveAction>(_bot, xLEFT);
 		break;
 	case JUMP:
-		return new JumpAction(_bot, actionTarget, distX, distY);
+		return std::make_shared<JumpAction>(_bot, actionTarget, distX, distY);
 		break;
 	case JUMPFROMLADDER:
 		if (mvState == mvCLIMBING_WITH_MOMENTUM)
-			return new JumpFromLadderAction(_bot, actionTarget, true, distX, distY);
+			return std::make_shared<JumpFromLadderAction>(_bot, actionTarget, true, distX, distY);
 		else if (mvState == mvCLIMBING)
-			return new JumpFromLadderAction(_bot, actionTarget, false, distX, distY);
+			return std::make_shared<JumpFromLadderAction>(_bot, actionTarget, false, distX, distY);
 		else
 			std::cout << "Error: MVSTATE is not CLIMBING when creating JUMPFROMLADDER" << std::endl;
 		break;
 	case WALKOFFLEDGE:
 		//TODO: walkoffledge to ladders
-		//return new WalkOffLedgeAction(_bot, distX, distY, jumpTarget));
-		return new WalkOffLedgeAction(_bot, distX, distY);
+		//return std::make_shared<WalkOffLedgeAction>(_bot, distX, distY, jumpTarget));
+		return std::make_shared<WalkOffLedgeAction>(_bot, distX, distY);
 		break;
 	default:
 		break;
 	}
 }
+
+
 

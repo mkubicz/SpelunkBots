@@ -4,7 +4,7 @@
 class HangAction : public IMovementAction
 {
 public:
-	HangAction(IBot* bot, DIRECTIONX directionX);
+	HangAction(std::shared_ptr<IBot> const& bot, DIRECTIONX directionX);
 
 	~HangAction() {};
 	ordersStruct GetOrders() override;

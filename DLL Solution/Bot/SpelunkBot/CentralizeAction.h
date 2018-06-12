@@ -11,8 +11,8 @@ private:
 	DIRECTIONX _centralizeDir;
 
 public:
-	CentralizeAction(IBot *bot, int centralizingPoint);
-	CentralizeAction(IBot *bot);
+	CentralizeAction(std::shared_ptr<IBot> const& bot, int centralizingPoint);
+	CentralizeAction(std::shared_ptr<IBot> const& bot);
 	~CentralizeAction() {};
 
 	ordersStruct GetOrders() override;

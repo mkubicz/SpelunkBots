@@ -20,11 +20,14 @@ public:
 	void Update() override;
 	void NewLevel() override;
 
+	void CreateHelpers() override;
+
 private:
 	//std::queue<IMovementAction*> _actionsQ;
-	Pathfinder* _pathfinder;
-	ObjectManager* _objectManager;
-	PathScheduler* _pathScheduler;
+	//std::shared_ptr<IBot> _bot;
+	std::shared_ptr<Pathfinder> _pathfinder;
+	std::shared_ptr<ObjectManager> _objectManager;
+	std::shared_ptr<PathScheduler> _pathScheduler;
 	std::thread _botLogicThread;
 	
 	//std::vector<collectableObject> _collectablesList;
@@ -34,12 +37,14 @@ private:
 						   CREATING_COMMANDS, FINISHED, WAITING_FOR_PATH, DEBUG };
 	enum BOTLOGIC_STATE { IDLE, START, EXIT, WAITING, GATHER_FROM_CC, EXPLORE_CC, PICK_TARGET_IN_NEXT_CC,
 						  MOVE_TO_NEXT_CC, SEARCH_FOR_EXIT, GO_TO_EXIT, EXIT_REACHED, UNREACHABLE_EXIT,
-						  NO_EXIT_EXPLORE, NO_EXIT_ERROR };
+						  NO_EXIT_EXPLORE, NO_EXIT_ERROR, EXHAUST_QUEUE, DISARM_ARROWTRAP };
 	BOTLOGIC_STATE _botLogicState;
-	BOTLOGIC_STATE _prevState;
+	BOTLOGIC_STATE _prevBotLogicState;
+	BOTLOGIC_STATE _nextBotLogicState;
 	SECONDARY_STATE _secState;
 	bool _botLogicWaiting;
 	int _waitTimer;
+	Coords _targetAfterDisarm;
 
 	//void CreateCommands(std::vector<MapNode*> path);
 	//void AddActionToActionQueue(MOVEMENTACTION action, ACTION_TARGET jumpTarget, MVSTATE mvState, int distX, int distY);

@@ -9,8 +9,8 @@ private:
 	bool _running;
 
 public:
-	WalkAction(IBot *bot, int dist);
-	WalkAction(IBot *bot, int dist, bool run);
+	WalkAction(std::shared_ptr<IBot> const& bot, int dist);
+	WalkAction(std::shared_ptr<IBot> const& bot, int dist, bool run);
 	void AddDistance(int distance);
 	~WalkAction() {};
 

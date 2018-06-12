@@ -12,6 +12,7 @@
 
 #include <windows.h>
 #include <iostream>
+#include <memory>
 #include <queue>
 //#include <deque>
 #include <string>
@@ -164,13 +165,13 @@ enum TerrainType
 
 enum ItemKind
 {
-	spJunkLight,
-	spJunkHeavy,
-	spTreasure,
-	spWeapon,
-	spEquipable,
-	spOther,
-	spNotInGame
+	kndJunkLight,
+	kndJunkHeavy,
+	kndTreasure,
+	kndWeapon,
+	kndEquipable,
+	kndOther,
+	kndNotInGame
 };
 
 

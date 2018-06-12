@@ -17,6 +17,8 @@ private:
 	ACTION_TARGET _actionToReachTargetCandidate;
 	MVSTATE _mvState;
 	MVSTATE _mvStateCandidate;
+	bool _arrowTrapOnWay;
+	bool _arrowTrapOnWayCandidate;
 
 	//used in A*
 	bool _opened;
@@ -32,6 +34,7 @@ private:
 	int _dij_dist;
 	MapNode *_dij_prev;
 
+
 public:
 	MapNode(int x, int y, MOVEMENTACTION actionToReach, ACTION_TARGET jumpTarget, MVSTATE mvState);
 	MapNode(int x, int y, MOVEMENTACTION actionToReach, MVSTATE mvState);
@@ -40,17 +43,23 @@ public:
 	MapNode(int x, int y);
 	MapNode();
 
+	void Reset();
+
 	int GetX();
 	int GetY();
 	Coords GetCoords();
 	MOVEMENTACTION GetActionToReach();
 	ACTION_TARGET GetActionTarget();
 	MVSTATE GetMvState();
+	bool IsArrowTrapOnWay();
+
+	void SolidifyCandidates();
 
 	//used in A*
 	double CalculateGScore(MapNode *parentCandidate);
 	double CalculateHScore(MapNode *destination);
 	double CalculateFScore();
 	void ComputeScores(MapNode * destination);
+	
 
 };

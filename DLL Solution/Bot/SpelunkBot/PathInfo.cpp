@@ -1,10 +1,20 @@
 #include "stdafx.h"
 #include "PathInfo.h"
 
-PathInfo::PathInfo(std::vector<MapNode> path, Coords target, std::vector<IMovementAction*> actions)
+PathInfo::PathInfo(std::vector<MapNode> path, Coords target, std::vector<std::shared_ptr<IMovementAction>> actions)
 	: _path(path), _target(target), _actions(actions)
 {
-	_pathIt = _actions.begin();
+	//_pathIt = _actions.begin();
+	_actionNr = -1;
+}
+
+PathInfo::~PathInfo()
+{
+	//we're using smart pointers now - no need for destructors.
+	//for (_pathIt = _actions.begin(); _pathIt != _actions.end(); _pathIt++)
+	//	delete (*_pathIt);
+
+	//_actions.clear();
 }
 
 Coords PathInfo::GetTarget()
@@ -12,19 +22,18 @@ Coords PathInfo::GetTarget()
 	return _target;
 }
 
-IMovementAction * PathInfo::GetNextAction()
+std::shared_ptr<IMovementAction> PathInfo::GetNextAction()
 {
-	IMovementAction * a = NULL;
 	if (!ActionsExhausted())
 	{
-		a = *_pathIt;
-		_pathIt++;
+		_actionNr++;
+		return _actions[_actionNr];
 	}
 
-	return a;
+	return nullptr;
 }
 
 bool PathInfo::ActionsExhausted()
 {
-	return _pathIt == _actions.end();
+	return _actionNr >= ((int)_actions.size() - 1);
 }

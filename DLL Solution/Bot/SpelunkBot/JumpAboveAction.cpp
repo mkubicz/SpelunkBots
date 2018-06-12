@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "JumpAboveAction.h"
 
-JumpAboveAction::JumpAboveAction(IBot* bot, DIRECTIONX directionX)
+JumpAboveAction::JumpAboveAction(std::shared_ptr<IBot> const& bot, DIRECTIONX directionX)
 	: IMovementAction(bot)
 {
 	_directionX = directionX;

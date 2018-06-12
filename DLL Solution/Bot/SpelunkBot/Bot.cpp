@@ -64,7 +64,10 @@ void CreateBot(double botSelector)
 			bot = std::make_unique<FishBot>();
 			break;
 		case 9:
-			bot = std::make_unique<DebugBot>();
+			bot = std::make_shared<DebugBot>();
+			bot->SetOwnPointer(bot);
+			bot->CreateHelpers();
+			bot->NewLevel();
 		default:
 			break;
 	}

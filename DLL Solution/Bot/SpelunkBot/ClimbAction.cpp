@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "ClimbAction.h"
 
-ClimbAction::ClimbAction(IBot * bot, int distY)
+ClimbAction::ClimbAction(std::shared_ptr<IBot> const& bot, int distY)
 	: IMovementAction(bot)
 {
 	_distY = distY;

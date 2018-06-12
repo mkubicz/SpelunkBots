@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "WalkUpAction.h"
 
-WalkUpAction::WalkUpAction(IBot *bot, DIRECTIONX directionX)
+WalkUpAction::WalkUpAction(std::unique_ptr<IBot> const& bot, DIRECTIONX directionX)
 	: IMovementAction(bot)
 {
 	_actionType = WALKUP;

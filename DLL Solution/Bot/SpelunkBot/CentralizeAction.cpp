@@ -2,7 +2,7 @@
 #include "CentralizeAction.h"
 #include "Utilities.h"
 
-CentralizeAction::CentralizeAction(IBot * bot, int centralizingPoint)
+CentralizeAction::CentralizeAction(std::shared_ptr<IBot> const& bot, int centralizingPoint)
 	: IMovementAction(bot)
 {
 	_actionType = CENTRALIZE;
@@ -10,7 +10,7 @@ CentralizeAction::CentralizeAction(IBot * bot, int centralizingPoint)
 	_centralizingPoint = centralizingPoint;
 }
 
-CentralizeAction::CentralizeAction(IBot* bot)
+CentralizeAction::CentralizeAction(std::shared_ptr<IBot> const& bot)
 	: CentralizeAction(bot, -1)
 {
 }

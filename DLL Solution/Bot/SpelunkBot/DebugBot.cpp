@@ -6,18 +6,36 @@
 
 DebugBot::DebugBot()
 {
-	_pathfinder = new Pathfinder(this);
-	_objectManager = new ObjectManager(this, _pathfinder);
-	_pathScheduler = new PathScheduler(this, _pathfinder);
-	NewLevel();
+	//_bot = std::unique_ptr<DebugBot>(this);
+	//_bot = std::make_unique<DebugBot>(this);
+
+	//_bot = std::make_shared<DebugBot>();
+	//_bot = std::shared_ptr<DebugBot>(this);
+	//_pathfinder = std::make_shared<Pathfinder>(_bot);
+	//_objectManager = std::make_shared<ObjectManager>(_bot, _pathfinder);
+	//_pathScheduler = std::make_shared<PathScheduler>(_bot, _pathfinder);
+
+	//_pathfinder = new Pathfinder(this);
+	//_objectManager = new ObjectManager(this, _pathfinder);
+	//_pathScheduler = new PathScheduler(this, _pathfinder);
+	//NewLevel();
+}
+
+void DebugBot::CreateHelpers()
+{
+	_pathfinder = std::make_shared<Pathfinder>(_bot);
+	_objectManager = std::make_shared<ObjectManager>(_bot, _pathfinder);
+	_pathScheduler = std::make_shared<PathScheduler>(_bot, _pathfinder);
 }
 
 void DebugBot::InitialiseBotLogicState()
 {	
 	_botLogicState = START;
+	_nextBotLogicState = IDLE;
 	_secState = WAITING_FOR_PATH;
 	_botLogicWaiting = false;
 	_waitTimer = 0;
+	_targetAfterDisarm = Coords(-1,-1);
 	//for manual movementaction tests
 	//_botLogicState = IDLE;
 	//_secState = DEBUG;
@@ -36,6 +54,11 @@ void DebugBot::InitialiseBotLogicState()
 
 void DebugBot::NewLevel()
 {
+	//if (!_pathfinder) _pathfinder = std::make_shared<Pathfinder>(_bot);
+	//if (!_objectManager) _objectManager = std::make_shared<ObjectManager>(_bot, _pathfinder);
+	//if (!_pathScheduler) _pathScheduler = std::make_shared<PathScheduler>(_bot, _pathfinder);
+
+
 	//terminate botlogic thread from previous level
 	_botLogicState = EXIT;
 	if (_botLogicThread.joinable())
@@ -51,7 +74,7 @@ void DebugBot::NewLevel()
 	//}
 
 	//initialize variables and start new botlogic thread
-	InitialiseVariables();
+	//InitialiseVariables();
 	_pathfinder->NewLevel();
 	_objectManager->NewLevel();
 	_pathScheduler->NewLevel();
@@ -70,37 +93,15 @@ DebugBot::~DebugBot()
 	//	delete _actionsQ.front();
 	//	_actionsQ.pop();
 	//}
-	delete _pathfinder;
-	delete _objectManager;
-	delete _pathScheduler;
+	//delete _pathfinder;
+	//delete _objectManager;
+	//delete _pathScheduler;
 }
 
 #pragma endregion
 
-#pragma region pathQ 
 
-
-//
-//bool DebugBot::IsPathToTargetSheduled(int x, int y)
-//{
-//	bool ok = false;
-//
-//	for (int j = 0; j < _pathsQ.size(); j++)
-//	{
-//		if (_pathsQ[j].back()->GetX() == x &&
-//			_pathsQ[j].back()->GetY() == y)
-//		{
-//			ok = true;
-//			break;
-//		}
-//	}
-//
-//	return ok;
-//}
-
-#pragma endregion
-
-#pragma region actionsQ
+#pragma region orders
 
 void DebugBot::ExecuteOrders(ordersStruct orders)
 {
@@ -131,134 +132,6 @@ void DebugBot::ClearOrders()
 	_payp = false;
 	_itemp = false;
 }
-//
-//void DebugBot::CreateCommands(std::vector<MapNode*> path)
-//{
-//	int currX, currY, targetX, targetY, distX, distY;
-//	MOVEMENTACTION prevAction = MOVEMENTACTION::IDLE;
-//	currX = (int)_playerPositionXNode;
-//	currY = (int)_playerPositionYNode;
-//	MVSTATE mvState;
-//	ACTION_TARGET actionTarget;
-//	MOVEMENTACTION action;
-//
-//	for (int i = 0; i < path.size(); i++)
-//	{
-//		//first node in a path is start node
-//		if (i == 0) continue;
-//
-//		targetX = path[i]->GetX();
-//		targetY = path[i]->GetY();
-//		distX = targetX - currX;
-//		distY = targetY - currY;
-//
-//		action = path[i]->GetActionToReach();
-//		actionTarget = path[i]->GetActionTarget();
-//		mvState = path[i - 1]->GetMvState();
-//
-//		AddActionToActionQueue(action, actionTarget, mvState, distX, distY);
-//
-//		currX = targetX;
-//		currY = targetY;
-//		prevAction = action;
-//	}
-//}
-//
-//void DebugBot::AddActionToActionQueue(MOVEMENTACTION action, ACTION_TARGET jumpTarget, MVSTATE mvState, int distX, int distY)
-//{
-//	DIRECTIONX directionX;
-//	DIRECTIONY directionY;
-//
-//	if (distX > 0) directionX = xRIGHT;
-//	else if (distX == 0) directionX = xNONE;
-//	else directionX = xLEFT;
-//
-//	if (distY > 0) directionY = yDOWN;
-//	else if (distY == 0) directionY = yNONE;
-//	else directionY = yUP;
-//
-//	switch (action)
-//	{
-//	case IDLE:
-//		break;
-//	case CENTRALIZE:
-//		_actionsQ.push(new CentralizeAction(this));
-//		break;
-//	case WALK:
-//		//if (distX == 2), then bot is walking over a hole which should be runned
-//		if (abs(distX) == 2)
-//		{
-//			_actionsQ.push(new WalkAction(this, distX, RUN));
-//			break;
-//		}
-//
-//		if (!_actionsQ.empty())
-//		{
-//			if (_actionsQ.back()->ActionType() == WALK &&
-//				((distX > 0 && _actionsQ.back()->GetDirectionX() == xRIGHT) ||
-//				(distX < 0 && _actionsQ.back()->GetDirectionX() == xLEFT)))
-//			{
-//				//previous action is also a WalkAction, and its going in the same direction,
-//				//so we increase its distance instead of creating a new command (ActionBatching™)
-//				dynamic_cast<WalkAction*>(_actionsQ.back())->AddDistance(distX);
-//				break;
-//			}
-//		}
-//
-//		_actionsQ.push(new WalkAction(this, distX));
-//
-//		break;
-//	case HANG:
-//		_actionsQ.push(new HangAction(this, directionX));
-//		break;
-//	case DROP:
-//		_actionsQ.push(new DropAction(this, jumpTarget, distY));
-//		break;
-//	case CLIMBFROMHANG:
-//		_actionsQ.push(new ClimbFromHangAction(this, directionX));
-//		break;
-//	case CLIMB:
-//		if (!_actionsQ.empty())
-//		{
-//			if (_actionsQ.back()->ActionType() == CLIMB &&
-//				((distY > 0 && _actionsQ.back()->GetDirectionY() == yDOWN) ||
-//				(distY < 0 && _actionsQ.back()->GetDirectionY() == yUP)))
-//			{
-//				//previous action is also a ClimbAction, and its going in the same direction,
-//				//so we increase its distance instead of creating a new command (ActionBatching™)
-//				dynamic_cast<ClimbAction*>(_actionsQ.back())->AddDistance(distY);
-//				break;
-//			}
-//		}
-//
-//		_actionsQ.push(new ClimbAction(this, distY));
-//		break;
-//	case JUMPABOVERIGHT:
-//		_actionsQ.push(new JumpAboveAction(this, xRIGHT));
-//		break;
-//	case JUMPABOVELEFT:
-//		_actionsQ.push(new JumpAboveAction(this, xLEFT));
-//		break;
-//	case JUMP:
-//		_actionsQ.push(new JumpAction(this, jumpTarget, distX, distY));
-//		break;
-//	case JUMPFROMLADDER:
-//		if (mvState == mvCLIMBING_WITH_MOMENTUM)
-//			_actionsQ.push(new JumpFromLadderAction(this, jumpTarget, true, distX, distY));
-//		else if (mvState == mvCLIMBING)
-//			_actionsQ.push(new JumpFromLadderAction(this, jumpTarget, false, distX, distY));
-//		else
-//			std::cout << "Error: MVSTATE is not CLIMBING when creating JUMPFROMLADDER" << std::endl;
-//		break;
-//	case WALKOFFLEDGE:
-//		//TODO: walkoffledge to ladders
-//		//_actionsQ.push(new WalkOffLedgeAction(this, distX, distY, jumpTarget));
-//		_actionsQ.push(new WalkOffLedgeAction(this, distX, distY));
-//		break;
-//	default:
-//		break;
-//	}
-//}
 
 #pragma endregion
 
@@ -285,6 +158,10 @@ void DebugBot::BotLogicWaiting()
 		//	break;
 		//case DebugBot::EXIT:
 		//	break;
+	case DebugBot::EXHAUST_QUEUE:
+		_waitTimer--;
+		if (_waitTimer == 0 || _pathScheduler->NoSheduledPaths()) _botLogicWaiting = false;
+		break;
 	case DebugBot::GATHER_FROM_CC:
 		_waitTimer--;
 		if (_waitTimer == 0 || _pathScheduler->NoSheduledPaths()) _botLogicWaiting = false;
@@ -369,9 +246,22 @@ void DebugBot::BotLogic()
 			//a little delay so map updates itself before bot starts to search for stuff
 			std::this_thread::sleep_for(100ms);
 			_botLogicState = GATHER_FROM_CC;
+			break;
+		case EXHAUST_QUEUE:
+			if (_pathScheduler->NoSheduledPaths())
+			{
+				_botLogicState = _nextBotLogicState;
+				_nextBotLogicState = IDLE;
+			}
+			else
+			{
+				_waitTimer = 10;
+				_botLogicWaiting = true;
+			}
+			break;
 		case GATHER_FROM_CC:
 		{
-			std::vector<Item> itemsList = _objectManager->GetItems(spTreasure, currentCCnr);
+			std::vector<Item> itemsList = _objectManager->GetItems(kndTreasure, currentCCnr);
 			Item* closest = NULL;
 
 			//znajdujemy najbli¿szy item który nie jest ju¿ scheduled, jak takiego nie ma to czekamy,
@@ -391,7 +281,14 @@ void DebugBot::BotLogic()
 
 			if (closest != NULL)
 			{
-				_pathScheduler->TryToSchedulePath(closest->GetCoords());
+				if (_pathfinder->GetNodeFromGrid(closest->GetCoords())->IsArrowTrapOnWay())
+				{
+					_botLogicState = EXHAUST_QUEUE;
+					_nextBotLogicState = DISARM_ARROWTRAP;
+					_targetAfterDisarm = closest->GetCoords();
+				}
+				else
+					_pathScheduler->TryToSchedulePath(closest->GetCoords());
 			}
 			else if (_pathScheduler->NoSheduledPaths())
 			{
@@ -403,7 +300,7 @@ void DebugBot::BotLogic()
 				_botLogicWaiting = true;
 			}
 
-
+			//single path
 			//if (_pathScheduler->NoSheduledPaths())
 			//{
 			//	//tak bym chcia³:
@@ -435,7 +332,7 @@ void DebugBot::BotLogic()
 		}
 		case EXPLORE_CC:
 		{
-			std::vector<Item> itemsList = _objectManager->GetItems(spTreasure, currentCCnr);
+			std::vector<Item> itemsList = _objectManager->GetItems(kndTreasure, currentCCnr);
 
 			if (!itemsList.empty())
 			{
@@ -547,6 +444,53 @@ void DebugBot::BotLogic()
 		case NO_EXIT_ERROR:
 			std::this_thread::sleep_for(100ms);
 			break;
+		case DISARM_ARROWTRAP:
+		{
+			//we guaranteed empty action queue earlier
+			/*
+			1. find something to disarm the trap with
+			2. go to it and pick it up
+			3. go right before the dangerous node in the path and throw the stone
+			4. ???
+			5. profit
+			*/
+			//sprawdŸ te¿ czy nie masz czegoœ w ³apie (w sumie na razie nie muszê bo na razie tylko w tym stanie podnoszê przedmioty)
+
+			Item* heldItem = _objectManager->GetItemByID(GetHeldItemID());
+			if (heldItem == NULL)
+			{
+				std::vector<Item> junkHeavy = _objectManager->GetItems(kndJunkHeavy, currentCCnr);
+				std::vector<Item> itemsList = _objectManager->GetItems(kndJunkLight, currentCCnr);
+				itemsList.insert(end(itemsList), begin(junkHeavy), end(junkHeavy));
+
+				//std::unique_ptr<Item> itemPtr = FindClosest(itemsList);
+
+				Item* closest = NULL;
+				for (int i = 0; i < itemsList.size(); i++)
+				{
+					if (closest == NULL || _pathfinder->GetDijDist(itemsList[i].GetCoords()) < _pathfinder->GetDijDist(closest->GetCoords()))
+						closest = &itemsList[i];
+				}
+
+				if (closest != NULL)
+				{
+					_pathScheduler->TryToSchedulePath(closest->GetCoords());
+					_pathScheduler->ScheduleAction(std::make_shared<PickUpItemAction>(_bot, closest->GetID()));
+					_botLogicState = EXHAUST_QUEUE;
+					_nextBotLogicState = DISARM_ARROWTRAP;
+				}
+				else
+				{
+					//i have the item
+				}
+			}
+			else
+			{
+				std::cout << "hehe patrz przemek mam przedmiot";
+			}
+
+			break;
+		}
 		case EXIT:
 			return;
 		}

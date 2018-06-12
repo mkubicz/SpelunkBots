@@ -60,7 +60,7 @@ void Item::SetKind(ItemType type)
 	case spBombBox:
 	case spRopePile:
 	case spBombBag:
-		_kind = spTreasure;
+		_kind = kndTreasure;
 		break;
 	case spChest:
 	case spLockedChest:
@@ -68,7 +68,7 @@ void Item::SetKind(ItemType type)
 	case spDamsel:
 	case spGoldIdol:
 	case spCrate:
-		_kind = spJunkHeavy;
+		_kind = kndJunkHeavy;
 		break;
 	case spKey:
 	case spRock:
@@ -78,7 +78,7 @@ void Item::SetKind(ItemType type)
 	case spArrow:
 	case spFishBone:
 	case spFlare:
-		_kind = spJunkLight;
+		_kind = kndJunkLight;
 		break;
 		break;
 		break;
@@ -96,7 +96,7 @@ void Item::SetKind(ItemType type)
 	case spMitt:
 	case spJetpack:
 	case spCape:
-		_kind = spEquipable;
+		_kind = kndEquipable;
 		break;
 	case spShotgun:
 	case spPistol:
@@ -106,7 +106,7 @@ void Item::SetKind(ItemType type)
 	case spMachete:
 	case spSceptre:
 	case spMattock:
-		_kind = spWeapon;
+		_kind = kndWeapon;
 		break;
 	case spRope:
 	case spBomb:
@@ -118,14 +118,14 @@ void Item::SetKind(ItemType type)
 	case spBlock:
 	case spPushBlock:
 	case spDarkFall:
-		_kind = spOther;
+		_kind = kndOther;
 		break;
 	case spJordans:
 	case spRopeBag:
-		_kind = spNotInGame;
+		_kind = kndNotInGame;
 		break;
 	default:
-		_kind = spOther;
+		_kind = kndOther;
 		break;
 	}
 }

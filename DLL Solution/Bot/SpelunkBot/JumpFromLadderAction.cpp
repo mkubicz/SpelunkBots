@@ -2,7 +2,7 @@
 #include "JumpFromLadderAction.h"
 
 //negative distX means going left! negative distY means going up!
-JumpFromLadderAction::JumpFromLadderAction(IBot * bot, ACTION_TARGET target, bool hasMomentum, int distX, int distY)
+JumpFromLadderAction::JumpFromLadderAction(std::shared_ptr<IBot> const& bot, ACTION_TARGET target, bool hasMomentum, int distX, int distY)
 	: IMovementAction(bot)
 {
 	_distX = distX;
@@ -27,7 +27,7 @@ JumpFromLadderAction::JumpFromLadderAction(IBot * bot, ACTION_TARGET target, boo
 	SetMovementRange();
 }
 
-JumpFromLadderAction::JumpFromLadderAction(IBot * bot, int distX, int distY)
+JumpFromLadderAction::JumpFromLadderAction(std::shared_ptr<IBot> const& bot, int distX, int distY)
 	: JumpFromLadderAction(bot, GROUND, false, distX, distY)
 {
 }

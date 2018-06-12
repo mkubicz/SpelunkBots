@@ -8,7 +8,7 @@ private:
 	int _distX;
 	int _distY;
 public:
-	ClimbAction(IBot * bot, int distY);
+	ClimbAction(std::shared_ptr<IBot> const& bot, int distY);
 	void AddDistance(int distance);
 	ordersStruct GetOrders();
 };

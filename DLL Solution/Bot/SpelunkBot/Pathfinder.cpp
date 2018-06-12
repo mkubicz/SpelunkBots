@@ -6,11 +6,40 @@ using namespace std;
 
 #pragma region Constructors and initialization
 
-Pathfinder::Pathfinder(IBot* bot)
+Pathfinder::Pathfinder(std::shared_ptr<IBot> bot)
+	: _bot(bot)
 {
-	_bot = bot;
 	InitializeGrid();
+	NewLevel();
 }
+
+void Pathfinder::InitializeGrid()
+{
+	for (int i = 0; i < X_NODES; i++)
+	{
+		_grid.push_back(std::vector<MapNode*>());
+
+		for (int j = 0; j < Y_NODES; j++)
+			_grid[i].push_back(new MapNode(i, j));
+	}
+}
+
+void Pathfinder::NewLevel()
+{
+	//for (int i = 0; i < X_NODES; i++)
+	//	for (int j = 0; j < Y_NODES; j++)
+	//		_grid[i][j] = new MapNode(i, j);
+	for (int i = 0; i < X_NODES; i++)
+		for (int j = 0; j < Y_NODES; j++)
+			_grid[i][j]->Reset();
+
+	_pathList.clear();
+	_exit = Coords(-1, -1);
+	_explorationTarget = Coords(-1, -1);
+	_exitFound = false;
+}
+
+
 
 Pathfinder::~Pathfinder()
 {
@@ -20,23 +49,27 @@ Pathfinder::~Pathfinder()
 		{
 			delete _grid[i][j];
 		}
+		_grid[i].clear();
 	}
 
-	//pathlist contains pointers to nodes from _grid, which we already deleted
-	//for (int i = 0; i < _pathList.size(); i++)
-	//	delete (_pathList[i]);
-	_pathList.clear();
+	_grid.clear();
+	
+
+	////pathlist contains pointers to nodes from _grid, which we already deleted
+	////for (int i = 0; i < _pathList.size(); i++)
+	////	delete (_pathList[i]);
+	//_pathList.clear();
 }
 
-void Pathfinder::InitializeGrid()
-{
-	for (int i = 0; i < X_NODES; i++)
-		for (int j = 0; j < Y_NODES; j++)
-			_grid[i][j] = new MapNode(i,j);
-
-	_exit = Coords(-1, -1);
-	_exitFound = false;
-}
+//void Pathfinder::InitializeGrid()
+//{
+//	for (int i = 0; i < X_NODES; i++)
+//		for (int j = 0; j < Y_NODES; j++)
+//			_grid[i][j] = new MapNode(i,j);
+//
+//	_exit = Coords(-1, -1);
+//	_exitFound = false;
+//}
 
 #pragma endregion
 
@@ -292,11 +325,6 @@ bool Pathfinder::CanStandInNode(Coords c)
 
 }
 
-//bool Pathfinder::CanStandInNode(MapNode* n)
-//{
-//	return CanStandInNode(n->GetX(), n->GetY());
-//}
-
 bool Pathfinder::IsNodeValidBotPosition(Coords c)
 {
 	return CanStandInNode(c) || Ladder(c) || CanHangInNode(c);
@@ -308,12 +336,6 @@ bool Pathfinder::CanHangInNode(Coords c)
 		((Passable(c.OffsetX(1)) && Impassable(c.Offset(1, -1))) || (Passable(c.OffsetX(-1)) && Impassable(c.Offset(-1, -1))));
 }
 
-
-
-//bool Pathfinder::IsInFog(MapSearchNode * n)
-//{
-//	return IsInFog(n->_x, n->_y);
-//}
 
 bool Pathfinder::IsFogOnMap()
 {
@@ -328,11 +350,6 @@ Coords Pathfinder::GetBotCoords()
 {
 	return Coords(_bot->GetPlayerPositionXNode(), _bot->GetPlayerPositionYNode(), NODE);
 }
-
-//int Pathfinder::CalculateDistance(MapSearchNode * n, MapSearchNode * m)
-//{
-//	return abs(n->_x - m->_x) + abs(n->_y - m->_y);
-//}
 
 int Pathfinder::CalculateDistance(Coords c1, Coords c2)
 {
@@ -407,10 +424,6 @@ bool Pathfinder::isCloseToFog(Coords c, int closeness)
 
 }
 
-//bool Pathfinder::isCloseToFog(Coords c, int closeness)
-//{
-//	return isCloseToFog(c.GetX(), c.GetY(), closeness);
-//}
 
 bool Pathfinder::HorizontalJumpPathClear(int x, int y, int dist, DIRECTIONX directionx)
 {
@@ -451,10 +464,7 @@ bool Pathfinder::HorizontalJumpPathClear(int x, int y, int dist, DIRECTIONX dire
 	return ok;
 }
 
-void Pathfinder::NewLevel()
-{
-	InitializeGrid();
-}
+
 
 bool Pathfinder::DownJumpPathClear(int x1, int y1, int x2, int y2, DIRECTIONX direction, bool fromLadder)
 {
@@ -701,25 +711,25 @@ void Pathfinder::DeleteUnsafeNeighboursArrowTrap(MapNode origin, std::vector<Map
 	MOVEMENTACTION action;
 	bool unsafe;
 
-	std::vector<MapNode>::iterator it = neighbours.begin();
-	while (it != neighbours.end())
+	std::vector<MapNode>::iterator neighbour = neighbours.begin();
+	while (neighbour != neighbours.end())
 	{
 		//walking to arrowtrap horizontally is safe
-		if (it->GetActionToReach() == WALK)
+		if (neighbour->GetActionToReach() == WALK)
 		{
-			it++;
+			neighbour++;
 			continue;
 		}
 
-		x = it->GetX();
-		y = it->GetY();
+		x = neighbour->GetX();
+		y = neighbour->GetY();
 		distX = x - origin.GetX();
 		distY = y - origin.GetY();
-		target = it->GetActionTarget();
-		action = it->GetActionToReach();
+		target = neighbour->GetActionTarget();
+		action = neighbour->GetActionToReach();
 		unsafe = false;
 
-		std::vector<Coords> path = GetPathBetweenNodes(origin.GetCoords(), (*it).GetCoords(), action);
+		std::vector<Coords> path = GetPathBetweenNodes(origin.GetCoords(), (*neighbour).GetCoords(), action);
 
 
 		for (auto n : path)
@@ -752,8 +762,14 @@ void Pathfinder::DeleteUnsafeNeighboursArrowTrap(MapNode origin, std::vector<Map
 		}
 
 
-		if (unsafe) it = neighbours.erase(it);
-		else it++;
+		if (unsafe)
+			//neighbour = neighbours.erase(neighbour);
+		{
+			neighbour->_arrowTrapOnWay = true;
+			neighbour++;
+		}
+		else 
+			neighbour++;
 	}
 }
 
@@ -1679,27 +1695,12 @@ std::vector<MapNode*> Pathfinder::CalculateNeighboursInGrid(MapNode * node, MVST
 		_grid[n[i].GetX()][n[i].GetY()]->_actionToReachCandidate = n[i].GetActionToReach();
 		_grid[n[i].GetX()][n[i].GetY()]->_actionToReachTargetCandidate = n[i].GetActionTarget();
 		_grid[n[i].GetX()][n[i].GetY()]->_mvStateCandidate = n[i].GetMvState();
+		_grid[n[i].GetX()][n[i].GetY()]->_arrowTrapOnWayCandidate = n[i]._arrowTrapOnWay;
 		neighbours.push_back(_grid[n[i].GetX()][n[i].GetY()]);
 	}
 	
 	return neighbours;
 }
-
-//std::vector<MapSearchNode*> Pathfinder::CalculateNeighboursInGrid(MapSearchNode* node, MVSTATE mvstate, ACTION_TARGET target)
-//{
-//	std::vector<MapSearchNode*> neighbours;
-//
-//	std::vector<Node> n = CalculateNeighboursInGrid(Node{ node->_x, node->_y }, mvstate, target);
-//	for (int i = 0; i < n.size(); i++)
-//	{
-//		_grid[n[i].GetX()][n[i].GetY()]->_actionToReachCandidate = n[i].GetActionToReach();
-//		_grid[n[i].GetX()][n[i].GetY()]->_actionToReachTargetCandidate = n[i].GetActionTarget();
-//		_grid[n[i].GetX()][n[i].GetY()]->_mvStateCandidate = n[i].GetMvState();
-//		neighbours.push_back(_grid[n[i].GetX()][n[i].GetY()]);
-//	}
-//
-//	return neighbours;
-//}
 
 #pragma endregion
 
@@ -1719,9 +1720,7 @@ void Pathfinder::TarjanDFS(MapNode* n)
 		//m not visited - visit it recursively
 		if (_tar_VN[m->GetX()][m->GetY()] == 0)
 		{
-			//we need to save mvstate which is saved as candidate during neighbour-finding
-			m->_mvState = m->_mvStateCandidate;
-			m->_actionToReachTarget = m->_actionToReachTargetCandidate;
+			m->SolidifyCandidates();
 
 			TarjanDFS(m);
 			_tar_VLow[n->GetX()][n->GetY()] = min(_tar_VLow[n->GetX()][n->GetY()], _tar_VLow[m->GetX()][m->GetY()]);
@@ -1793,26 +1792,6 @@ void Pathfinder::CalculateConnectedComponents()
 
 #pragma region Getter methods
 
-//int Pathfinder::GetCCnr(int nodeX, int nodeY)
-//{
-//	return _grid[nodeX][nodeY]->_CCnr;
-//}
-//
-//int Pathfinder::GetCCnr(Node n)
-//{
-//	return _grid[n.GetX()][n.GetY()]->_CCnr;
-//}
-//
-//int Pathfinder::GetCCnr(MapSearchNode n)
-//{
-//	return _grid[n.GetX()][n.GetY()]->_CCnr;
-//}
-//
-//int Pathfinder::GetCCnr(Item item)
-//{
-//	return _grid[item.GetX()][item.GetY()]->_CCnr;
-//}
-
 int Pathfinder::GetCCnr(Coords c)
 {
 	return _grid[c.GetX()][c.GetY()]->_CCnr;
@@ -1823,27 +1802,17 @@ std::vector<MapNode*> Pathfinder::GetAllNodesFromCC(int ccnr)
 	return _tar_CCmap[ccnr];
 }
 
-//MapNode* Pathfinder::GetNodeFromGrid(int x, int y)
-//{
-//	return _grid[x][y];
-//}
-
 MapNode* Pathfinder::GetNodeFromGrid(Coords c)
 {
 	return _grid[c.GetX()][c.GetY()];
 }
-
-//Node Pathfinder::ToNode(MapSearchNode * n)
-//{
-//	return Node(n->_x, n->_y, n->_actionToReach, n->_actionToReachTarget, n->GetMvState());
-//}
 
 std::vector<MapNode*> Pathfinder::GetPathFromGrid()
 {
 	return _pathList;
 }
 
-std::vector<MapNode> Pathfinder::GetPath()
+std::vector<MapNode> Pathfinder::GetPathCopy()
 {
 	std::vector<MapNode> pathCopy;
 
@@ -1856,15 +1825,6 @@ std::vector<MapNode> Pathfinder::GetPath()
 
 	return pathCopy;
 }
-
-//std::vector<Node> Pathfinder::GetPathListNode()
-//{
-//	std::vector<Node> pathListNode;
-//	for (int i = 0; i < _pathList.size(); i++)
-//		pathListNode.push_back(Node{ _pathList[i]->_x, _pathList[i]->_y, _pathList[i]->_actionToReach, _pathList[i]->_actionToReachTarget, _pathList[i]->GetMvState() });
-//
-//	return pathListNode;
-//}
 
 Coords Pathfinder::GetExplorationTarget()
 {
@@ -1967,9 +1927,7 @@ void Pathfinder::Dijkstra(Coords startc)
 				{
 					m->_dij_dist = n->_dij_dist + CalculateDistance(n->GetCoords(), m->GetCoords());
 					m->_dij_prev = n;
-					m->_mvState = m->_mvStateCandidate;
-					m->_actionToReachTarget = m->_actionToReachTargetCandidate;
-					m->_actionToReach = m->_actionToReachCandidate;
+					m->SolidifyCandidates();
 					_dij_pQ.push(m);
 					_dij_visited[m->GetX()][m->GetY()] = true;
 				}
@@ -1993,28 +1951,6 @@ std::vector<MapNode*> Pathfinder::GetDijPath(Coords targetC)
 
 	return vect;
 }
-
-//std::vector<Node> Pathfinder::GetDijPathNode(int targetX, int targetY)
-//{
-//	std::vector<MapSearchNode*> vect = GetDijPath(targetX, targetY);
-//	std::vector<Node> vectNode;
-//	for (int i = 0; i < vect.size(); i++)
-//		vectNode.push_back(ToNode(vect[i]));
-//	
-//	return vectNode;
-//}
-
-
-
-//int Pathfinder::GetDijDist(int x, int y)
-//{
-//	return _grid[x][y]->_dij_dist;
-//}
-//
-//int Pathfinder::GetDijDist(Item i)
-//{
-//	return _grid[i.GetX()][i.GetY()]->_dij_dist;
-//}
 
 int Pathfinder::GetDijDist(Coords c)
 {
@@ -2133,9 +2069,7 @@ bool Pathfinder::TryToCalculatePath(Coords c1, Coords c2)
 					if (child->_gScore > child->CalculateGScore(current))
 					{
 						child->_parent = current;
-						child->_actionToReach = child->_actionToReachCandidate;
-						child->_actionToReachTarget = child->_actionToReachTargetCandidate;
-						child->_mvState = child->_mvStateCandidate;
+						child->SolidifyCandidates();
 						child->ComputeScores(end);
 					}
 				}
@@ -2146,9 +2080,7 @@ bool Pathfinder::TryToCalculatePath(Coords c1, Coords c2)
 
 					// COMPUTE THE G
 					child->_parent = current;
-					child->_actionToReach = child->_actionToReachCandidate;
-					child->_actionToReachTarget = child->_actionToReachTargetCandidate;
-					child->_mvState = child->_mvStateCandidate;
+					child->SolidifyCandidates();
 					child->ComputeScores(end);
 				}
 			}
@@ -2182,6 +2114,7 @@ bool Pathfinder::TryToCalculatePath(Coords c1, Coords c2)
 			(*i)->_gScore = 0;
 
 			(*i)->_parent = NULL;
+			(*i)->_arrowTrapOnWay = false;
 		}
 		for (i = closedList.begin(); i != closedList.end(); i++)
 		{
@@ -2190,6 +2123,7 @@ bool Pathfinder::TryToCalculatePath(Coords c1, Coords c2)
 			(*i)->_gScore = 0;
 
 			(*i)->_parent = NULL;
+			(*i)->_arrowTrapOnWay = false;
 		}
 
 
@@ -2267,9 +2201,7 @@ bool Pathfinder::TryToFindExplorationTarget(Coords startc)
 
 					current->_visited = true;
 					visitedList.push_back(current);
-					current->_actionToReach = current->_actionToReachCandidate;
-					current->_actionToReachTarget = current->_actionToReachTargetCandidate;
-					current->_mvState = current->_mvStateCandidate;
+					current->SolidifyCandidates();
 
 					break;
 				}

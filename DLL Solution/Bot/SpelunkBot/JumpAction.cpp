@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "JumpAction.h"
 
-JumpAction::JumpAction(IBot * bot, ACTION_TARGET target, int distX, int distY)
+JumpAction::JumpAction(std::shared_ptr<IBot> const& bot, ACTION_TARGET target, int distX, int distY)
 	: IMovementAction(bot)
 {
 	_distX = distX;
@@ -25,7 +25,7 @@ JumpAction::JumpAction(IBot * bot, ACTION_TARGET target, int distX, int distY)
 	SetMovementRange();
 }
 
-JumpAction::JumpAction(IBot * bot, int distX, int distY)
+JumpAction::JumpAction(std::shared_ptr<IBot> const& bot, int distX, int distY)
 	: JumpAction(bot, GROUND, distX, distY)
 {
 }

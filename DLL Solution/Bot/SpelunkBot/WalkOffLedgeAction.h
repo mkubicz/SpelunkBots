@@ -16,5 +16,5 @@ private:
 
 public:
 	ordersStruct GetOrders();
-	WalkOffLedgeAction(IBot * bot, int distX, int distY);
+	WalkOffLedgeAction(std::shared_ptr<IBot> const& bot, int distX, int distY);
 };

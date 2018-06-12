@@ -2,7 +2,7 @@
 #include "WalkOffLedgeAction.h"
 
 
-WalkOffLedgeAction::WalkOffLedgeAction(IBot * bot, int distX, int distY)
+WalkOffLedgeAction::WalkOffLedgeAction(std::shared_ptr<IBot> const& bot, int distX, int distY)
 	: IMovementAction(bot)
 {
 	_distX = distX;

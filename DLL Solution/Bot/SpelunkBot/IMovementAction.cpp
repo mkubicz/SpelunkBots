@@ -2,14 +2,14 @@
 #include "IMovementAction.h"
 
 
-IMovementAction::IMovementAction(IBot* bot)
+IMovementAction::IMovementAction(std::shared_ptr<IBot> const& bot)
+	: _bot(bot)
 {
-	_bot = bot;
 	_actionDone = false;
 	_actionInProgress = false;
 	_directionX = DIRECTIONX::xNONE;
 	_directionY = DIRECTIONY::yNONE;
-	_targetNode = Coords();
+	_targetNode = Coords(-1,-1);
 }
 
 IMovementAction::~IMovementAction()

@@ -92,7 +92,10 @@ private:
 	void InitialiseDLLFunctions(void);
 	GetSpelunkerStatePROC GetSpelunkerStateDLL;
 
+
 protected:
+	std::shared_ptr<IBot> _bot;
+
 	double _pathCount;
 	double _tempID;
 	double _waitTimer;
@@ -331,6 +334,9 @@ public:
 	{
 		return _playerPositionYNode;
 	}
+
+	void SetOwnPointer(std::shared_ptr<IBot> ptr);
+	virtual void CreateHelpers(){};
 
 	virtual void Update() = 0;
 	virtual void Reset();

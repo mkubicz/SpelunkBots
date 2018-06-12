@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "ClimbFromHangAction.h"
 
-ClimbFromHangAction::ClimbFromHangAction(IBot * bot, DIRECTIONX directionX)
+ClimbFromHangAction::ClimbFromHangAction(std::shared_ptr<IBot> const& bot, DIRECTIONX directionX)
 	: IMovementAction(bot)
 {
 	_directionX = directionX;

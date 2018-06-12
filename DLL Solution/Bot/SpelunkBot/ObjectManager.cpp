@@ -6,10 +6,11 @@
 
 using namespace std;
 
-ObjectManager::ObjectManager(IBot *bot, Pathfinder *pathfinder)
+ObjectManager::ObjectManager(std::shared_ptr<IBot> bot, std::shared_ptr<Pathfinder> pathfinder)
+	: _bot(bot), _pathfinder(pathfinder)
 {
-	_bot = bot;
-	_pathfinder = pathfinder;
+	//_bot = bot;
+	//_pathfinder = pathfinder;
 }
 
 std::vector<Item> ObjectManager::GetItems()
@@ -88,7 +89,7 @@ std::vector<Item> ObjectManager::GetTreasures()
 	std::vector<Item> treasures;
 
 	for (Item item : _itemsList)
-		if (item.GetKind() == spTreasure)
+		if (item.GetKind() == kndTreasure)
 			treasures.push_back(item);
 
 	return treasures;

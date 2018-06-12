@@ -11,3 +11,5 @@
 #include "JumpAction.h"
 #include "JumpFromLadderAction.h"
 #include "ClimbAction.h"
+#include "PickUpItemAction.h"
+#include "ThrowItemAction.h"

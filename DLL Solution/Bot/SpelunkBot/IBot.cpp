@@ -12,6 +12,11 @@ IBot::~IBot()
 
 }
 
+void IBot::SetOwnPointer(std::shared_ptr<IBot> ptr)
+{
+	_bot = ptr;
+}
+
 void IBot::InitialiseVariables()
 {
 	_targetX = 0;

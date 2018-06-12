@@ -12,8 +12,8 @@ private:
 	STATE _state;
 
 public:
-	PickUpItemAction(IBot *bot, int itemID);
-	PickUpItemAction(IBot *bot);
+	PickUpItemAction(std::shared_ptr<IBot> const& bot, int itemID);
+	PickUpItemAction(std::shared_ptr<IBot> const& bot);
 
 	ordersStruct GetOrders() override;
 };

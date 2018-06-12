@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "PickUpItemAction.h"
 
-PickUpItemAction::PickUpItemAction(IBot * bot, int itemID)
+PickUpItemAction::PickUpItemAction(std::shared_ptr<IBot> const& bot, int itemID)
 	: IMovementAction(bot)
 {
 	_pickupByID = true;
@@ -10,7 +10,7 @@ PickUpItemAction::PickUpItemAction(IBot * bot, int itemID)
 	_state = PICKING_UP;
 }
 
-PickUpItemAction::PickUpItemAction(IBot * bot)
+PickUpItemAction::PickUpItemAction(std::shared_ptr<IBot> const& bot)
 	: PickUpItemAction(bot, -1)
 {
 	_pickupByID = false;

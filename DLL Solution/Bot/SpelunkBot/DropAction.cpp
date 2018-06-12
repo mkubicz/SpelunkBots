@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "DropAction.h"
 
-DropAction::DropAction(IBot* bot, ACTION_TARGET actionTarget, int distY)
+DropAction::DropAction(std::shared_ptr<IBot> const& bot, ACTION_TARGET actionTarget, int distY)
 	: IMovementAction(bot)
 {
 	_actionTarget = actionTarget;
@@ -13,7 +13,7 @@ DropAction::DropAction(IBot* bot, ACTION_TARGET actionTarget, int distY)
 		std::cout << "ERROR: ActionTarget for DropAction should not be LEDGE";
 }
 
-DropAction::DropAction(IBot* bot, int distY)
+DropAction::DropAction(std::shared_ptr<IBot> const& bot, int distY)
 	: DropAction(bot, GROUND, distY)
 {
 }

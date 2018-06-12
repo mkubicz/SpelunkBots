@@ -11,7 +11,7 @@ private:
 	int _startingPosY;
 	enum STATES {WALKING, JUMPING, HANGING};
 public:
-	JumpAboveAction(IBot *bot, DIRECTIONX directionX);
+	JumpAboveAction(std::shared_ptr<IBot> const& bot, DIRECTIONX directionX);
 	~JumpAboveAction() {};
 
 	ordersStruct GetOrders() override;

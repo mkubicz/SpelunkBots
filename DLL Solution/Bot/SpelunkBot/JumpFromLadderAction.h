@@ -22,8 +22,8 @@ private:
 	void MoveToTarget(ordersStruct *orders);
 
 public:
-	JumpFromLadderAction(IBot * bot, ACTION_TARGET target, bool hasMomentum, int distX, int distY);
-	JumpFromLadderAction(IBot *bot, int distX, int distY);
+	JumpFromLadderAction(std::shared_ptr<IBot> const& bot, ACTION_TARGET target, bool hasMomentum, int distX, int distY);
+	JumpFromLadderAction(std::shared_ptr<IBot> const& bot, int distX, int distY);
 
 	ordersStruct GetOrders();
 };

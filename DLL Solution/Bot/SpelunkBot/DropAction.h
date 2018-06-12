@@ -4,8 +4,8 @@
 class DropAction : public IMovementAction
 {
 public:
-	DropAction(IBot* bot, ACTION_TARGET actionTarget, int distY);
-	DropAction(IBot* bot, int distY);
+	DropAction(std::shared_ptr<IBot> const& bot, ACTION_TARGET actionTarget, int distY);
+	DropAction(std::shared_ptr<IBot> const& bot, int distY);
 	~DropAction() {};
 
 	ordersStruct GetOrders() override;

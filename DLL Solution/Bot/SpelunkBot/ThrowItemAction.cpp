@@ -1,12 +1,12 @@
 #include "stdafx.h"
 #include "ThrowItemAction.h"
 
-ThrowItemAction::ThrowItemAction(IBot * bot)
+ThrowItemAction::ThrowItemAction(std::shared_ptr<IBot> const& bot)
 	: ThrowItemAction(bot, xNONE, yNONE)
 {
 }
 
-ThrowItemAction::ThrowItemAction(IBot * bot, DIRECTIONX dirX, DIRECTIONY dirY)
+ThrowItemAction::ThrowItemAction(std::shared_ptr<IBot> const& bot, DIRECTIONX dirX, DIRECTIONY dirY)
 	: IMovementAction(bot)
 {
 	_directionX = dirX;

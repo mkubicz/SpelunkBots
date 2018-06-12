@@ -23,7 +23,9 @@ struct ordersStruct
 class IMovementAction
 {
 protected:
-	IBot* _bot;
+	//IBot* _bot;
+	std::shared_ptr<IBot> const& _bot;
+	//std::shared_ptr<IBot> _bot;
 
 	MOVEMENTACTION _actionType;
 	bool _actionDone;	
@@ -45,7 +47,7 @@ protected:
 	bool IsStandingStill(int playerPosX, int playerPosY, int prevPlayerPosX, int prevPlayerPosY);
 
 public:
-	IMovementAction(IBot* bot);
+	IMovementAction(std::shared_ptr<IBot> const& bot);
 	~IMovementAction();
 
 	bool ActionDone();

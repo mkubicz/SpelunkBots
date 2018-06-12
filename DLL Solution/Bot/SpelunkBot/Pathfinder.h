@@ -13,7 +13,8 @@
 class Pathfinder
 {
 public:
-	Pathfinder(IBot* bot);
+	//Pathfinder(IBot* bot);
+	Pathfinder(std::shared_ptr<IBot> bot);
 	~Pathfinder();
 
 	void NewLevel();
@@ -26,7 +27,7 @@ public:
 	
 	bool TryToCalculatePath(Coords c1, Coords c2);
 	std::vector<MapNode*> GetPathFromGrid();
-	std::vector<MapNode> GetPath();
+	std::vector<MapNode> GetPathCopy();
 	int GetPathLength(std::vector<MapNode*> path);
 	int GetPathLength();
 
@@ -61,8 +62,9 @@ public:
 	void DijkstraDebug(bool exact);
 
 private:	
-	IBot* _bot;
-	std::map<int, std::map<int, MapNode*> > _grid;
+	std::shared_ptr<IBot> _bot;
+	//std::map<int, std::map<int, MapNode*> > _grid;
+	std::vector<std::vector<MapNode*> > _grid;
 
 	std::vector<MapNode*> _pathList;
 	Coords _explorationTarget;

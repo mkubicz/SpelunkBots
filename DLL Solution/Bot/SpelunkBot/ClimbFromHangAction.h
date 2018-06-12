@@ -11,6 +11,6 @@ private:
 	int _prevPlayerPosY;
 
 public:
-	ClimbFromHangAction(IBot *bot, DIRECTIONX directionX);
+	ClimbFromHangAction(std::shared_ptr<IBot> const& bot, DIRECTIONX directionX);
 	ordersStruct GetOrders();
 };

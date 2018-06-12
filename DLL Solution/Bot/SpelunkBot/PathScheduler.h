@@ -6,28 +6,34 @@
 class PathScheduler
 {
 private:
-	Pathfinder* _pathfinder;
-	IBot * _bot;
-	std::deque<PathInfo> _pathInfoQ;
-	IMovementAction* _currentAction;
+	std::shared_ptr<IBot> _bot;
+	std::shared_ptr<Pathfinder> _pathfinder;
+
+	std::deque<std::unique_ptr<PathInfo>> _pathInfoQ;
+	std::shared_ptr<IMovementAction> _currentAction;
 
 	//Coords GetStartNodeForNextPath(int i);
 	void UpdateCurrentAction();
-	IMovementAction* GetNextAction();
+	std::shared_ptr<IMovementAction> GetNextAction();
 
 	bool TryToAddPath(Coords start, Coords target);
 
-	std::vector<IMovementAction*> CreateActions(std::vector<MapNode> path);
-	IMovementAction* PathScheduler::CreateAction(MOVEMENTACTION action, ACTION_TARGET actionTarget, MVSTATE mvState, int distX, int distY);
+	std::vector<std::shared_ptr<IMovementAction>> CreateActions(std::vector<MapNode> path);
+	std::shared_ptr<IMovementAction> PathScheduler::CreateAction(MOVEMENTACTION action, ACTION_TARGET actionTarget, MVSTATE mvState, int distX, int distY);
+
+	//void ModifyPathToDangers(std::vector<MapNode> *path);
+
+
 
 public:
-	PathScheduler(IBot* bot, Pathfinder* pathfinder);
+	PathScheduler(std::shared_ptr<IBot> bot, std::shared_ptr<Pathfinder> pathfinder);
 
 	void NewLevel();
 
 	bool TryToSchedulePath(Coords target);
 	bool TryToInsertPath(Coords target, int i);
-
+	void PickUpItem(int itemID);
+	void ScheduleAction(std::shared_ptr<IMovementAction> action);
 
 	Coords GetStartNodeForNextPath();
 	ordersStruct GetOrdersFromCurrentAction();

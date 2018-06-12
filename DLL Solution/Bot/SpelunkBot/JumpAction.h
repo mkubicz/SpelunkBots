@@ -29,8 +29,8 @@ private:
 	void MoveToTarget(ordersStruct *orders);
 
 public:
-	JumpAction(IBot * bot, ACTION_TARGET target, int distX, int distY);
-	JumpAction(IBot *bot, int distX, int distY);
+	JumpAction(std::shared_ptr<IBot> const& bot, ACTION_TARGET target, int distX, int distY);
+	JumpAction(std::shared_ptr<IBot> const& bot, int distX, int distY);
 
 
 	ordersStruct GetOrders();

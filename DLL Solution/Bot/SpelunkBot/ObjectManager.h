@@ -7,7 +7,7 @@
 class ObjectManager
 {
 public:
-	ObjectManager(IBot *bot, Pathfinder *pathfinder);
+	ObjectManager(std::shared_ptr<IBot> bot, std::shared_ptr<Pathfinder> pathfinder);
 
 	void NewLevel();
 
@@ -35,8 +35,9 @@ public:
 	void RemoveEnemyWithID(double id);
 	*/
 private:
-	IBot* _bot;
-	Pathfinder * _pathfinder;
+	std::shared_ptr<IBot> _bot;
+	std::shared_ptr<Pathfinder> _pathfinder;
+
 	//std::vector<collectableObject> _collectablesList;
 	std::vector<Item> _itemsList;
 	std::vector<enemyObject> _enemiesList;
