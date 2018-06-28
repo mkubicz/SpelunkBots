@@ -91,6 +91,13 @@ int EdgeOfNodeX(int nodenr, DIRECTIONX direction)
 		return (nodenr * PIXELS_IN_NODE);
 }
 
+int EdgeOfNodeY(int nodenr, DIRECTIONY direction)
+{
+	if (direction == yDOWN)
+		return (nodenr * PIXELS_IN_NODE) + PIXELS_IN_NODE;
+	else
+		return (nodenr * PIXELS_IN_NODE);
+}
 
 bool WithinRangeFromTarget(int posPixel, int targetPixel, int pixelRange)
 {

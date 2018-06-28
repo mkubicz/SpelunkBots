@@ -11,7 +11,7 @@ private:
 
 public:
 	ThrowItemAction(std::shared_ptr<IBot> const& bot);
-	ThrowItemAction(std::shared_ptr<IBot> const& bot, DIRECTIONX dirX, DIRECTIONY dirY);
+	ThrowItemAction(std::shared_ptr<IBot> const& bot, directions dir);
 
 	ordersStruct GetOrders() override;
 };

@@ -6,6 +6,7 @@ ClimbAction::ClimbAction(std::shared_ptr<IBot> const& bot, int distY)
 {
 	_distY = distY;
 	_actionType = CLIMB;
+	_targetIsGround = false;
 
 	if (_distY < 0) _directionY = yUP;
 	if (_distY > 0) _directionY = yDOWN;
@@ -27,20 +28,38 @@ ordersStruct ClimbAction::GetOrders()
 	if (!_actionInProgress)
 	{
 		CalculateTargetNode(0, _distY);
+		if (!_bot->IsNodePassable(_targetNode.GetX(), _targetNode.GetY() + 1, NODE_COORDS))
+			_targetIsGround = true;
 		_actionInProgress = true;
 	}
 
-	if (playerPosY != _targetNode.GetMidYpixel())
+	if (!_targetIsGround)
 	{
-		if (playerPosY > _targetNode.GetMidYpixel())
-			orders.lookUp = true;
-		if (playerPosY < _targetNode.GetMidYpixel())
-			orders.duck = true;
+		if (playerPosY != _targetNode.GetMidYpixel())
+		{
+			if (playerPosY > _targetNode.GetMidYpixel())
+				orders.lookUp = true;
+			if (playerPosY < _targetNode.GetMidYpixel())
+				orders.duck = true;
+		}
+		else
+		{
+			_actionDone = true;
+		}
 	}
 	else
 	{
-		_actionDone = true;
+		if (_bot->GetSpelunkerState() == spCLIMBING)
+		{
+			orders.duck = true;
+		}
+		else
+		{
+			_actionDone = true;
+		}
 	}
+
+
 
 
 	return orders;

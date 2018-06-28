@@ -259,9 +259,22 @@ ordersStruct JumpAction::GetOrders()
 			_jumpThreshold = EdgeOfNodeX((int)_bot->GetPlayerPositionXNode(), _directionX);
 			//makes the bot jump from the furthest point of a ledge, so he can jump out of narrow tunnels (when there is a full tile above his head)
 			if (_directionX == xRIGHT)
+			{
 				_jumpThreshold += 1;
+
+				//if bot does not jump from the edge he sometimes jumps a bit closer and doesnt make it;
+				//so we increase the threshold in that case
+				if (_distX == 5 && !_bot->IsNodePassable(startNode.GetX() + 1, startNode.GetY() + 1, NODE_COORDS))
+					_jumpThreshold += 3;
+			}
 			else
+			{
 				_jumpThreshold -= 1;
+
+				//see RIGHT case above for explanation
+				if (_distX == 5 && !_bot->IsNodePassable(startNode.GetX() - 1, startNode.GetY() + 1, NODE_COORDS))
+					_jumpThreshold -= 3;
+			}
 		}
 
 
@@ -355,7 +368,7 @@ ordersStruct JumpAction::GetOrders()
 
 		break;
 	case LANDED_STUCK:
-		Centralize(&orders, _targetNode.GetMidXpixel());
+		Centralize_old(&orders, _targetNode.GetMidXpixel());
 		break;
 	case FINISHED:
 		_finishedTimer += 1;

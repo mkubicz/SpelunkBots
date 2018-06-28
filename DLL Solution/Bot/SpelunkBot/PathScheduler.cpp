@@ -7,19 +7,21 @@ PathScheduler::PathScheduler(std::shared_ptr<IBot> bot, std::shared_ptr<Pathfind
 	_currentAction = NULL;
 }
 
-bool PathScheduler::TryToSchedulePath(Coords target)
+bool PathScheduler::TryToSchedulePath(Coords target, PATHFINDING_AT_MODE atmode,
+	std::vector<Coords> allowedArrowTraps)
 {
-	return TryToAddPath(GetStartNodeForNextPath(), target);
+	return TryToAddPath(GetStartNodeForNextPath(), target, atmode, allowedArrowTraps);
 }
 
-bool PathScheduler::TryToInsertPath(Coords target, int i)
+bool PathScheduler::TryToInsertPath(Coords target, int i, PATHFINDING_AT_MODE atmode,
+	std::vector<Coords> allowedArrowTraps)
 {
 	while (_pathInfoQ.size() >= i)
 		_pathInfoQ.pop_back();
 
 	Coords start = GetStartNodeForNextPath();
 
-	return TryToAddPath(start, target);
+	return TryToAddPath(start, target, atmode, allowedArrowTraps);
 }
 
 void PathScheduler::PickUpItem(int itemID)
@@ -40,9 +42,11 @@ void PathScheduler::ScheduleAction(std::shared_ptr<IMovementAction> action)
 	_pathInfoQ.push_back(std::make_unique<PathInfo>(std::vector<MapNode>(), Coords(-1, -1), actions));
 }
 
-bool PathScheduler::TryToAddPath(Coords start, Coords target)
+bool PathScheduler::TryToAddPath(Coords start, Coords target, PATHFINDING_AT_MODE atmode,
+	std::vector<Coords> allowedArrowTraps)
 {
-	if (_pathfinder->TryToCalculatePath(start, target))
+	if (_pathfinder->TryToCalculatePath(start, target, atmode, allowedArrowTraps))
+	//if (_pathfinder->TryToCalculatePathNoGrid(start, target))
 	{
 		std::vector<MapNode> path = _pathfinder->GetPathCopy();
 
@@ -85,6 +89,14 @@ ordersStruct PathScheduler::GetOrdersFromCurrentAction()
 	return orders;
 }
 
+MOVEMENTACTION PathScheduler::GetCurrentActionType()
+{
+	if (_currentAction != NULL)
+		return _currentAction->ActionType();
+	else
+		return IDLE;
+}
+
 void PathScheduler::UpdateCurrentAction()
 {
 	if (_currentAction == nullptr || _currentAction->ActionDone())
@@ -95,6 +107,9 @@ void PathScheduler::UpdateCurrentAction()
 
 std::shared_ptr<IMovementAction> PathScheduler::GetNextAction()
 {
+	//lock_guard automatycznie siê zwalnia jak wyjdzie ze scope
+	std::lock_guard<std::mutex> lockGuard(_mutex_pathInfoQ);
+
 	if (!_pathInfoQ.empty())
 	{
 		if (!_pathInfoQ.front()->ActionsExhausted())
@@ -132,6 +147,11 @@ bool PathScheduler::NoSheduledPaths()
 	return _pathInfoQ.empty();
 }
 
+bool PathScheduler::ActionInProgress()
+{
+	return _currentAction != nullptr;
+}
+
 Coords PathScheduler::GetCurrentTarget()
 {
 	if (!_pathInfoQ.empty())
@@ -152,7 +172,11 @@ std::vector<Coords> PathScheduler::GetSheduledTargets()
 
 void PathScheduler::ClearSheduledPaths()
 {
+	_mutex_pathInfoQ.lock();
+
 	_pathInfoQ.clear();
+
+	_mutex_pathInfoQ.unlock();
 }
 
 void PathScheduler::NewLevel()
@@ -197,6 +221,9 @@ std::vector<std::shared_ptr<IMovementAction>> PathScheduler::CreateActions(std::
 		action = path[i].GetActionToReach();
 		actionTarget = path[i].GetActionTarget();
 		mvState = path[i - 1].GetMvState();
+		
+		if (action == DROP && _pathfinder->LadderTop(currC.OffsetY(1)))
+			actions.push_back(std::make_shared<CentralizeAction>(_bot));
 
 		actions.push_back(CreateAction(action, actionTarget, mvState, distX, distY));
 
@@ -255,6 +282,8 @@ std::shared_ptr<IMovementAction> PathScheduler::CreateAction(MOVEMENTACTION acti
 	case DROP:
 		return std::make_shared<DropAction>(_bot, actionTarget, distY);
 		break;
+	case HANGDROP:
+		return std::make_shared<HangDropAction>(_bot, directionX);
 	case CLIMBFROMHANG:
 		return std::make_shared<ClimbFromHangAction>(_bot, directionX);
 		break;

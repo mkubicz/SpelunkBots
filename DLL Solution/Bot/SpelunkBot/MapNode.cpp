@@ -51,6 +51,9 @@ MapNode::MapNode(int x, int y, MOVEMENTACTION actionToReach, ACTION_TARGET jumpT
 
 	_arrowTrapOnWay = false;
 	_arrowTrapOnWayCandidate = false;
+
+	_arrowTrapCoords = Coords();
+	_arrowTrapCoordsCandidate = Coords();
 }
 
 void MapNode::Reset()
@@ -77,6 +80,9 @@ void MapNode::Reset()
 
 	_arrowTrapOnWay = false;
 	_arrowTrapOnWayCandidate = false;
+
+	_arrowTrapCoords = Coords();
+	_arrowTrapCoordsCandidate = Coords();
 }
 
 int MapNode::GetX()
@@ -114,6 +120,45 @@ bool MapNode::IsArrowTrapOnWay()
 	return _arrowTrapOnWay;
 }
 
+Coords MapNode::GetArrowTrapCoords()
+{
+	return _arrowTrapCoords;
+}
+
+MapNode * MapNode::GetDijParent()
+{
+	return _dij_prev;
+}
+
+void MapNode::CopyInfo(MapNode n)
+{
+	_actionToReach = n._actionToReach;
+	_actionToReachTarget = n._actionToReachTarget;
+	_mvState = n._mvState;
+
+	_actionToReachCandidate = n._actionToReachCandidate;
+	_actionToReachTargetCandidate = n._actionToReachTargetCandidate;
+	_mvStateCandidate = n._mvStateCandidate;
+
+	_gScore = n._gScore;
+	_hScore = n._hScore;
+	_parent = n._parent;
+
+	_opened = n._opened;
+	_closed = n._closed;
+	_visited = n._visited;
+
+	_CCnr = n._CCnr;
+	_dij_dist = n._dij_dist;
+	_dij_prev = n._dij_prev;
+
+	_arrowTrapOnWay = n._arrowTrapOnWay;
+	_arrowTrapOnWayCandidate = n._arrowTrapOnWayCandidate;
+
+	_arrowTrapCoords = n._arrowTrapCoords;
+	_arrowTrapCoordsCandidate = n._arrowTrapCoordsCandidate;
+}
+
 void MapNode::SolidifyCandidates()
 {
 	_actionToReach = _actionToReachCandidate;
@@ -121,22 +166,49 @@ void MapNode::SolidifyCandidates()
 	_mvState = _mvStateCandidate;
 
 	_arrowTrapOnWay = _arrowTrapOnWayCandidate;
+	_arrowTrapCoords = _arrowTrapCoordsCandidate;
 
 	//if there is an arrowtrap on the way to node's parent, then there is an arrowtrap on the way to node itself
+
 	if (_parent != NULL)
 		if (_parent->_arrowTrapOnWay == true)
+		{
 			_arrowTrapOnWay = true;
+			_arrowTrapCoords = _parent->_arrowTrapCoords;
+		}
 	if (_dij_prev != NULL)
 		if (_dij_prev->_arrowTrapOnWay == true)
+		{
 			_arrowTrapOnWay = true;
+			_arrowTrapCoords = _dij_prev->_arrowTrapCoords;
+		}
+}
+
+int MapNode::GetPenalty()
+{
+	if (_actionToReach == WALK || _actionToReachCandidate == WALK) return 0;
+	else if (_actionToReach == JUMP || _actionToReachCandidate == JUMP) return 5;
+	else if (_actionToReach == WALKOFFLEDGE || _actionToReachCandidate == WALKOFFLEDGE) return 7;
+	else return 1;
 }
 
 double MapNode::CalculateGScore(MapNode * parentCandidate)
 {
+	double dist = 0;
+
+	//if (_actionToReachCandidate == WALK || _actionToReachCandidate == CLIMB)
+	//	dist = 0.5; //walk and climb has lower cost because its safer
+	//else
+		dist = abs(parentCandidate->GetX() - GetX()) + abs(parentCandidate->GetY() - GetY());
+
+	//if (_actionToReachCandidate == JUMP || _actionToReachCandidate == WALKOFFLEDGE)
+	//	dist += 1000;
+
+		dist += GetPenalty();
+
 	//manhattan
-	return parentCandidate->_gScore + 
-		abs(parentCandidate->GetX() - GetX()) + 
-		abs(parentCandidate->GetY() - GetY());
+	return parentCandidate->_gScore + dist;
+
 }
 
 double MapNode::CalculateHScore(MapNode * destination)

@@ -86,6 +86,16 @@ void IMovementAction::Centralize(ordersStruct * orders, int centralizingPoint)
 {
 	int playerPosX = (int)_bot->GetPlayerPositionX();
 
+	if (playerPosX > centralizingPoint) orders->leftReleased = true;
+	else if (playerPosX < centralizingPoint) orders->rightReleased = true;
+	
+	return;
+}
+
+void IMovementAction::Centralize_old(ordersStruct * orders, int centralizingPoint)
+{
+	int playerPosX = (int)_bot->GetPlayerPositionX();
+
 	if (_centralizeBreakTimer == 0 && _centralizeMoveTimer == 0)
 	{
 		if (playerPosX < centralizingPoint)
@@ -125,7 +135,6 @@ void IMovementAction::Centralize(ordersStruct * orders, int centralizingPoint)
 		return;
 	}
 }
-
 
 bool IMovementAction::IsStandingStill(int playerPosX, int playerPosY, int prevPlayerPosX, int prevPlayerPosY)
 {

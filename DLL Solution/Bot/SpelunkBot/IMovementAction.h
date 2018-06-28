@@ -18,6 +18,10 @@ struct ordersStruct
 	bool run = false;
 	bool pay = false;
 	bool itemp = false;
+	bool rightPressed = false;
+	bool leftPressed = false;
+	bool rightReleased = false;
+	bool leftReleased = false;
 };
 
 class IMovementAction
@@ -42,6 +46,8 @@ protected:
 	int _centralizeBreakTimer = 0;
 	DIRECTIONX _centralizeDir;
 	void Centralize(ordersStruct *orders, int centralizingPoint);
+
+	void Centralize_old(ordersStruct * orders, int centralizingPoint);
 
 	int _standingStillCounter = 0;
 	bool IsStandingStill(int playerPosX, int playerPosY, int prevPlayerPosX, int prevPlayerPosY);

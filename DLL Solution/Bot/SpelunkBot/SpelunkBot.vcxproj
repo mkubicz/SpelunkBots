@@ -90,6 +90,7 @@
     <ClInclude Include="DropAction.h" />
     <ClInclude Include="HangAction.h" />
     <ClInclude Include="Coords.h" />
+    <ClInclude Include="HangDropAction.h" />
     <ClInclude Include="IMovementAction.h" />
     <ClInclude Include="Item.h" />
     <ClInclude Include="JordanBot.h" />
@@ -103,6 +104,7 @@
     <ClInclude Include="JumpAction.h" />
     <ClInclude Include="JumpFromLadderAction.h" />
     <ClInclude Include="MapNode.h" />
+    <ClInclude Include="MovementSimulator.h" />
     <ClInclude Include="NotSoSolidSnake.h" />
     <ClInclude Include="ObjectManager.h" />
     <ClInclude Include="Pathfinder.h" />
@@ -114,6 +116,7 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="ThrowItemAction.h" />
     <ClInclude Include="Utilities.h" />
+    <ClInclude Include="WaitAction.h" />
     <ClInclude Include="WalkAction.h" />
     <ClInclude Include="WalkOffLedgeAction.h" />
   </ItemGroup>
@@ -126,6 +129,7 @@
     <ClCompile Include="DropAction.cpp" />
     <ClCompile Include="HangAction.cpp" />
     <ClCompile Include="Coords.cpp" />
+    <ClCompile Include="HangDropAction.cpp" />
     <ClCompile Include="IMovementAction.cpp" />
     <ClCompile Include="Item.cpp" />
     <ClCompile Include="JordanBot.cpp" />
@@ -147,6 +151,7 @@
     <ClCompile Include="JumpAction.cpp" />
     <ClCompile Include="JumpFromLadderAction.cpp" />
     <ClCompile Include="MapNode.cpp" />
+    <ClCompile Include="MovementSimulator.cpp" />
     <ClCompile Include="NotSoSolidSnake.cpp" />
     <ClCompile Include="ObjectManager.cpp" />
     <ClCompile Include="Pathfinder.cpp" />
@@ -160,6 +165,7 @@
     </ClCompile>
     <ClCompile Include="ThrowItemAction.cpp" />
     <ClCompile Include="Utilities.cpp" />
+    <ClCompile Include="WaitAction.cpp" />
     <ClCompile Include="WalkAction.cpp" />
     <ClCompile Include="WalkOffLedgeAction.cpp" />
   </ItemGroup>

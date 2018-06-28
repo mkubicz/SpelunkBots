@@ -199,6 +199,22 @@ SPELUNKBOT_API double GetRunp(void)
 	return bot->GetRunp();
 }
 
+SPELUNKBOT_API double GetRightPressed(void)
+{
+	return bot->GetRightPressed();
+}
+SPELUNKBOT_API double GetLeftPressed(void)
+{
+	return bot->GetLeftPressed();
+}
+SPELUNKBOT_API double GetRightReleased(void)
+{
+	return bot->GetRightReleased();
+}
+SPELUNKBOT_API double GetLeftReleased(void)
+{
+	return bot->GetLeftReleased();
+}
 #pragma endregion
 
 #pragma region Game objects management

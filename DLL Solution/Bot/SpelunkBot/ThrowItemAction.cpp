@@ -2,15 +2,16 @@
 #include "ThrowItemAction.h"
 
 ThrowItemAction::ThrowItemAction(std::shared_ptr<IBot> const& bot)
-	: ThrowItemAction(bot, xNONE, yNONE)
+	: ThrowItemAction(bot, directions{ xNONE, yNONE })
 {
 }
 
-ThrowItemAction::ThrowItemAction(std::shared_ptr<IBot> const& bot, DIRECTIONX dirX, DIRECTIONY dirY)
+ThrowItemAction::ThrowItemAction(std::shared_ptr<IBot> const& bot, directions dir)
 	: IMovementAction(bot)
 {
-	_directionX = dirX;
-	_directionY = dirY;
+	_directionX = dir.x;
+	_directionY = dir.y;
+	_actionType = THROWITEM;
 }
 
 ordersStruct ThrowItemAction::GetOrders()
@@ -41,7 +42,15 @@ ordersStruct ThrowItemAction::GetOrders()
 		else if (_directionY == yDOWN)
 			orders.duck = true;
 
-		orders.attack = true;
+		if (_directionY == yDOWN)
+		{
+
+
+			if (_bot->GetSpelunkerState() == spDUCKING || _bot->GetSpelunkerState() == spCLIMBING)
+				orders.attack = true;
+		}
+		else
+			orders.attack = true;
 	}
 	else
 	{

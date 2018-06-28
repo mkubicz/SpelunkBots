@@ -50,6 +50,11 @@ void IBot::InitialiseVariables()
 	_itemp = false;
 	_hanging = false;
 	_isHanging = false;
+
+	_rightPressed = false;
+	_rightReleased = false;
+	_leftPressed = false;
+	_leftReleased = false;
 }
 
 SpState IBot::GetSpelunkerState()
@@ -156,6 +161,11 @@ void IBot::Reset()
 	_ropep = false;
 	_payp = false;
 	_itemp = false;
+
+	_rightPressed = false;
+	_rightReleased = false;
+	_leftPressed = false;
+	_leftReleased = false;
 }
 
 void IBot::UpdateBotPosition(double nodeX, double nodeY)

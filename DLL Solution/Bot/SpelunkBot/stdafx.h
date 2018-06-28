@@ -86,6 +86,26 @@ enum DIRECTIONY {
 	yDOWN = 1
 };
 
+struct directions {
+	directions()
+		: x(xNONE), y(yNONE) {}
+	directions(DIRECTIONX dirx, DIRECTIONY diry) 
+		: x(dirx), y(diry) {}
+
+
+	DIRECTIONX x;
+	DIRECTIONY y;
+
+	void FlipX()
+	{
+		x = x == xRIGHT ? xLEFT : xRIGHT;
+	}
+	void FlipY()
+	{
+		y = y == yDOWN ? yUP : yDOWN;
+	}
+};
+
 enum ACTION_TARGET {
 	GROUND,
 	LADDER,
@@ -93,10 +113,7 @@ enum ACTION_TARGET {
 	LEDGE
 };
 
-enum SCHEDULING_REASON {
-	ITEM,
-	EXPLORATION
-};
+enum PATHFINDING_AT_MODE { STOP_ON_ARROWTRAPS, ALLOW_ARROWTRAPS, ALLOW_SELECTED };
 
 enum MOVEMENTACTION
 {
@@ -113,6 +130,9 @@ enum MOVEMENTACTION
 	JUMP,
 	JUMPFROMLADDER,
 	WALKOFFLEDGE,
+	WAIT,
+	THROWITEM,
+	PICKUPITEM
 };
 
 enum SpState

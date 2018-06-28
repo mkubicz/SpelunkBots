@@ -44,13 +44,13 @@ public:
 	///<summary>Returns pixel coordinate y.</summary>
 	int GetYpixel();
 
-	///<summary>Returns pixel x coordinate of middle </summary>
+	///<summary>Returns middle x pixel coordinate of current node.</summary>
 	int GetMidXpixel();
-	///<summary>Returns node coordinate x, rounded down.</summary>
+	///<summary>Returns middle x node coordinate of current node.</summary>
 	double GetMidXnode();
-	///<summary>Returns node coordinate x, rounded down.</summary>
+	///<summary>Returns middle y pixel coordinate of current node.</summary>
 	int GetMidYpixel();
-	///<summary>Returns node coordinate x, rounded down.</summary>
+	///<summary>Returns middle y node coordinate of current node.</summary>
 	double GetMidYnode();
 
 	///<summary>Returns new Coords object with changed coordinates.</summary>
@@ -63,6 +63,10 @@ public:
 	///<summary>Returns new Coords object with changed coordinates.</summary>
 	///<param name="yDistNode">Distance in nodes to add to Y coordinate.</param>
 	Coords OffsetY(int yDistNode);
+
+	///<summary>Returns true if node c is equal in terms of rounded node coordinates.</summary>
+	///<param name="c">Coords to test.</param>
+	bool SameNode(Coords c);
 
 	inline bool operator==(const Coords& c)
 	{

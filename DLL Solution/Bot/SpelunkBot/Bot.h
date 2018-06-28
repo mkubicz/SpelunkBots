@@ -99,4 +99,9 @@ SPELUNKBOT_API double GetBombp(void);
 SPELUNKBOT_API double GetPayp(void);
 SPELUNKBOT_API double GetItemp(void);
 SPELUNKBOT_API double GetRunp(void);
+
+SPELUNKBOT_API double GetRightPressed(void);
+SPELUNKBOT_API double GetLeftPressed(void);
+SPELUNKBOT_API double GetRightReleased(void);
+SPELUNKBOT_API double GetLeftReleased(void);
 #pragma endregion

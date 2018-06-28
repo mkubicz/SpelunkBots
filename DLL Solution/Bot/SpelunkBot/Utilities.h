@@ -3,6 +3,7 @@
 //forward declarations
 //class Node;
 enum DIRECTIONX;
+enum DIRECTIONY;
 enum ACTION_TARGET;
 enum MVSTATE;
 enum SpState;
@@ -21,6 +22,7 @@ bool WithinRangeFromTarget(int posPixel, int targetPixel, int pixelRange);
 //int MiddleXPixel(Node node);
 //int MiddleYPixel(Node node);
 int EdgeOfNodeX(int nodenr, DIRECTIONX direction);
+int EdgeOfNodeY(int nodenr, DIRECTIONY direction);
 //int MiddlePixelOfNode(int nodenr);
 
 bool IsBotAgainstTheWall(int playerPositionX, bool goingRight);

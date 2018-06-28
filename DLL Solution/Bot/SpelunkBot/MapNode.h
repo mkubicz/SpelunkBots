@@ -7,8 +7,8 @@ class MapNode
 
 private:
 	Coords _coords;
-	int _gScore;
-	int _hScore;
+	double _gScore;
+	double _hScore;
 	MapNode* _parent;
 
 	MOVEMENTACTION _actionToReach;
@@ -19,6 +19,8 @@ private:
 	MVSTATE _mvStateCandidate;
 	bool _arrowTrapOnWay;
 	bool _arrowTrapOnWayCandidate;
+	Coords _arrowTrapCoords;
+	Coords _arrowTrapCoordsCandidate;
 
 	//used in A*
 	bool _opened;
@@ -52,7 +54,11 @@ public:
 	ACTION_TARGET GetActionTarget();
 	MVSTATE GetMvState();
 	bool IsArrowTrapOnWay();
+	int GetPenalty();
+	Coords GetArrowTrapCoords();
+	MapNode *GetDijParent();
 
+	void CopyInfo(MapNode n);
 	void SolidifyCandidates();
 
 	//used in A*
@@ -61,5 +67,17 @@ public:
 	double CalculateFScore();
 	void ComputeScores(MapNode * destination);
 	
+	inline bool operator==(const MapNode& n)
+	{
+		return
+			this->_coords == n._coords;// &&
+			//this->_actionToReach == n._actionToReach &&
+			//this->_actionToReachTarget == n._actionToReachTarget &&
+			//this->_mvState == n._mvState;
+	};
 
+	inline bool operator!=(const MapNode& n)
+	{
+		return !(*this == n);
+	};
 };

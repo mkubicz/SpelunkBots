@@ -190,7 +190,7 @@ ordersStruct JumpFromLadderAction::GetOrders()
 
 	//flying through hard ladder tops
 	if ((_state == JUMPING || _state == FALLING) &&
-		IsNearLadderTop())
+		IsNearLadderTop() && _distY > 0)
 		orders.duck = true;
 
 

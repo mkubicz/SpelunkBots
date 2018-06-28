@@ -128,6 +128,11 @@ protected:
 	bool _holdingItem;
 	bool _hanging;
 
+	bool _rightPressed;
+	bool _rightReleased;
+	bool _leftPressed;
+	bool _leftReleased;
+
 public:
 	IBot();
 	~IBot();
@@ -333,6 +338,23 @@ public:
 	inline double GetPlayerPositionYNode(void)
 	{
 		return _playerPositionYNode;
+	}
+
+	inline double GetRightPressed(void)
+	{
+		return ConvertBoolToDouble(_rightPressed);
+	}	
+	inline double GetRightReleased(void)
+	{
+		return ConvertBoolToDouble(_rightReleased);
+	}	
+	inline double GetLeftPressed(void)
+	{
+		return ConvertBoolToDouble(_leftPressed);
+	}	
+	inline double GetLeftReleased(void)
+	{
+		return ConvertBoolToDouble(_leftReleased);
 	}
 
 	void SetOwnPointer(std::shared_ptr<IBot> ptr);

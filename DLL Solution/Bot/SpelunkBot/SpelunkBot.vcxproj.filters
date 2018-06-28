@@ -177,6 +177,15 @@
     <ClInclude Include="AllActions.h">
       <Filter>Header Files\Bots\DebugBot\Actions</Filter>
     </ClInclude>
+    <ClInclude Include="HangDropAction.h">
+      <Filter>Header Files\Bots\DebugBot\Actions</Filter>
+    </ClInclude>
+    <ClInclude Include="WaitAction.h">
+      <Filter>Header Files\Bots\DebugBot\Actions</Filter>
+    </ClInclude>
+    <ClInclude Include="MovementSimulator.h">
+      <Filter>Header Files\Bots\DebugBot</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -280,6 +289,15 @@
     </ClCompile>
     <ClCompile Include="PathScheduler.cpp">
       <Filter>Source Files\Bots\DebugBot\Scheduling</Filter>
+    </ClCompile>
+    <ClCompile Include="HangDropAction.cpp">
+      <Filter>Source Files\Bots\DebugBot\Actions</Filter>
+    </ClCompile>
+    <ClCompile Include="WaitAction.cpp">
+      <Filter>Source Files\Bots\DebugBot\Actions</Filter>
+    </ClCompile>
+    <ClCompile Include="MovementSimulator.cpp">
+      <Filter>Source Files\Bots\DebugBot</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

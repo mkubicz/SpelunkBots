@@ -8,6 +8,7 @@ CentralizeAction::CentralizeAction(std::shared_ptr<IBot> const& bot, int central
 	_actionType = CENTRALIZE;
 	_actionDone = false;
 	_centralizingPoint = centralizingPoint;
+	_standingStillCounter = 3;
 }
 
 CentralizeAction::CentralizeAction(std::shared_ptr<IBot> const& bot)
@@ -35,45 +36,13 @@ ordersStruct CentralizeAction::GetOrders()
 		_actionInProgress = true;
 	}
 
-
-
-	if (_centralizeBreakTimer == 0 && _centralizeMoveTimer == 0)
+	if (_standingStillCounter != 0)
+		_standingStillCounter--;
+	else
 	{
-		if (playerPosX < _centralizingPoint)
-			_centralizeDir = xRIGHT;
-		if (playerPosX > _centralizingPoint)
-			_centralizeDir = xLEFT;
-
-		_centralizeMoveTimer = 3;
-
-		return orders;
-	}
-
-
-	if (_centralizeMoveTimer != 0)
-	{
-		if (_centralizeDir == xRIGHT)
-			orders.goRight = true;
-		else
-			orders.goLeft = true;
-
-		_centralizeMoveTimer--;
-
-		if (_centralizeMoveTimer == 0)
-		{
-			if (WithinRangeFromTarget(playerPosX, _centralizingPoint, 1))
-				_centralizeBreakTimer = 6;
-			else
-				_centralizeBreakTimer = 2;
-		}
-
-		return orders;
-	}
-
-	if (_centralizeBreakTimer != 0)
-	{
-		_centralizeBreakTimer--;
-		return orders;
+		if (playerPosX > _centralizingPoint) orders.leftReleased = true;
+		else if (playerPosX < _centralizingPoint) orders.rightReleased = true;
+		else _actionDone = true;
 	}
 
 	return orders;

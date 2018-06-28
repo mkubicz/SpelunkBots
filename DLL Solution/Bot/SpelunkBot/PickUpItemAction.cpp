@@ -4,6 +4,7 @@
 PickUpItemAction::PickUpItemAction(std::shared_ptr<IBot> const& bot, int itemID)
 	: IMovementAction(bot)
 {
+	_actionType = PICKUPITEM;
 	_pickupByID = true;
 	_itemID = itemID;
 	_waitTimer = 0;

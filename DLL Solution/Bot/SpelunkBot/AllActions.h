@@ -13,3 +13,4 @@
 #include "ClimbAction.h"
 #include "PickUpItemAction.h"
 #include "ThrowItemAction.h"
+#include "WaitAction.h"

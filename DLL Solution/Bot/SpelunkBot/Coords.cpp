@@ -113,6 +113,11 @@ Coords Coords::OffsetY(int yDistNode)
 	return Coords(this->GetXnode(), this->GetYnode() + yDistNode, NODE);
 }
 
+bool Coords::SameNode(Coords c)
+{
+	return this->GetX() == c.GetX() && this->GetY() == c.GetY();
+}
+
 int Coords::ConvertToPixel(double nodeCoord)
 {
 	return (int)(nodeCoord * 16);
@@ -120,5 +125,5 @@ int Coords::ConvertToPixel(double nodeCoord)
 
 double Coords::ConvertToNode(int pixelCoord)
 {
-	return (double)(pixelCoord / 16);
+	return ((double)pixelCoord / 16);
 }

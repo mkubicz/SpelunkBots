@@ -6,8 +6,8 @@ using namespace std;
 
 #pragma region Constructors and initialization
 
-Pathfinder::Pathfinder(std::shared_ptr<IBot> bot)
-	: _bot(bot)
+Pathfinder::Pathfinder(std::shared_ptr<IBot> bot, std::shared_ptr<MovementSimulator> msim)
+	: _bot(bot), _moveSim(msim)
 {
 	InitializeGrid();
 	NewLevel();
@@ -36,6 +36,7 @@ void Pathfinder::NewLevel()
 	_pathList.clear();
 	_exit = Coords(-1, -1);
 	_explorationTarget = Coords(-1, -1);
+	_nextCCTarget = Coords(-1, -1);
 	_exitFound = false;
 }
 
@@ -76,24 +77,24 @@ Pathfinder::~Pathfinder()
 #pragma region Simplicity/node state methods
 
 
-bool Pathfinder::Impassable(int x, int y)
-{
-	return _bot->IsNodePassable(x, y, NODE_COORDS);
-}
-
-bool Pathfinder::Impassable(Coords c)
-{
-	return Impassable(c.GetX(), c.GetY());
-}
-
 bool Pathfinder::Passable(int x, int y)
 {
-	return !Impassable(x,y);
+	return _bot->IsNodePassable(x, y, NODE_COORDS);
 }
 
 bool Pathfinder::Passable(Coords c)
 {
 	return Passable(c.GetX(), c.GetY());
+}
+
+bool Pathfinder::Impassable(int x, int y)
+{
+	return !_bot->IsNodePassable(x, y, NODE_COORDS);
+}
+
+bool Pathfinder::Impassable(Coords c)
+{
+	return Impassable(c.GetX(), c.GetY());
 }
 
 bool Pathfinder::Ladder(int x, int y)
@@ -124,7 +125,7 @@ bool Pathfinder::Spikes(int x, int y)
 
 bool Pathfinder::Spikes(Coords c)
 {
-	return false;
+	return Spikes(c.GetX(), c.GetY());
 }
 
 bool Pathfinder::ArrowTrapR(int x, int y)
@@ -134,7 +135,7 @@ bool Pathfinder::ArrowTrapR(int x, int y)
 
 bool Pathfinder::ArrowTrapR(Coords c)
 {
-	return false;
+	return ArrowTrapR(c.GetX(), c.GetY());
 }
 
 bool Pathfinder::ArrowTrapL(int x, int y)
@@ -144,7 +145,7 @@ bool Pathfinder::ArrowTrapL(int x, int y)
 
 bool Pathfinder::ArrowTrapL(Coords c)
 {
-	return false;
+	return ArrowTrapL(c.GetX(), c.GetY());
 }
 
 bool Pathfinder::SpearTrap(int x, int y)
@@ -154,7 +155,7 @@ bool Pathfinder::SpearTrap(int x, int y)
 
 bool Pathfinder::SpearTrap(Coords c)
 {
-	return false;
+	return SpearTrap(c.GetX(), c.GetY());
 }
 
 std::vector<Coords> Pathfinder::GetPathBetweenNodes(Coords start, Coords end, MOVEMENTACTION used_action)
@@ -182,6 +183,9 @@ std::vector<Coords> Pathfinder::GetPathBetweenNodes(Coords start, Coords end, MO
 		path.push_back(Coords(endX, endY - 1));
 		path.push_back(end);
 		break;
+	case HANGDROP:
+		path.push_back(Coords(endX, endY - 1));
+		path.push_back(end);
 	case CLIMBFROMHANG:
 		path.push_back(Coords(startX, startY - 1));
 		path.push_back(end);
@@ -235,21 +239,40 @@ std::vector<Coords> Pathfinder::GetPathBetweenNodes(Coords start, Coords end, MO
 		}
 		else
 		{
-			x = dirX == xRIGHT ? startX + 1 : startX - 1;
+			//x = dirX == xRIGHT ? startX + 1 : startX - 1;
+			//y = startY - 1;
+			//path.push_back(Coords(x, y));
+			
+			x = startX;
 			y = startY - 1;
+			path.push_back(Coords(x, y));
+			dirX == xRIGHT ? x++ : x--;
 			path.push_back(Coords(x, y));
 
 			if (x != endX)
 			{
-				dirX == xRIGHT ? x++ : x--;
+				//dirX == xRIGHT ? x++ : x--;
+				//y--;
+				//path.push_back(Coords(x, y));
+
 				y--;
+				path.push_back(Coords(x, y));
+				dirX == xRIGHT ? x++ : x--;
 				path.push_back(Coords(x, y));
 
 				tick = false;
 				while (x != endX)
 				{
+					//dirX == xRIGHT ? x++ : x--;
+					//if (tick) y++;
+					//path.push_back(Coords(x, y));
+
+					if (tick)
+					{
+						y++;
+						path.push_back(Coords(x, y));
+					}
 					dirX == xRIGHT ? x++ : x--;
-					if (tick) y++;
 					path.push_back(Coords(x, y));
 
 					tick = tick ? false : true;
@@ -286,8 +309,16 @@ std::vector<Coords> Pathfinder::GetPathBetweenNodes(Coords start, Coords end, MO
 			tick = true;
 			while (x != endX)
 			{
+				//dirX == xRIGHT ? x++ : x--;
+				//if (tick) y++;
+				//path.push_back(Coords(x, y));
+
+				if (tick)
+				{
+					y++;
+					path.push_back(Coords(x, y));
+				}
 				dirX == xRIGHT ? x++ : x--;
-				if (tick) y++;
 				path.push_back(Coords(x, y));
 
 				tick = tick ? false : true;
@@ -319,8 +350,8 @@ bool Pathfinder::IsOutOfBounds(Coords c)
 
 bool Pathfinder::CanStandInNode(Coords c)
 {
-	return !IsInFog(c) && !IsInFog(c.OffsetY(1)) && Impassable(c) && 
-		(Passable(c.OffsetY(1)) || LadderTop(c.OffsetY(1)));
+	return !IsInFog(c) && !IsInFog(c.OffsetY(1)) && Passable(c) && 
+		(Impassable(c.OffsetY(1)) || LadderTop(c.OffsetY(1)));
 		//(!_bot->IsNodePassable(x, y + 1, NODE_COORDS) || LadderTop(x, y + 1));
 
 }
@@ -332,8 +363,8 @@ bool Pathfinder::IsNodeValidBotPosition(Coords c)
 
 bool Pathfinder::CanHangInNode(Coords c)
 {
-	return !IsInFog(c) && Impassable(c) && Impassable(c.OffsetY(-1)) &&
-		((Passable(c.OffsetX(1)) && Impassable(c.Offset(1, -1))) || (Passable(c.OffsetX(-1)) && Impassable(c.Offset(-1, -1))));
+	return !IsInFog(c) && Passable(c) && Passable(c.OffsetY(-1)) &&
+		((Impassable(c.OffsetX(1)) && Passable(c.Offset(1, -1))) || (Impassable(c.OffsetX(-1)) && Passable(c.Offset(-1, -1))));
 }
 
 
@@ -344,6 +375,42 @@ bool Pathfinder::IsFogOnMap()
 			if (_bot->GetFogState(i, j, NODE_COORDS))
 				return true;
 	return false;
+}
+
+bool Pathfinder::NoArrowTrapsOnPath(std::vector<MapNode*> path)
+{
+	for (auto node : path)
+		if (node->IsArrowTrapOnWay())
+			return false;
+
+	return true;
+}
+
+directions Pathfinder::CalculateDirections(Coords from, Coords to)
+{
+	return directions{ CalculateDirX(from, to), CalculateDirY(from, to) };
+}
+
+DIRECTIONX Pathfinder::CalculateDirX(Coords from, Coords to)
+{
+	DIRECTIONX dirX;
+
+	if (to.GetX() > from.GetX()) dirX = xRIGHT;
+	else if (to.GetX() == from.GetX()) dirX = xNONE;
+	else dirX = xLEFT;
+
+	return dirX;
+}
+
+DIRECTIONY Pathfinder::CalculateDirY(Coords from, Coords to)
+{
+	DIRECTIONY dirY;
+
+	if (to.GetY() > from.GetY()) dirY = yDOWN;
+	else if (to.GetY() == from.GetY()) dirY = yNONE;
+	else dirY = yUP;
+
+	return dirY;
 }
 
 Coords Pathfinder::GetBotCoords()
@@ -441,7 +508,7 @@ bool Pathfinder::HorizontalJumpPathClear(int x, int y, int dist, DIRECTIONX dire
 
 			if (directionx == xRIGHT)
 			{
-				if (Passable(x + i, y - j))
+				if (Impassable(x + i, y - j))
 				{
 					ok = false;
 					break;
@@ -449,7 +516,7 @@ bool Pathfinder::HorizontalJumpPathClear(int x, int y, int dist, DIRECTIONX dire
 			}
 			else
 			{
-				if (Passable(x - i, y - j))
+				if (Impassable(x - i, y - j))
 				{
 					ok = false;
 					break;
@@ -504,7 +571,7 @@ bool Pathfinder::DownJumpPathClear(int x1, int y1, int x2, int y2, DIRECTIONX di
 
 				}
 
-				if (Passable(i, j)) return false;
+				if (Impassable(i, j)) return false;
 			}
 
 			if (startX != x2) startX += 1;
@@ -542,7 +609,7 @@ bool Pathfinder::DownJumpPathClear(int x1, int y1, int x2, int y2, DIRECTIONX di
 					if (distX == 1 && i == x1 - 1 && !fromLadder) continue;
 				}
 
-				if (Passable(i, j)) return false;
+				if (Impassable(i, j)) return false;
 			}
 
 			if (startX != x2) startX -= 1;
@@ -550,6 +617,8 @@ bool Pathfinder::DownJumpPathClear(int x1, int y1, int x2, int y2, DIRECTIONX di
 
 		return true;
 	}
+	else
+		return false;
 }
 
 bool Pathfinder::DownJumpPathClear(int x1, int y1, int x2, int y2, DIRECTIONX direction)
@@ -575,13 +644,13 @@ bool Pathfinder::WalkOffLedgePathClear(int x1, int y1, int x2, int y2, DIRECTION
 		{
 			for (int i = startX; i <= x2; i++)
 			{
-				if (Passable(i, j)) return false;
+				if (Impassable(i, j)) return false;
 
 				//falling through narrow spaces is hard; walkoffledge cant do that or it is likely that it will get stuck.
 				//until we rework it, we remove the neighbours getting to which requires flying througha narrow space.
 				if (startX == x2)
 				{
-					if (Passable(i - 1, j) || Passable(i + 1, j)) return false;
+					if (Impassable(i - 1, j) || Impassable(i + 1, j)) return false;
 				}
 
 			}
@@ -602,13 +671,13 @@ bool Pathfinder::WalkOffLedgePathClear(int x1, int y1, int x2, int y2, DIRECTION
 		{
 			for (int i = startX; i >= x2; i--)
 			{
-				if (Passable(i, j)) return false;
+				if (Impassable(i, j)) return false;
 
 				//falling through narrow spaces is hard; walkoffledge cant do that or it is likely that it will get stuck.
 				//until we rework it, we remove the neighbours getting to which requires flying througha narrow space.
 				if (startX == x2)
 				{
-					if (Passable(i - 1, j) || Passable(i + 1, j)) return false;
+					if (Impassable(i - 1, j) || Impassable(i + 1, j)) return false;
 				}
 			}
 
@@ -617,17 +686,19 @@ bool Pathfinder::WalkOffLedgePathClear(int x1, int y1, int x2, int y2, DIRECTION
 
 		return true;
 	}
+	else
+		return false;
 }
 
 #pragma endregion
 
 #pragma region Traps
 
-void Pathfinder::DeleteUnsafeNeighbours(MapNode origin, std::vector<MapNode> &neighbours)
+void Pathfinder::HandleUnsafeNeighbours(MapNode origin, std::vector<MapNode> &neighbours)
 {
 	DeleteUnsafeNeighboursSpikes(origin, neighbours);
-	DeleteUnsafeNeighboursSpearTrap(origin, neighbours);
-	DeleteUnsafeNeighboursArrowTrap(origin, neighbours);
+	HandleUnsafeNeighboursSpearTrap(origin, neighbours);
+	HandleUnsafeNeighboursArrowTrap(origin, neighbours);
 }
 
 void Pathfinder::DeleteUnsafeNeighboursSpikes(MapNode origin, std::vector<MapNode> &neighbours)
@@ -679,7 +750,7 @@ void Pathfinder::DeleteUnsafeNeighboursSpikes(MapNode origin, std::vector<MapNod
 	}
 }
 
-void Pathfinder::DeleteUnsafeNeighboursSpearTrap(MapNode origin, std::vector<MapNode> &neighbours)
+void Pathfinder::HandleUnsafeNeighboursSpearTrap(MapNode origin, std::vector<MapNode> &neighbours)
 {
 	int x, y, distX, distY;
 	ACTION_TARGET target;
@@ -704,12 +775,13 @@ void Pathfinder::DeleteUnsafeNeighboursSpearTrap(MapNode origin, std::vector<Map
 	}
 }
 
-void Pathfinder::DeleteUnsafeNeighboursArrowTrap(MapNode origin, std::vector<MapNode> &neighbours)
+void Pathfinder::HandleUnsafeNeighboursArrowTrap(MapNode origin, std::vector<MapNode> &neighbours)
 {
 	int x, y, distX, distY;
 	ACTION_TARGET target;
 	MOVEMENTACTION action;
 	bool unsafe;
+	Coords coords;
 
 	std::vector<MapNode>::iterator neighbour = neighbours.begin();
 	while (neighbour != neighbours.end())
@@ -728,32 +800,44 @@ void Pathfinder::DeleteUnsafeNeighboursArrowTrap(MapNode origin, std::vector<Map
 		target = neighbour->GetActionTarget();
 		action = neighbour->GetActionToReach();
 		unsafe = false;
+		
 
 		std::vector<Coords> path = GetPathBetweenNodes(origin.GetCoords(), (*neighbour).GetCoords(), action);
 
 
 		for (auto n : path)
 		{
-			for (int i = 1; i <= 7; i++)
+			//arrowTrapR has shorter range then arrowTrapL
+			for (int i = 1; i <= 6; i++)
 			{
 				if (ArrowTrapR(n.GetX() - i, n.GetY()) && !_bot->IsArrowTrapDisarmed(n.GetX() - i, n.GetY()))
 				{
+					//HANG and HANGDROP is technically safe and can disarm a trap, but I don't have the infrastructure
+					//to use it yet and it only causes problems
+					//if (i == 1 && (action == HANG || action == HANGDROP) && origin.GetCoords() == n.Offset(-1, -1))
+					//	continue;
+
 					unsafe = true;
+					coords = Coords(n.GetX() - i, n.GetY());
 					break;
 				}
-				else if (Impassable(x - i, y))
+				else if (Passable(n.GetX() - i, n.GetY()))
 					continue;
 				else break;
 			}
 
 			for (int i = 1; i <= 7; i++)
 			{
+				//if (i == 1 && (action == HANG || action == HANGDROP) && origin.GetCoords() == n.Offset(1, -1))
+				//	continue;
+
 				if (ArrowTrapL(n.GetX() + i, n.GetY()) && !_bot->IsArrowTrapDisarmed(n.GetX() + i, n.GetY()))
 				{
 					unsafe = true;
+					coords = Coords(n.GetX() + i, n.GetY());
 					break;
 				}
-				else if (Impassable(x + i, y))
+				else if (Passable(n.GetX() + i, n.GetY()))
 					continue;
 				else break;
 			}
@@ -761,11 +845,14 @@ void Pathfinder::DeleteUnsafeNeighboursArrowTrap(MapNode origin, std::vector<Map
 			if (unsafe) break;
 		}
 
+		//czy jak n wyjdzie ze scope to coords siê zr¹bie?
+		//nie
 
 		if (unsafe)
 			//neighbour = neighbours.erase(neighbour);
 		{
 			neighbour->_arrowTrapOnWay = true;
+			neighbour->_arrowTrapCoords = coords;
 			neighbour++;
 		}
 		else 
@@ -779,6 +866,8 @@ void Pathfinder::DeleteUnsafeNeighboursArrowTrap(MapNode origin, std::vector<Map
 
 void Pathfinder::AddNeighboursLR(int x, int y, bool right, std::vector<MapNode> *neighbours)
 {
+	//old; in case of problems - use CalculatePathBeetweenNodes
+
 	int MAX = 7; //maximum travel distance
 	int borderY = 0;
 	int okDist = 0;
@@ -786,18 +875,32 @@ void Pathfinder::AddNeighboursLR(int x, int y, bool right, std::vector<MapNode> 
 
 	for (int i = 1; i < MAX; i++)
 	{
-		if (i <= 2) borderY = 0;
-		if (i > 2 && i <= 4) borderY = 1;
-		if (i > 4) borderY = 2;
+		if (i <= 1) borderY = 0;
+		if (i > 1 && i <= 3) borderY = 1;
+		if (i > 3) borderY = 2;
+
+		//int n = right ? 1 : -1;
+		//if (i == 3)
+		//	for (int k = 0; k < 3; k++)
+		//		if (Impassable(x + k*n, y - 1) || LadderTop(x + k*n, y - 1)) ok = false;
+
+		//if (i == 5)
+		//{
+		//	for (int k = 0; k < 5; k++)
+		//		if (Impassable(x + k*n, y - 1) || LadderTop(x + k*n, y - 1)) ok = false;
+		//	for (int k = 1; k < 5; k++)
+		//		if (Impassable(x + k*n, y - 2) || LadderTop(x + k*n, y - 2)) ok = false;
+		//}
+		//	
 
 		for (int j = 0; j <= borderY; j++)
 		{
 			if (right)
 			{
-				if (Passable(x + i, y - j) || LadderTop(x + i, y - j)) ok = false;
+				if (Impassable(x + i, y - j) || LadderTop(x + i, y - j)) ok = false;
 			}
 			else
-				if (Passable(x - i, y - j) || LadderTop(x - i, y - j)) ok = false;
+				if (Impassable(x - i, y - j) || LadderTop(x - i, y - j)) ok = false;
 		}
 
 		if (!ok) break;
@@ -823,7 +926,7 @@ void Pathfinder::AddNeighboursLR(int x, int y, bool right, std::vector<MapNode> 
 			neighbours->push_back(MapNode{ x + candidateX, y, JUMP, LADDER, mvState });
 		}
 
-		if (Passable(x + candidateX, y + 1) && Impassable(x + candidateX, y))
+		if (Impassable(x + candidateX, y + 1) && Passable(x + candidateX, y))
 		{
 			if (abs(candidateX) == 1 || abs(candidateX) == 2)
 			{
@@ -839,7 +942,7 @@ void Pathfinder::AddNeighboursLR(int x, int y, bool right, std::vector<MapNode> 
 			break;
 		}
 
-		if (LadderTop(x + candidateX, y + 1) && Impassable(x + candidateX, y))
+		if (LadderTop(x + candidateX, y + 1) && Passable(x + candidateX, y))
 		{
 			if (abs(candidateX) == 1)
 			{
@@ -855,6 +958,91 @@ void Pathfinder::AddNeighboursLR(int x, int y, bool right, std::vector<MapNode> 
 	}
 }
 
+std::vector<MapNode> Pathfinder::RemoveDuplicateNeighbours(std::vector<MapNode> neighboursTemp)
+{
+	std::vector<MapNode> neighbours;
+	bool dupe_found;
+
+	for (MapNode nt : neighboursTemp)
+	{
+		dupe_found = false;
+		for (MapNode n : neighbours)
+			if (nt == n)
+			{
+				if (nt.GetPenalty() < n.GetPenalty())
+				{
+					n.CopyInfo(nt);
+				}
+				dupe_found = true;
+				break;
+			}
+
+		if (!dupe_found)
+		{
+			neighbours.push_back(nt);
+		}
+	}
+
+	return neighbours;
+}
+
+std::vector<MapNode> Pathfinder::RemoveNeighboursWithArrowTraps(std::vector<MapNode> neighboursTemp, 
+	PATHFINDING_AT_MODE atmode, 
+	std::vector<Coords> allowedArrowTraps)
+{
+	std::vector<MapNode> neighbours;
+
+	for (MapNode n : neighboursTemp)
+	{
+		switch (atmode)
+		{
+		case STOP_ON_ARROWTRAPS:
+			if (!n._arrowTrapOnWay) 
+				neighbours.push_back(n);
+			break;
+		case ALLOW_ARROWTRAPS:
+			neighbours.push_back(n);
+			break;
+		case ALLOW_SELECTED:
+			if (!n._arrowTrapOnWay) 
+				neighbours.push_back(n);
+			else
+			{
+				for (auto c : allowedArrowTraps)
+					if (n.GetArrowTrapCoords() == c)
+					{
+						neighbours.push_back(n);
+						break;
+					}
+			}
+			break;
+		default:
+			break;
+		}
+
+	}
+
+	
+	return neighbours;
+}
+
+std::vector<MapNode*> Pathfinder::ConvertNeighboursToGrid(std::vector<MapNode> n)
+{
+	std::vector<MapNode*> neighboursGrid;
+
+	for (int i = 0; i < n.size(); i++)
+	{
+		_grid[n[i].GetX()][n[i].GetY()]->_actionToReachCandidate = n[i].GetActionToReach();
+		_grid[n[i].GetX()][n[i].GetY()]->_actionToReachTargetCandidate = n[i].GetActionTarget();
+		_grid[n[i].GetX()][n[i].GetY()]->_mvStateCandidate = n[i].GetMvState();
+		_grid[n[i].GetX()][n[i].GetY()]->_arrowTrapOnWayCandidate = n[i]._arrowTrapOnWay;
+		_grid[n[i].GetX()][n[i].GetY()]->_arrowTrapCoordsCandidate = n[i]._arrowTrapCoords;
+		neighboursGrid.push_back(_grid[n[i].GetX()][n[i].GetY()]);
+	}
+
+	return neighboursGrid;
+}
+
 std::vector<MapNode> Pathfinder::CalculateNeighboursHanging(MapNode node)
 {
 	std::vector<MapNode> neighbours;
@@ -866,7 +1054,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursHanging(MapNode node)
 	MAX = 8; //max distance to ground tile
 	for (int i = 1; i <= MAX; i++)
 	{
-		if (i > 1 && Ladder(x, y + i - 1) && !Passable(x, y + i))
+		if (i > 1 && Ladder(x, y + i - 1) && !Impassable(x, y + i))
 		{
 			neighbours.push_back(MapNode{ x, y + i - 1, DROP, LADDER, mvCLIMBING });
 		}
@@ -877,7 +1065,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursHanging(MapNode node)
 			break;
 		}
 
-		if (Passable(x, y + i) && y + i < Y_NODES)
+		if (Impassable(x, y + i) && y + i < Y_NODES)
 		{
 			neighbours.push_back(MapNode{ x, y + i - 1, DROP });
 			break;
@@ -885,8 +1073,8 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursHanging(MapNode node)
 	}
 
 	//climb
-	if (Passable(x + 1, y) && Impassable(x + 1, y - 1)) neighbours.push_back(MapNode{ x + 1, y - 1, CLIMBFROMHANG });
-	if (Passable(x - 1, y) && Impassable(x - 1, y - 1)) neighbours.push_back(MapNode{ x - 1, y - 1, CLIMBFROMHANG });
+	if (Impassable(x + 1, y) && Passable(x + 1, y - 1)) neighbours.push_back(MapNode{ x + 1, y - 1, CLIMBFROMHANG });
+	if (Impassable(x - 1, y) && Passable(x - 1, y - 1)) neighbours.push_back(MapNode{ x - 1, y - 1, CLIMBFROMHANG });
 
 
 	return neighbours;
@@ -904,7 +1092,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursClimbing(MapNode node)
 		neighbours.push_back(MapNode{ x, y - 1, CLIMB, LADDER, mvCLIMBING });
 	if (Ladder(x, y + 1))
 	{
-		if (Passable(x, y + 2))
+		if (Impassable(x, y + 2))
 			neighbours.push_back(MapNode{ x, y + 1, CLIMB, GROUND });
 		else
 			neighbours.push_back(MapNode{ x, y + 1, CLIMB, LADDER, mvCLIMBING });
@@ -914,7 +1102,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursClimbing(MapNode node)
 	MAX = 8; //max distance to ground tile
 	for (int i = 1; i <= MAX; i++)
 	{
-		if (i > 1 && Ladder(x, y + i - 1) && !Passable(x, y + i))
+		if (i > 1 && Ladder(x, y + i - 1) && !Impassable(x, y + i))
 		{
 			neighbours.push_back(MapNode{ x, y + i - 1, DROP, LADDER, mvCLIMBING });
 		}
@@ -925,7 +1113,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursClimbing(MapNode node)
 			break;
 		}
 
-		if (Passable(x, y + i) && y + i < Y_NODES)
+		if (Impassable(x, y + i) && y + i < Y_NODES)
 		{
 			neighbours.push_back(MapNode{ x, y + i - 1, DROP });
 			break;
@@ -934,17 +1122,17 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursClimbing(MapNode node)
 
 	//jump y=-2
 	//right
-	if (Impassable(x, y - 1) && Impassable(x, y - 2) && Impassable(x + 1, y - 2) && Passable(x + 1, y - 1))
+	if (Passable(x, y - 1) && Passable(x, y - 2) && Passable(x + 1, y - 2) && Impassable(x + 1, y - 1))
 		neighbours.push_back(MapNode{ x, y - 1, JUMPFROMLADDER, LEDGE, mvHANGING });
-	if (Impassable(x, y - 1) && Impassable(x + 1, y) && Impassable(x + 1, y - 1) && Impassable(x + 1, y - 2) &&
-		Impassable(x + 2, y - 2) && Passable(x + 2, y - 1))
+	if (Passable(x, y - 1) && Passable(x + 1, y) && Passable(x + 1, y - 1) && Passable(x + 1, y - 2) &&
+		Passable(x + 2, y - 2) && Impassable(x + 2, y - 1))
 		neighbours.push_back(MapNode{ x + 1, y - 1, JUMPFROMLADDER, LEDGE, mvHANGING });
 
 	//left
-	if (Impassable(x, y - 1) && Impassable(x, y - 2) && Impassable(x - 1, y - 2) && Passable(x - 1, y - 1))
+	if (Passable(x, y - 1) && Passable(x, y - 2) && Passable(x - 1, y - 2) && Impassable(x - 1, y - 1))
 		neighbours.push_back(MapNode{ x, y - 1, JUMPFROMLADDER, LEDGE, mvHANGING });
-	if (Impassable(x, y - 1) && Impassable(x - 1, y) && Impassable(x - 1, y - 1) && Impassable(x - 1, y - 2) &&
-		Impassable(x - 2, y - 2) && Passable(x - 2, y - 1))
+	if (Passable(x, y - 1) && Passable(x - 1, y) && Passable(x - 1, y - 1) && Passable(x - 1, y - 2) &&
+		Passable(x - 2, y - 2) && Impassable(x - 2, y - 1))
 		neighbours.push_back(MapNode{ x - 1, y - 1, JUMPFROMLADDER, LEDGE, mvHANGING });
 
 	//jump y=-1
@@ -952,7 +1140,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursClimbing(MapNode node)
 	int safedist = 3;
 	for (int i = 0; i <= 3; i++)
 	{
-		if (Passable(x + i, y - 1))
+		if (Impassable(x + i, y - 1))
 		{
 			safedist = i - 1;
 			break;
@@ -961,7 +1149,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursClimbing(MapNode node)
 
 	for (int i = 1; i <= safedist; i++)
 	{
-		if (Passable(x + i, y) && Impassable(x + i, y - 1))
+		if (Impassable(x + i, y) && Passable(x + i, y - 1))
 		{
 			if (i == 1 || i == 2) neighbours.push_back(MapNode{ x + i, y - 1, JUMPFROMLADDER, GROUND });
 			if (i == 3) neighbours.push_back(MapNode{ x + i - 1, y, JUMPFROMLADDER, LEDGE, mvHANGING });
@@ -979,7 +1167,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursClimbing(MapNode node)
 	safedist = 3;
 	for (int i = 0; i <= 3; i++)
 	{
-		if (Passable(x - i, y - 1))
+		if (Impassable(x - i, y - 1))
 		{
 			safedist = i - 1;
 			break;
@@ -988,7 +1176,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursClimbing(MapNode node)
 
 	for (int i = 1; i <= safedist; i++)
 	{
-		if (Passable(x - i, y) && Impassable(x - i, y - 1))
+		if (Impassable(x - i, y) && Passable(x - i, y - 1))
 		{
 			if (i == 1 || i == 2) neighbours.push_back(MapNode{ x - i, y - 1, JUMPFROMLADDER, GROUND });
 			if (i == 3) neighbours.push_back(MapNode{ x - i + 1, y, JUMPFROMLADDER, LEDGE, mvHANGING });
@@ -1012,9 +1200,9 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursClimbing(MapNode node)
 		{
 			if (DownJumpPathClear(x, y, x + i, y + j, xRIGHT, true))
 			{
-				if (Passable(x + i, y + j + 1) && Impassable(x + i, y + j))
+				if (Impassable(x + i, y + j + 1) && Passable(x + i, y + j))
 					neighbours.push_back(MapNode{ x + i, y + j, JUMPFROMLADDER, GROUND });
-				else if (LadderTop(x + i, y + j + 1) && Impassable(x + i, y + j))
+				else if (LadderTop(x + i, y + j + 1) && Passable(x + i, y + j))
 					neighbours.push_back(MapNode{ x + i, y + j, JUMPFROMLADDER, LADDERTOP });
 				else if (Ladder(x + i, y + j))
 					neighbours.push_back(MapNode{ x + i, y + j, JUMPFROMLADDER, LADDER, mvCLIMBING });
@@ -1031,9 +1219,9 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursClimbing(MapNode node)
 		{
 			if (DownJumpPathClear(x, y, x - i, y + j, xLEFT, true))
 			{
-				if (Passable(x - i, y + j + 1) && Impassable(x - i, y + j))
+				if (Impassable(x - i, y + j + 1) && Passable(x - i, y + j))
 					neighbours.push_back(MapNode{ x - i, y + j, JUMPFROMLADDER, GROUND });
-				else if (LadderTop(x - i, y + j + 1) && Impassable(x - i, y + j))
+				else if (LadderTop(x - i, y + j + 1) && Passable(x - i, y + j))
 					neighbours.push_back(MapNode{ x + i, y + j, JUMPFROMLADDER, LADDERTOP });
 				else if (Ladder(x - i, y + j))
 					neighbours.push_back(MapNode{ x - i, y + j, JUMPFROMLADDER, LADDER, mvCLIMBING });
@@ -1056,7 +1244,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursClimbingWithMomentum(MapNode
 		neighbours.push_back(MapNode{ x, y - 1, CLIMB, LADDER, mvCLIMBING_WITH_MOMENTUM });
 	if (Ladder(x, y + 1))
 	{
-		if (Passable(x, y + 2))
+		if (Impassable(x, y + 2))
 			neighbours.push_back(MapNode{ x, y + 1, CLIMB, GROUND });
 		else
 			neighbours.push_back(MapNode{ x, y + 1, CLIMB, LADDER, mvCLIMBING_WITH_MOMENTUM });
@@ -1067,7 +1255,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursClimbingWithMomentum(MapNode
 	MAX = 8; //max distance to ground tile
 	for (int i = 1; i <= MAX; i++)
 	{
-		if (i > 1 && Ladder(x, y + i - 1) && !Passable(x, y + i))
+		if (i > 1 && Ladder(x, y + i - 1) && !Impassable(x, y + i))
 		{
 			neighbours.push_back(MapNode{ x, y + i - 1, DROP, LADDER, mvCLIMBING_WITH_MOMENTUM });
 		}
@@ -1078,7 +1266,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursClimbingWithMomentum(MapNode
 			break;
 		}
 
-		if (Passable(x, y + i) && y + i < Y_NODES)
+		if (Impassable(x, y + i) && y + i < Y_NODES)
 		{
 			neighbours.push_back(MapNode{ x, y + i - 1, DROP });
 			break;
@@ -1088,23 +1276,23 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursClimbingWithMomentum(MapNode
 
 	//jump y=-2
 	//right
-	if (Impassable(x, y - 1) && Impassable(x, y - 2) && Impassable(x + 1, y - 2) && Passable(x + 1, y - 1))
+	if (Passable(x, y - 1) && Passable(x, y - 2) && Passable(x + 1, y - 2) && Impassable(x + 1, y - 1))
 		neighbours.push_back(MapNode{ x, y - 1, JUMPFROMLADDER, LEDGE, mvHANGING });
-	if (Impassable(x, y - 1) && Impassable(x + 1, y) && Impassable(x + 1, y - 1) && Impassable(x + 1, y - 2) &&
-		Impassable(x + 2, y - 2) && Passable(x + 2, y - 1))
+	if (Passable(x, y - 1) && Passable(x + 1, y) && Passable(x + 1, y - 1) && Passable(x + 1, y - 2) &&
+		Passable(x + 2, y - 2) && Impassable(x + 2, y - 1))
 		neighbours.push_back(MapNode{ x + 1, y - 1, JUMPFROMLADDER, LEDGE, mvHANGING });
-	if (Impassable(x, y - 1) && Impassable(x + 1, y) && Impassable(x + 1, y - 1) && Impassable(x + 2, y - 1) &&
-		Impassable(x + 2, y - 2) && Impassable(x + 3, y - 2) && Passable(x + 3, y - 1))
+	if (Passable(x, y - 1) && Passable(x + 1, y) && Passable(x + 1, y - 1) && Passable(x + 2, y - 1) &&
+		Passable(x + 2, y - 2) && Passable(x + 3, y - 2) && Impassable(x + 3, y - 1))
 		neighbours.push_back(MapNode{ x + 2, y - 1, JUMPFROMLADDER, LEDGE, mvHANGING });
 
 	//left
-	if (Impassable(x, y - 1) && Impassable(x, y - 2) && Impassable(x - 1, y - 2) && Passable(x - 1, y - 1))
+	if (Passable(x, y - 1) && Passable(x, y - 2) && Passable(x - 1, y - 2) && Impassable(x - 1, y - 1))
 		neighbours.push_back(MapNode{ x, y - 1, JUMPFROMLADDER, LEDGE, mvHANGING });
-	if (Impassable(x, y - 1) && Impassable(x - 1, y) && Impassable(x - 1, y - 1) && Impassable(x - 1, y - 2) &&
-		Impassable(x - 2, y - 2) && Passable(x - 2, y - 1))
+	if (Passable(x, y - 1) && Passable(x - 1, y) && Passable(x - 1, y - 1) && Passable(x - 1, y - 2) &&
+		Passable(x - 2, y - 2) && Impassable(x - 2, y - 1))
 		neighbours.push_back(MapNode{ x - 1, y - 1, JUMPFROMLADDER, LEDGE, mvHANGING });
-	if (Impassable(x, y - 1) && Impassable(x - 1, y) && Impassable(x - 1, y - 1) && Impassable(x - 2, y - 1) &&
-		Impassable(x - 2, y - 2) && Impassable(x - 3, y - 2) && Passable(x - 3, y - 1))
+	if (Passable(x, y - 1) && Passable(x - 1, y) && Passable(x - 1, y - 1) && Passable(x - 2, y - 1) &&
+		Passable(x - 2, y - 2) && Passable(x - 3, y - 2) && Impassable(x - 3, y - 1))
 		neighbours.push_back(MapNode{ x - 2, y - 1, JUMPFROMLADDER, LEDGE, mvHANGING });
 
 
@@ -1115,7 +1303,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursClimbingWithMomentum(MapNode
 	int safedist = MAX;
 	for (int i = 0; i <= MAX; i++)
 	{
-		if (Passable(x + i, y - 1))
+		if (Impassable(x + i, y - 1))
 		{
 			safedist = i - 1;
 			break;
@@ -1124,7 +1312,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursClimbingWithMomentum(MapNode
 
 	bool roof = false;
 	for (int i = 1; i < MAX; i++)
-		if (Passable(x + i, y - 2))
+		if (Impassable(x + i, y - 2))
 		{
 			roof = true;
 			break;
@@ -1132,7 +1320,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursClimbingWithMomentum(MapNode
 
 	for (int i = 1; i <= safedist; i++)
 	{
-		if (Passable(x + i, y))
+		if (Impassable(x + i, y))
 		{
 			if (i == 5 || (i == 4 && roof))
 				neighbours.push_back(MapNode{ x + i - 1, y, JUMPFROMLADDER, LEDGE, mvHANGING });
@@ -1154,7 +1342,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursClimbingWithMomentum(MapNode
 	safedist = MAX;
 	for (int i = 0; i <= MAX; i++)
 	{
-		if (Passable(x - i, y - 1))
+		if (Impassable(x - i, y - 1))
 		{
 			safedist = i - 1;
 			break;
@@ -1163,7 +1351,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursClimbingWithMomentum(MapNode
 
 	roof = false;
 	for (int i = 1; i < MAX; i++)
-		if (Passable(x - i, y - 2))
+		if (Impassable(x - i, y - 2))
 		{
 			roof = true;
 			break;
@@ -1171,7 +1359,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursClimbingWithMomentum(MapNode
 
 	for (int i = 1; i <= safedist; i++)
 	{
-		if (Passable(x - i, y))
+		if (Impassable(x - i, y))
 		{
 			if (i == 5 || (i == 4 && roof))
 				neighbours.push_back(MapNode{ x - i - 1, y, JUMPFROMLADDER, LEDGE, mvHANGING });
@@ -1202,9 +1390,9 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursClimbingWithMomentum(MapNode
 		{
 			if (DownJumpPathClear(x, y, x + i, y + j, xRIGHT, true))
 			{
-				if (Passable(x + i, y + j + 1) && Impassable(x + i, y + j))
+				if (Impassable(x + i, y + j + 1) && Passable(x + i, y + j))
 					neighbours.push_back(MapNode{ x + i, y + j, JUMPFROMLADDER, GROUND });
-				else if (LadderTop(x + i, y + j + 1) && Impassable(x + i, y + j))
+				else if (LadderTop(x + i, y + j + 1) && Passable(x + i, y + j))
 					neighbours.push_back(MapNode{ x + i, y + j, JUMPFROMLADDER, LADDERTOP });
 				else if (Ladder(x + i, y + j))
 					neighbours.push_back(MapNode{ x + i, y + j, JUMPFROMLADDER, LADDER, mvCLIMBING });
@@ -1218,9 +1406,9 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursClimbingWithMomentum(MapNode
 		{
 			if (DownJumpPathClear(x, y, x - i, y + j, xLEFT, true))
 			{
-				if (Passable(x - i, y + j + 1) && Impassable(x - i, y + j))
+				if (Impassable(x - i, y + j + 1) && Passable(x - i, y + j))
 					neighbours.push_back(MapNode{ x - i, y + j, JUMPFROMLADDER, GROUND });
-				else if (LadderTop(x - i, y + j + 1) && Impassable(x - i, y + j))
+				else if (LadderTop(x - i, y + j + 1) && Passable(x - i, y + j))
 					neighbours.push_back(MapNode{ x + i, y + j, JUMPFROMLADDER, LADDERTOP });
 				else if (Ladder(x - i, y + j))
 					neighbours.push_back(MapNode{ x - i, y + j, JUMPFROMLADDER, LADDER, mvCLIMBING });
@@ -1243,13 +1431,13 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursStanding(MapNode node)
 	* UP I
 	*/
 
-	if (Passable(x, y - 1) && Impassable(x, y - 2))
+	if (Impassable(x, y - 1) && Passable(x, y - 2))
 	{
 		//right
-		if (Impassable(x + 1, y) && Impassable(x + 1, y - 1) && Impassable(x + 1, y - 2))
+		if (Passable(x + 1, y) && Passable(x + 1, y - 1) && Passable(x + 1, y - 2))
 			neighbours.push_back(MapNode{ x, y - 2, JUMPABOVERIGHT });
 		//left
-		if (Impassable(x - 1, y) && Impassable(x - 1, y - 1) && Impassable(x - 1, y - 2))
+		if (Passable(x - 1, y) && Passable(x - 1, y - 1) && Passable(x - 1, y - 2))
 			neighbours.push_back(MapNode{ x, y - 2, JUMPABOVELEFT });
 	}
 
@@ -1261,7 +1449,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursStanding(MapNode node)
 		else
 			neighbours.push_back(MapNode{ x, y - 1, JUMP, LADDER, mvCLIMBING });
 	}
-	else if (Ladder(x, y - 2) && Impassable(x, y - 1))
+	else if (Ladder(x, y - 2) && Passable(x, y - 1))
 		neighbours.push_back(MapNode{ x, y - 2, JUMP, LADDER, mvCLIMBING });
 
 
@@ -1274,7 +1462,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursStanding(MapNode node)
 	int maxUpIII = MAX - 1;
 	for (int i = 0; i <= maxUpIII; i++)
 	{
-		if (Impassable(x + i, y) && Impassable(x + i, y - 1) && Impassable(x + i + 1, y - 2))
+		if (Passable(x + i, y) && Passable(x + i, y - 1) && Passable(x + i + 1, y - 2))
 		{
 			if (i != 0 && Ladder(x + i, y - 2))
 			{
@@ -1287,11 +1475,11 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursStanding(MapNode node)
 				neighbours.push_back(MapNode{ x + i, y - 2, JUMP, LADDER, mvState });
 			}
 
-			if (Passable(x + i + 1, y - 1))
+			if (Impassable(x + i + 1, y - 1))
 			{
 				if (i == 0)
 				{
-					if (Impassable(x, y - 2))
+					if (Passable(x, y - 2))
 						neighbours.push_back(MapNode{ x + i, y - 1, JUMP, LEDGE, mvHANGING });
 				}
 				else
@@ -1306,7 +1494,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursStanding(MapNode node)
 	//left
 	for (int i = 0; i >= -maxUpIII; i--)
 	{
-		if (Impassable(x + i, y) && Impassable(x + i, y - 1) && Impassable(x + i - 1, y - 2))
+		if (Passable(x + i, y) && Passable(x + i, y - 1) && Passable(x + i - 1, y - 2))
 		{
 			if (i != 0 && Ladder(x + i, y - 2))
 			{
@@ -1319,11 +1507,11 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursStanding(MapNode node)
 				neighbours.push_back(MapNode{ x + i, y - 2, JUMP, LADDER, mvState });
 			}
 
-			if (Passable(x + i - 1, y - 1))
+			if (Impassable(x + i - 1, y - 1))
 			{
 				if (i == 0)
 				{
-					if (Impassable(x, y - 2))
+					if (Passable(x, y - 2))
 						neighbours.push_back(MapNode{ x, y - 1, JUMP, LEDGE, mvHANGING });
 				}
 				else
@@ -1344,7 +1532,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursStanding(MapNode node)
 	int maxUpVI = MAX-1;
 	for (int i = 0; i <= maxUpVI; i++)
 	{
-		if (Impassable(x + i, y) && Impassable(x + i, y - 1) && Impassable(x + i + 1, y - 1) && (abs(i) <= 1 || Impassable(x + i, y - 2)))
+		if (Passable(x + i, y) && Passable(x + i, y - 1) && Passable(x + i + 1, y - 1) && (abs(i) <= 1 || Passable(x + i, y - 2)))
 		{
 			if (Ladder(x + i + 1, y - 1))
 			{
@@ -1357,11 +1545,11 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursStanding(MapNode node)
 				neighbours.push_back(MapNode{ x + i + 1, y - 1, JUMP, LADDER, mvState });
 			}
 
-			if (Passable(x + i + 1, y))
+			if (Impassable(x + i + 1, y))
 			{
 				if (i == 0)
 					neighbours.push_back(MapNode{ x + i + 1, y - 1, JUMP});
-				else if (i == MAX && Impassable(x + i, y + 1))
+				else if (i == MAX && Passable(x + i, y + 1))
 					neighbours.push_back(MapNode{ x + i, y, JUMP, LEDGE, mvHANGING });
 				else
 					neighbours.push_back(MapNode{ x + i + 1, y - 1, JUMP });
@@ -1374,7 +1562,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursStanding(MapNode node)
 	//left
 	for (int i = 0; i >= -maxUpVI; i--)
 	{
-		if (Impassable(x + i, y) && Impassable(x + i, y - 1) && Impassable(x + i - 1, y - 1) && (abs(i) <= 1 || Impassable(x + i, y - 2)))
+		if (Passable(x + i, y) && Passable(x + i, y - 1) && Passable(x + i - 1, y - 1) && (abs(i) <= 1 || Passable(x + i, y - 2)))
 		{
 			if (Ladder(x + i - 1, y - 1))
 			{
@@ -1387,11 +1575,11 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursStanding(MapNode node)
 				neighbours.push_back(MapNode{ x + i - 1, y - 1, JUMP, LADDER, mvState });
 			}
 
-			if (Passable(x + i - 1, y))
+			if (Impassable(x + i - 1, y))
 			{
 				if (i == 0)
 					neighbours.push_back(MapNode{ x + i - 1, y - 1, JUMP });
-				else if (i == -MAX && Impassable(x + i, y + 1))
+				else if (i == -MAX && Passable(x + i, y + 1))
 					neighbours.push_back(MapNode{ x + i, y, JUMP, LEDGE, mvHANGING });
 				else
 					neighbours.push_back(MapNode{ x + i - 1, y - 1, JUMP });
@@ -1410,34 +1598,36 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursStanding(MapNode node)
 	AddNeighboursLR(x, y, false, &neighbours);
 
 
+
+
 	/*
 	* DOWN hang
 	*/
 	//right
-	if (Impassable(x + 1, y) && Impassable(x + 1, y + 1))
+	if (Passable(x + 1, y) && Passable(x + 1, y + 1))
 	{
 		//if there are problems with hanging on a ladder with ground just below, restore hangdrop action
-		//if (Passable(x + 1, y + 2)) neighbours.push_back(MapNode{ x + 1, y + 1, HANGDROP });
-		//else
-		//{
+		if (Impassable(x + 1, y + 2)) neighbours.push_back(MapNode{ x + 1, y + 1, HANGDROP });
+		else
+		{
 			if (Ladder(x + 1, y + 1) || LadderTop(x + 1, y + 1))
 				neighbours.push_back(MapNode{ x + 1, y + 1, HANG, LADDER, mvCLIMBING });
 			else
 				neighbours.push_back(MapNode{ x + 1, y + 1, HANG, LEDGE, mvHANGING });
-		//}
+		}
 	}
 
 	//left
-	if (Impassable(x - 1, y) && Impassable(x - 1, y + 1))
+	if (Passable(x - 1, y) && Passable(x - 1, y + 1))
 	{
-		//if (Passable(x - 1, y + 2)) neighbours.push_back(MapNode{ x - 1, y + 1, HANGDROP });
-		//else
-		//{
+		if (Impassable(x - 1, y + 2)) neighbours.push_back(MapNode{ x - 1, y + 1, HANGDROP });
+		else
+		{
 			if (Ladder(x - 1, y + 1) || LadderTop(x - 1, y + 1))
 				neighbours.push_back(MapNode{ x - 1, y + 1, HANG, LADDER, mvCLIMBING });
 			else
 				neighbours.push_back(MapNode{ x - 1, y + 1, HANG, LEDGE, mvHANGING });
-		//}
+		}
 	}
 
 
@@ -1449,21 +1639,21 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursStanding(MapNode node)
 
 	//right
 	bool canHang = false;
-	if (Impassable(x + 1, y + 1))
+	if (Passable(x + 1, y + 1))
 	{
 		for (int i = 1; i <= MAXx; i++)
 			for (int j = 1; j <= MAXy; j++)
 			{
 				//awkward blocked jump; bot will HangDrop instead
-				if (i == 1 && (Passable(x, y - 1) || Passable(x + 1, y - 1)))
+				if (i == 1 && (Impassable(x, y - 1) || Impassable(x + 1, y - 1)))
 					continue;
 
 				if (DownJumpPathClear(x, y, x + i, y + j, xRIGHT))
 				{
-					if (Passable(x + i, y + j + 1) && Impassable(x + i, y + j))
+					if (Impassable(x + i, y + j + 1) && Passable(x + i, y + j))
 						neighbours.push_back(MapNode{ x + i, y + j, JUMP });
 
-					if (LadderTop(x + i, y + j + 1) && Impassable(x + i, y + j))
+					if (LadderTop(x + i, y + j + 1) && Passable(x + i, y + j))
 						neighbours.push_back(MapNode{ x + i, y + j, JUMP, LADDERTOP });
 
 					if (Ladder(x + i, y + j))
@@ -1495,21 +1685,21 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursStanding(MapNode node)
 
 	//left
 	canHang = false;
-	if (Impassable(x - 1, y + 1))
+	if (Passable(x - 1, y + 1))
 	{
 		for (int i = 1; i <= MAXx; i++)
 			for (int j = 1; j <= MAXy; j++)
 			{
 				//awkward blocked jump; bot will HangDrop instead
-				if (i == 1 && (Passable(x, y - 1) || Passable(x - 1, y - 1)))
+				if (i == 1 && (Impassable(x, y - 1) || Impassable(x - 1, y - 1)))
 					continue;
 
 				if (DownJumpPathClear(x, y, x - i, y + j, xLEFT))
 				{
-					if (Passable(x - i, y + j + 1) && Impassable(x - i, y + j))
+					if (Impassable(x - i, y + j + 1) && Passable(x - i, y + j))
 						neighbours.push_back(MapNode{ x - i, y + j, JUMP });
 
-					if (LadderTop(x - i, y + j + 1) && Impassable(x + i, y + j))
+					if (LadderTop(x - i, y + j + 1) && Passable(x + i, y + j))
 						neighbours.push_back(MapNode{ x - i, y + j, JUMP, LADDERTOP });
 
 					if (Ladder(x - i, y + j))
@@ -1545,7 +1735,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursStanding(MapNode node)
 	MAXy = 7;
 
 	//right
-	if (Impassable(x + 1, y + 1))
+	if (Passable(x + 1, y + 1))
 	{
 		for (int i = 2; i <= MAXx; i++)
 			for (int j = 1; j <= MAXy; j++)
@@ -1555,9 +1745,9 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursStanding(MapNode node)
 				{
 					if (WalkOffLedgePathClear(x, y, x + i, y + j, xRIGHT))
 					{
-						if (Passable(x + i, y + j + 1) && Impassable(x + i, y + j))
+						if (Impassable(x + i, y + j + 1) && Passable(x + i, y + j))
 							neighbours.push_back(MapNode{ x + i, y + j, WALKOFFLEDGE });
-						if (LadderTop(x + i, y + j + 1) && Impassable(x + i, y + j))
+						if (LadderTop(x + i, y + j + 1) && Passable(x + i, y + j))
 							neighbours.push_back(MapNode{ x + i, y + j, WALKOFFLEDGE, LADDERTOP });
 					}
 					//TODO: walkoffledge to ladder
@@ -1572,7 +1762,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursStanding(MapNode node)
 	}
 
 	//left
-	if (Impassable(x - 1, y + 1))
+	if (Passable(x - 1, y + 1))
 	{
 		for (int i = 2; i <= MAXx; i++)
 			for (int j = 1; j <= MAXy; j++)
@@ -1582,9 +1772,9 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursStanding(MapNode node)
 				{
 					if (WalkOffLedgePathClear(x, y, x - i, y + j, xLEFT))
 					{
-						if (Passable(x - i, y + j + 1) && Impassable(x - i, y + j))
+						if (Impassable(x - i, y + j + 1) && Passable(x - i, y + j))
 							neighbours.push_back(MapNode{ x - i, y + j, WALKOFFLEDGE });
-						if (LadderTop(x - i, y + j + 1) && Impassable(x - i, y + j))
+						if (LadderTop(x - i, y + j + 1) && Passable(x - i, y + j))
 							neighbours.push_back(MapNode{ x - i, y + j, WALKOFFLEDGE, LADDERTOP });
 					}
 					//TODO: walkoffledge to ladder
@@ -1621,7 +1811,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursStandingLT(MapNode node)
 	int MAX = 8; //max distance to ground tile
 	for (int i = 1; i <= MAX; i++)
 	{
-		if (Passable(x, y + i + 1) && y + i + 1 < Y_NODES)
+		if (Impassable(x, y + i + 1) && y + i + 1 < Y_NODES)
 		{
 			neighbours.push_back(MapNode{ x, y + i, DROP });
 			break;
@@ -1667,7 +1857,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighbours(MapNode node, MVSTATE mvsta
 		break;
 	}
 
-	DeleteUnsafeNeighbours(node, neighbours);
+	HandleUnsafeNeighbours(node, neighbours);
 
 	//delete any accidental out of bounds neighbours or neighbours in fog
 	for (int i = 0; i < neighbours.size(); i++)
@@ -1696,6 +1886,7 @@ std::vector<MapNode*> Pathfinder::CalculateNeighboursInGrid(MapNode * node, MVST
 		_grid[n[i].GetX()][n[i].GetY()]->_actionToReachTargetCandidate = n[i].GetActionTarget();
 		_grid[n[i].GetX()][n[i].GetY()]->_mvStateCandidate = n[i].GetMvState();
 		_grid[n[i].GetX()][n[i].GetY()]->_arrowTrapOnWayCandidate = n[i]._arrowTrapOnWay;
+		_grid[n[i].GetX()][n[i].GetY()]->_arrowTrapCoordsCandidate = n[i]._arrowTrapCoords;
 		neighbours.push_back(_grid[n[i].GetX()][n[i].GetY()]);
 	}
 	
@@ -1706,7 +1897,7 @@ std::vector<MapNode*> Pathfinder::CalculateNeighboursInGrid(MapNode * node, MVST
 
 #pragma region Calculating strong connected components
 
-void Pathfinder::TarjanDFS(MapNode* n)
+void Pathfinder::TarjanDFS(MapNode* n, PATHFINDING_AT_MODE atmode, std::vector<Coords> allowedArrowTraps)
 {
 	_tar_cvn++;
 	_tar_VN[n->GetX()][n->GetY()] = _tar_cvn;
@@ -1714,15 +1905,20 @@ void Pathfinder::TarjanDFS(MapNode* n)
 	_tar_S.push(n);
 	_tar_VS[n->GetX()][n->GetY()] = true;
 
-	//will GetMvState work? IF not, we can estimate it --it seems to work for now
-	for each (MapNode * m in CalculateNeighboursInGrid(n, n->GetMvState(), n->GetActionTarget()))
+	//CalculateNeighboursInGrid(n, n->GetMvState(), n->GetActionTarget());
+	std::vector<MapNode> neighboursTemp = CalculateNeighbours(*n, n->GetMvState(), n->GetActionTarget());
+	neighboursTemp = RemoveDuplicateNeighbours(neighboursTemp);
+	neighboursTemp = RemoveNeighboursWithArrowTraps(neighboursTemp, atmode, allowedArrowTraps);
+	std::vector<MapNode*> neighbours = ConvertNeighboursToGrid(neighboursTemp);
+
+	for each (MapNode * m in neighbours)
 	{
 		//m not visited - visit it recursively
 		if (_tar_VN[m->GetX()][m->GetY()] == 0)
 		{
 			m->SolidifyCandidates();
 
-			TarjanDFS(m);
+			TarjanDFS(m, atmode, allowedArrowTraps);
 			_tar_VLow[n->GetX()][n->GetY()] = min(_tar_VLow[n->GetX()][n->GetY()], _tar_VLow[m->GetX()][m->GetY()]);
 		}
 		else
@@ -1753,7 +1949,7 @@ void Pathfinder::TarjanDFS(MapNode* n)
 	_tar_CCmap[m->_CCnr] = sccp;
 }
 
-void Pathfinder::CalculateConnectedComponents()
+void Pathfinder::CalculateConnectedComponents(PATHFINDING_AT_MODE atmode, std::vector<Coords> allowedArrowTraps)
 {
 	//initialize variables
 	_tar_cvn = 0;
@@ -1784,7 +1980,7 @@ void Pathfinder::CalculateConnectedComponents()
 		{
 			if (_tar_VN[i][j] == 0 && !IsInFog(_grid[i][j]->GetCoords()) &&
 				(CanStandInNode(_grid[i][j]->GetCoords()) || Ladder(_grid[i][j]->GetCoords())))
-				TarjanDFS(_grid[i][j]);
+				TarjanDFS(_grid[i][j], atmode, allowedArrowTraps);
 		}
 }
 
@@ -1805,6 +2001,11 @@ std::vector<MapNode*> Pathfinder::GetAllNodesFromCC(int ccnr)
 MapNode* Pathfinder::GetNodeFromGrid(Coords c)
 {
 	return _grid[c.GetX()][c.GetY()];
+}
+
+std::vector<MapNode> Pathfinder::GetPath2()
+{
+	return _pathList2;
 }
 
 std::vector<MapNode*> Pathfinder::GetPathFromGrid()
@@ -1887,7 +2088,7 @@ bool Pathfinder::IsExitFound()
 
 #pragma region Dijkstra
 
-void Pathfinder::Dijkstra(Coords startc)
+void Pathfinder::Dijkstra(Coords startc, PATHFINDING_AT_MODE atmode, std::vector<Coords> allowedArrowTraps)
 {
 	int x, y;
 	x = startc.GetX();
@@ -1918,7 +2119,11 @@ void Pathfinder::Dijkstra(Coords startc)
 		//break if you reach unreachable nodes
 		if (n->_dij_dist == INT_MAX) break;
 
-		vector<MapNode*> neighbours = CalculateNeighboursInGrid(n, n->GetMvState(), n->GetActionTarget());
+		vector<MapNode> neighboursTemp = CalculateNeighbours(*n, n->GetMvState(), n->GetActionTarget());
+		neighboursTemp = RemoveNeighboursWithArrowTraps(neighboursTemp, atmode, allowedArrowTraps);
+		neighboursTemp = RemoveDuplicateNeighbours(neighboursTemp);
+		vector<MapNode*> neighbours = ConvertNeighboursToGrid(neighboursTemp);
+
 
 		for (MapNode* m : neighbours)
 		{
@@ -1957,19 +2162,69 @@ int Pathfinder::GetDijDist(Coords c)
 	return _grid[c.GetX()][c.GetY()]->_dij_dist;
 }
 
+MapNode Pathfinder::GetSafeNodeToDisarmAT(MapNode candidate, Coords arrowTrap)
+{
+	int Xo, Yo;
+
+	Xo = arrowTrap.GetXpixel() + (ArrowTrapL(arrowTrap) ? -1 : 16);
+	Yo = arrowTrap.GetYpixel();
+	directions dirs = directions(ArrowTrapL(arrowTrap) ? xLEFT : xRIGHT, yDOWN);
+
+	vector<Coords> path = _moveSim->SimulatePath(Xo, Yo, 8, 0, dirs);
+
+	bool safe = false;
+
+	//zrób jak¹œ kolejkê do której wrzuæ candidate
+	//potem w pêtli bierz pierwszego z kolejki i sprawdŸ czy safe, jak tak to gut
+	//jak nie to wyszukaj jego neighboursów i wsadŸ do kolejki na koniec i continue
+
+	std::queue<MapNode> candidates;
+	MapNode curr;
+	candidates.push(candidate);
+	
+	while (!safe)
+	{
+		curr = candidates.front();
+		candidates.pop();
+
+		safe = true;
+		for (Coords c : path)
+		{
+			if (c.SameNode(curr.GetCoords()))
+			{
+				safe = false;
+				break;
+			}
+		}
+
+		if (!safe)
+		{
+			std::vector<MapNode> neighbours = CalculateNeighbours(curr, curr.GetMvState(), curr.GetActionTarget());
+			//powinienem blokowaæ arrowtrapy, na razie muszê robiæ to manualnie wywo³uj¹c DeleteNeighboursWithArrowTraps - trochê lipa
+
+			for (int i = 0; i < neighbours.size(); i++)
+				candidates.push(neighbours[i]);
+		}
+
+	}
+
+	return curr;
+};
+
 #pragma endregion
 
 #pragma region Pathfinding methods
 
-bool Pathfinder::TryToCalculatePath(Coords c1, Coords c2)
+bool Pathfinder::TryToCalculatePath(Coords c1, Coords c2, PATHFINDING_AT_MODE atmode, std::vector<Coords> allowedArrowTraps)
 {
-	bool DEBUG = false;
+	bool DEBUG = true;
 
 	bool path_found = false;
 
+	_pathList.clear();
+
 	if (c1.GetX() != c2.GetX() || c1.GetY() != c2.GetY())
 	{
-		_pathList.clear();
 
 		ofstream fileStream;
 		if (DEBUG) fileStream.open(".\\Pathfinder\\level_paths.txt");
@@ -2043,7 +2298,12 @@ bool Pathfinder::TryToCalculatePath(Coords c1, Coords c2)
 			closedList.push_back(current);
 			current->_closed = true;
 
-			std::vector<MapNode*> neighbours = CalculateNeighboursInGrid(current, current->GetMvState(), current->GetActionTarget());
+			//std::vector<MapNode*> neighbours = CalculateNeighboursInGrid(current, current->GetMvState(), current->GetActionTarget());
+			std::vector<MapNode> neighboursTemp = CalculateNeighbours(*current, current->GetMvState(), current->GetActionTarget());
+			neighboursTemp = RemoveDuplicateNeighbours(neighboursTemp);
+			neighboursTemp = RemoveNeighboursWithArrowTraps(neighboursTemp, atmode, allowedArrowTraps);
+			std::vector<MapNode*> neighbours = ConvertNeighboursToGrid(neighboursTemp);
+
 
 			for (int i = 0; i < neighbours.size(); i++)
 			{
@@ -2064,7 +2324,7 @@ bool Pathfinder::TryToCalculatePath(Coords c1, Coords c2)
 				// if it's already in the opened list
 				if (child->_opened)
 				{
-					//we can compare the G score, because the F = G+H, and H is just our distance to target prediction, 
+					//we can compare the G score, because F = G+H, and H is just our distance to target prediction, 
 					//which is going to be the same because its the same node reached in 2 different ways
 					if (child->_gScore > child->CalculateGScore(current))
 					{
@@ -2106,6 +2366,26 @@ bool Pathfinder::TryToCalculatePath(Coords c1, Coords c2)
 			reverse(_pathList.begin(), _pathList.end());
 		}
 
+		if (DEBUG)
+		{
+			for (int i = 0; i < _pathList.size(); i++)
+			{
+
+				fileStream << "X ";
+				fileStream << _pathList[i]->GetX();
+				fileStream << " Y ";
+				fileStream << _pathList[i]->GetY();
+				fileStream << " Akcja: ";
+				fileStream << MVactionStrings[_pathList[i]->_actionToReach];
+				fileStream << " G: ";
+				fileStream << _pathList[i]->_gScore;
+				fileStream << " H: ";
+				fileStream << _pathList[i]->_hScore;
+				fileStream << "\n";
+			}
+			fileStream.close();
+		}
+
 		// Reset
 		for (i = openList.begin(); i != openList.end(); i++)
 		{
@@ -2126,23 +2406,6 @@ bool Pathfinder::TryToCalculatePath(Coords c1, Coords c2)
 			(*i)->_arrowTrapOnWay = false;
 		}
 
-
-		if (DEBUG)
-		{
-			for (int i = 0; i < _pathList.size(); i++)
-			{
-
-				fileStream << "X ";
-				fileStream << _pathList[i]->GetX();
-				fileStream << " Y ";
-				fileStream << _pathList[i]->GetY();
-				fileStream << " Akcja: ";
-				fileStream << MVactionStrings[_pathList[i]->_actionToReach];
-				fileStream << "\n";
-			}
-			fileStream.close();
-		}
-
 		return path_found;
 
 
@@ -2151,7 +2414,212 @@ bool Pathfinder::TryToCalculatePath(Coords c1, Coords c2)
 		return true;
 }
 
-bool Pathfinder::TryToFindExplorationTarget(Coords startc)
+
+//bool Pathfinder::TryToCalculatePathNoGrid(Coords c1, Coords c2)
+//{
+//	bool DEBUG = true;
+//
+//	bool path_found = false;
+//
+//	if (c1.GetX() != c2.GetX() || c1.GetY() != c2.GetY())
+//	{
+//		_pathList.clear();
+//
+//		ofstream fileStream;
+//		if (DEBUG) fileStream.open(".\\Pathfinder\\level_paths.txt");
+//
+//		//we have to take start from grid to be able to use info about previous action
+//		MapNode start = *GetNodeFromGrid(c1);
+//		MapNode end = *GetNodeFromGrid(c2);
+//
+//		if (DEBUG)
+//		{
+//			fileStream << "START:" << endl;
+//			fileStream << "X: ";
+//			fileStream << start.GetX();
+//			fileStream << " Y: ";
+//			fileStream << start.GetY();
+//			fileStream << endl;
+//
+//			fileStream << "END" << endl;
+//			fileStream << "X: ";
+//			fileStream << end.GetX();
+//			fileStream << " Y: ";
+//			fileStream << end.GetY();
+//			fileStream << endl;
+//		}
+//
+//		MapNode current;
+//		MapNode child;
+//
+//		std::list<MapNode> openList;
+//		std::list<MapNode> closedList;
+//		list<MapNode>::iterator i;
+//
+//		unsigned int n = 0;
+//
+//		openList.push_back(start);
+//		start._opened = true;
+//
+//		while (n == 0 || (current != end && n < 500))
+//		{
+//			// Look for the smallest f value in the openList
+//			for (i = openList.begin(); i != openList.end(); i++)
+//			{
+//				if (i == openList.begin() || i->CalculateFScore() <= current.CalculateFScore())
+//				{
+//					current = (*i);
+//				}
+//			}
+//
+//			if (DEBUG)
+//			{
+//				fileStream << "searching";
+//				fileStream << " Current X: ";
+//				fileStream << current.GetX();
+//				fileStream << " Current Y: ";
+//				fileStream << current.GetY();
+//			}
+//
+//			// Stop if we've reached the end
+//			if (current == end)
+//			{
+//				if (DEBUG) fileStream << endl << "end reached";
+//				path_found = true;
+//
+//				//save info to grid
+//				_grid[end.GetX()][end.GetY()]->CopyInfo(end);
+//
+//				break;
+//			}
+//
+//			// Remove the current point from the open list
+//			openList.remove(current);
+//			current._opened = false;
+//
+//			// Add the current point to the closed list
+//			closedList.push_back(current);
+//			current._closed = true;
+//
+//			std::vector<MapNode> neighbours = CalculateNeighbours(current, current.GetMvState(), current.GetActionTarget());
+//
+//			for (int i = 0; i < neighbours.size(); i++)
+//			{
+//				child = neighbours[i];
+//
+//				// if it's closed then pass
+//				bool isClosed = false;
+//				for(MapNode node : closedList)
+//					if (child == node)
+//					{
+//						if (DEBUG)
+//						{
+//							fileStream << "\n";
+//							fileStream << "closed";
+//						}
+//						isClosed = true;
+//					}
+//				if (isClosed) continue;
+//
+//				
+//				bool isOpened = false;
+//				for (MapNode node : openList)
+//					if (child == node)
+//						isOpened = true;
+//
+//				// if it's already in the opened list
+//				if (isOpened)
+//				{
+//					//we can compare the G score, because F = G+H, and H is just our distance to target prediction, 
+//					//which is going to be the same because its the same node reached in 2 different ways
+//					if (child._gScore > child.CalculateGScore(&current))
+//					{
+//						child._parent = &current;
+//						child.ComputeScores(&end);
+//					}
+//				}
+//				else
+//				{
+//					openList.push_back(child);
+//					child._opened = true;
+//
+//					// COMPUTE THE G
+//					child._parent = &current;
+//					child.ComputeScores(&end);
+//				}
+//			}
+//
+//			n++;
+//			if (DEBUG) fileStream << "\n";
+//		}
+//
+//		if (DEBUG) fileStream.close();
+//
+//		if (DEBUG) fileStream.open(".\\Pathfinder\\level_path.txt");
+//
+//		if (path_found)
+//		{
+//			// resolve the path starting from the end point
+//			while (current._parent && current != start)
+//			{
+//				_pathList2.push_back(current);
+//				current = *(current._parent);
+//			}
+//			_pathList2.push_back(start);
+//
+//			reverse(_pathList2.begin(), _pathList2.end());
+//		}
+//
+//		if (DEBUG)
+//		{
+//			for (int i = 0; i < _pathList2.size(); i++)
+//			{
+//
+//				fileStream << "X ";
+//				fileStream << _pathList2[i].GetX();
+//				fileStream << " Y ";
+//				fileStream << _pathList2[i].GetY();
+//				fileStream << " Akcja: ";
+//				fileStream << MVactionStrings[_pathList2[i]._actionToReach];
+//				fileStream << " G: ";
+//				fileStream << _pathList2[i]._gScore;
+//				fileStream << " H: ";
+//				fileStream << _pathList2[i]._hScore;
+//				fileStream << "\n";
+//			}
+//			fileStream.close();
+//		}
+//
+//		//// Reset
+//		//for (i = openList.begin(); i != openList.end(); i++)
+//		//{
+//		//	(i)->_opened = false;
+//		//	(i)->_hScore = 0;
+//		//	(i)->_gScore = 0;
+//
+//		//	(i)->_parent = NULL;
+//		//	(i)->_arrowTrapOnWay = false;
+//		//}
+//		//for (i = closedList.begin(); i != closedList.end(); i++)
+//		//{
+//		//	(i)->_closed = false;
+//		//	(i)->_hScore = 0;
+//		//	(i)->_gScore = 0;
+//
+//		//	(i)->_parent = NULL;
+//		//	(i)->_arrowTrapOnWay = false;
+//		//}
+//
+//		return path_found;
+//
+//
+//	}
+//	else //we are standing on the exit
+//		return true;
+//}
+
+
+bool Pathfinder::TryToFindExplorationTarget(Coords startc, PATHFINDING_AT_MODE atmode, std::vector<Coords> allowedArrowTraps)
 {
 	bool targetFound = false;
 	std::list<MapNode*> visitedList;
@@ -2176,7 +2644,11 @@ bool Pathfinder::TryToFindExplorationTarget(Coords startc)
 			break;
 		}
 
-		vector<MapNode*> neighbours = CalculateNeighboursInGrid(current, current->GetMvState(), current->GetActionTarget());
+		//vector<MapNode*> neighbours = CalculateNeighboursInGrid(current, current->GetMvState(), current->GetActionTarget());
+		std::vector<MapNode> neighboursTemp = CalculateNeighbours(*current, current->GetMvState(), current->GetActionTarget());
+		neighboursTemp = RemoveDuplicateNeighbours(neighboursTemp);
+		neighboursTemp = RemoveNeighboursWithArrowTraps(neighboursTemp, atmode, allowedArrowTraps);
+		std::vector<MapNode*> neighbours = ConvertNeighboursToGrid(neighboursTemp);
 
 		//no neighbours - backtracking
 		if (neighbours.empty())
@@ -2229,6 +2701,96 @@ bool Pathfinder::TryToFindExplorationTarget(Coords startc)
 	}
 
 	return targetFound;
+}
+
+
+bool Pathfinder::TryToFindTargetInNextCC(Coords startc, PATHFINDING_AT_MODE atmode, std::vector<Coords> allowedArrowTraps)
+{
+	bool targetFound = false;
+	std::list<MapNode*> visitedList;
+	list<MapNode*>::iterator i;
+
+	_pathList.clear();
+
+	MapNode* start = GetNodeFromGrid(startc);
+	start->_visited = true;
+	visitedList.push_back(start);
+
+	MapNode* current = start;
+
+	unsigned int n = 0;
+
+	while (n < 1000)
+	{
+		if (current->_CCnr != start->_CCnr)
+		{
+			targetFound = true;
+			_nextCCTarget = current->GetCoords();
+			break;
+		}
+
+		//vector<MapNode*> neighbours = CalculateNeighboursInGrid(current, current->GetMvState(), current->GetActionTarget());
+		std::vector<MapNode> neighboursTemp = CalculateNeighbours(*current, current->GetMvState(), current->GetActionTarget());
+		neighboursTemp = RemoveDuplicateNeighbours(neighboursTemp);
+		neighboursTemp = RemoveNeighboursWithArrowTraps(neighboursTemp, atmode, allowedArrowTraps);
+		std::vector<MapNode*> neighbours = ConvertNeighboursToGrid(neighboursTemp);
+
+		//no neighbours - backtracking
+		if (neighbours.empty())
+		{
+			if (current->_parent != NULL)
+				current = current->_parent;
+			else
+				//current does not have a parent, we can't backtrack
+				break;
+		}
+		else
+		{
+			//find first not visited neighbour
+			int i = 0;
+			while (i < neighbours.size())
+			{
+				if (!neighbours[i]->_visited)
+				{
+					//first neighbour becomes current
+					neighbours[i]->_parent = current;
+					current = neighbours[i];
+
+					current->_visited = true;
+					visitedList.push_back(current);
+					current->SolidifyCandidates();
+
+					break;
+				}
+				i++;
+			}
+			//unvisited neighbour not found - backtracking
+			if (i == neighbours.size())
+			{
+				if (current->_parent != NULL)
+					current = current->_parent;
+				else
+					//current does not have a parent, we can't backtrack
+					break;
+			}
+		}
+
+		n++;
+	}
+
+	//reset
+	for (i = visitedList.begin(); i != visitedList.end(); i++)
+	{
+		(*i)->_visited = false;
+		(*i)->_parent = NULL;
+	}
+
+	return targetFound;
+}
+
+Coords Pathfinder::GetTargetInNextCC()
+{
+	return _nextCCTarget;
 }
 
 //std::vector<Node> Pathfinder::FindExplorationTargets(int x1, int y1)
@@ -2328,9 +2890,9 @@ void Pathfinder::NeighboursDebug(Coords c, bool hasMomentum)
 		mvState = mvCLIMBING_WITH_MOMENTUM;
 
 	ACTION_TARGET target;
-	if (Impassable(x, y) && Passable(x, y + 1)) target = GROUND;
+	if (Passable(x, y) && Impassable(x, y + 1)) target = GROUND;
 	else if (Ladder(x, y) && !LadderTop(x, y)) target = LADDER;
-	else if (Impassable(x, y) && LadderTop(x, y + 1)) target = LADDERTOP;
+	else if (Passable(x, y) && LadderTop(x, y + 1)) target = LADDERTOP;
 	else target = LEDGE;
 
 	std::vector<MapNode> neighbours = CalculateNeighbours(MapNode(x,y), mvState, target);
@@ -2341,6 +2903,7 @@ void Pathfinder::NeighboursDebug(Coords c, bool hasMomentum)
 		fileStream << " Y: " << neighbours[i].GetY();
 		fileStream << " " << MVactionStrings[neighbours[i].GetActionToReach()];
 		fileStream << " " << ActionTargetStrings[neighbours[i].GetActionTarget()];
+		fileStream << " arrowtr=" << neighbours[i].IsArrowTrapOnWay();
 		fileStream << endl;
 
 		auto path = GetPathBetweenNodes(_grid[x][y]->GetCoords(), neighbours[i].GetCoords(), neighbours[i].GetActionToReach());
