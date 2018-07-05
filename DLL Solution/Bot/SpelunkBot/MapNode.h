@@ -51,14 +51,14 @@ public:
 	int GetY();
 	Coords GetCoords();
 	MOVEMENTACTION GetActionToReach();
-	ACTION_TARGET GetActionTarget();
+	ACTION_TARGET GetPrevActionTarget();
 	MVSTATE GetMvState();
 	bool IsArrowTrapOnWay();
 	int GetPenalty();
 	Coords GetArrowTrapCoords();
 	MapNode *GetDijParent();
 
-	void CopyInfo(MapNode n);
+	//void CopyInfo(MapNode n);
 	void SolidifyCandidates();
 
 	//used in A*

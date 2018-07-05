@@ -24,26 +24,28 @@ public:
 	void NewLevel();
 	void InitializeGrid();
 
-	std::vector<MapNode> CalculateNeighbours(MapNode node, MVSTATE mvstate, ACTION_TARGET target);
-	std::vector<MapNode*> CalculateNeighboursInGrid(MapNode* node, MVSTATE mvstate, ACTION_TARGET target);
+	//std::vector<MapNode> CalculateNeighbours(MapNode node, MVSTATE mvstate, ACTION_TARGET target);
+	std::vector<MapNode> CalculateNeighbours(MapNode node, bool allow_duplicates, AT_MODE atmode,
+		std::vector<Coords> allowedArrowTraps = std::vector<Coords>());
+	//std::vector<MapNode*> CalculateNeighboursInGrid(MapNode* node, MVSTATE mvstate, ACTION_TARGET target);
 
 	MapNode* GetNodeFromGrid(Coords c);
 
 	//bool TryToCalculatePath(Coords c1, Coords c2);
 	//bool TryToCalculatePathNoGrid(Coords c1, Coords c2);
-	bool TryToCalculatePath(Coords c1, Coords c2, PATHFINDING_AT_MODE atmode,
+	bool TryToCalculatePath(Coords c1, Coords c2, AT_MODE atmode,
 		std::vector<Coords> allowedArrowTraps = std::vector<Coords>());
 	std::vector<MapNode*> GetPathFromGrid();
 	std::vector<MapNode> GetPathCopy();
-	std::vector<MapNode> GetPath2();
+	//std::vector<MapNode> GetPath2();
 	int GetPathLength(std::vector<MapNode*> path);
 	int GetPathLength();
 
-	bool TryToFindExplorationTarget(Coords startc, PATHFINDING_AT_MODE atmode,
+	bool TryToFindExplorationTarget(Coords startc, AT_MODE atmode,
 		std::vector<Coords> allowedArrowTraps = std::vector<Coords>());
 	Coords GetExplorationTarget();
 
-	bool TryToFindTargetInNextCC(Coords startc, PATHFINDING_AT_MODE atmode,
+	bool TryToFindTargetInNextCC(Coords startc, AT_MODE atmode,
 		std::vector<Coords> allowedArrowTraps = std::vector<Coords>());
 	Coords GetTargetInNextCC();
 
@@ -51,17 +53,19 @@ public:
 	Coords GetExit();
 	bool IsExitFound();
 
-	void CalculateConnectedComponents(PATHFINDING_AT_MODE atmode,
+	void CalculateConnectedComponents(AT_MODE atmode,
 		std::vector<Coords> allowedArrowTraps = std::vector<Coords>());
 	std::vector<MapNode*> GetAllNodesFromCC(int ccnr);
 	int GetCCnr(Coords coords);
 
 	//void Dijkstra(Coords startc, bool stopOnArrowTraps = false);
-	void Dijkstra(Coords startc, PATHFINDING_AT_MODE pfMode, std::vector<Coords> allowedArrowTraps = std::vector<Coords>());
+	void Dijkstra(Coords startc, AT_MODE pfMode, std::vector<Coords> allowedArrowTraps = std::vector<Coords>());
 	std::vector<MapNode*> GetDijPath(Coords targetC);
 	int GetDijDist(Coords c);
 
 	MapNode GetSafeNodeToDisarmAT(MapNode candidate, Coords arrowTrapToDisarm);
+	directions SetThrowDirections(Coords beforeAT, Coords afterAT, Coords arrowTrapToDisarm);
+	void ModifyThrowDownLaddertop(MapNode &beforeAT, directions &throwDir);
 
 	bool isCloseToFog(Coords c, int closeness);
 	bool IsOutOfBounds(Coords c);
@@ -128,18 +132,20 @@ private:
 	std::vector<MapNode> CalculateNeighboursStanding(MapNode node);
 	std::vector<MapNode> CalculateNeighboursStandingLT(MapNode node);
 	void AddNeighboursLR(int x, int y, bool right, std::vector<MapNode> *neighbours);
-	std::vector<MapNode> RemoveDuplicateNeighbours(std::vector<MapNode> neighboursTemp);
-	std::vector<MapNode> RemoveNeighboursWithArrowTraps(
-		std::vector<MapNode> neighboursTemp, 
-		PATHFINDING_AT_MODE atmode, 
-		std::vector<Coords> allowedArrowTraps = std::vector<Coords>());
-	std::vector<MapNode*> ConvertNeighboursToGrid(std::vector<MapNode> neighbours);
+	void RemoveDuplicateNeighbours(std::vector<MapNode> &neighbours);
+	//std::vector<MapNode> RemoveNeighboursWithArrowTraps(
+	//	std::vector<MapNode> &neighboursTemp, 
+	//	AT_MODE atmode, 
+	//	std::vector<Coords> allowedArrowTraps = std::vector<Coords>());
+	void UpdateMovementInfoInGrid(std::vector<MapNode> &neighbours);
+	std::vector<MapNode*> GetNodesFromGrid(std::vector<MapNode> &neighbours);
 
 	//traps
 	void HandleUnsafeNeighbours(MapNode origin, std::vector<MapNode> &neighbours);
 	void DeleteUnsafeNeighboursSpikes(MapNode origin, std::vector<MapNode>& neighbours);
 	void HandleUnsafeNeighboursSpearTrap(MapNode origin, std::vector<MapNode>& neighbours);
-	void HandleUnsafeNeighboursArrowTrap(MapNode origin, std::vector<MapNode>& neighbours);
+	void HandleUnsafeNeighboursArrowTrap(MapNode origin, std::vector<MapNode>& neighbours, AT_MODE atmode,
+		std::vector<Coords> allowedArrowTraps = std::vector<Coords>());
 
 	//tarjan's algorithm
 	int _tar_cvn;
@@ -150,18 +156,19 @@ private:
 	std::stack<MapNode*> _tar_S;
 	std::vector<std::vector<MapNode*>> _tar_CClist;
 	std::map<int, std::vector<MapNode*>> _tar_CCmap;
-	void TarjanDFS(MapNode* n, PATHFINDING_AT_MODE pfMode, std::vector<Coords> allowedArrowTraps = std::vector<Coords>());
+	void TarjanDFS(MapNode* n, AT_MODE pfMode, std::vector<Coords> allowedArrowTraps = std::vector<Coords>());
 
 	//dijkstra's algorithm
-	struct _dij_MSNodeCmp
-	{
-		bool operator() (MapNode* n1, MapNode* n2)
-		{
-			return n1->_dij_dist > n2->_dij_dist;
-			//return _dij_dists[n1->_x][n1->_y] < _dij_dists[n1->_x][n1->_y];
-		}
-	};
-	std::priority_queue<MapNode*, std::vector<MapNode*>, _dij_MSNodeCmp> _dij_pQ;
+	//struct _dij_MSNodeCmp
+	//{
+	//	bool operator() (MapNode* n1, MapNode* n2)
+	//	{
+	//		return n1->_dij_dist > n2->_dij_dist;
+	//		//return _dij_dists[n1->_x][n1->_y] < _dij_dists[n1->_x][n1->_y];
+	//	}
+	//};
+	//std::priority_queue<MapNode*, std::vector<MapNode*>, _dij_MSNodeCmp> _dij_pQ;
+	std::list<MapNode*> _dij_pL;
 	//static int _dij_dists[X_NODES][Y_NODES];
 	bool _dij_visited[X_NODES][Y_NODES];
 	static int _dij_prev[X_NODES][Y_NODES];

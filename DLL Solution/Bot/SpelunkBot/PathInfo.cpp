@@ -14,7 +14,7 @@ PathInfo::~PathInfo()
 	//for (_pathIt = _actions.begin(); _pathIt != _actions.end(); _pathIt++)
 	//	delete (*_pathIt);
 
-	//_actions.clear();
+	_actions.clear();
 }
 
 Coords PathInfo::GetTarget()

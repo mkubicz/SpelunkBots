@@ -113,8 +113,10 @@
     <ClInclude Include="PickUpItemAction.h" />
     <ClInclude Include="SeanBean.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="ExploitDisarmAction.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="ThrowItemAction.h" />
+    <ClInclude Include="ThrowRopeAction.h" />
     <ClInclude Include="Utilities.h" />
     <ClInclude Include="WaitAction.h" />
     <ClInclude Include="WalkAction.h" />
@@ -163,7 +165,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="ExploitDisarmAction.cpp" />
     <ClCompile Include="ThrowItemAction.cpp" />
+    <ClCompile Include="ThrowRopeAction.cpp" />
     <ClCompile Include="Utilities.cpp" />
     <ClCompile Include="WaitAction.cpp" />
     <ClCompile Include="WalkAction.cpp" />

@@ -19,6 +19,4 @@ public:
 	std::shared_ptr<IMovementAction> GetNextAction();
 	bool ActionsExhausted();
 
-	//mo¿e olaæ ten reason? wydaje siê nie byæ a¿ tak potrzebne
-	//SCHEDULING_REASON reason;
 };

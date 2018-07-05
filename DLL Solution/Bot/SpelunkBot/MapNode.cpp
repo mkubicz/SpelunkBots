@@ -105,7 +105,7 @@ MOVEMENTACTION MapNode::GetActionToReach()
 	return _actionToReach;
 }
 
-ACTION_TARGET MapNode::GetActionTarget()
+ACTION_TARGET MapNode::GetPrevActionTarget()
 {
 	return _actionToReachTarget;
 }
@@ -130,34 +130,34 @@ MapNode * MapNode::GetDijParent()
 	return _dij_prev;
 }
 
-void MapNode::CopyInfo(MapNode n)
-{
-	_actionToReach = n._actionToReach;
-	_actionToReachTarget = n._actionToReachTarget;
-	_mvState = n._mvState;
-
-	_actionToReachCandidate = n._actionToReachCandidate;
-	_actionToReachTargetCandidate = n._actionToReachTargetCandidate;
-	_mvStateCandidate = n._mvStateCandidate;
-
-	_gScore = n._gScore;
-	_hScore = n._hScore;
-	_parent = n._parent;
-
-	_opened = n._opened;
-	_closed = n._closed;
-	_visited = n._visited;
-
-	_CCnr = n._CCnr;
-	_dij_dist = n._dij_dist;
-	_dij_prev = n._dij_prev;
-
-	_arrowTrapOnWay = n._arrowTrapOnWay;
-	_arrowTrapOnWayCandidate = n._arrowTrapOnWayCandidate;
-
-	_arrowTrapCoords = n._arrowTrapCoords;
-	_arrowTrapCoordsCandidate = n._arrowTrapCoordsCandidate;
-}
+//void MapNode::CopyInfo(MapNode n)
+//{
+//	_actionToReach = n._actionToReach;
+//	_actionToReachTarget = n._actionToReachTarget;
+//	_mvState = n._mvState;
+//
+//	_actionToReachCandidate = n._actionToReachCandidate;
+//	_actionToReachTargetCandidate = n._actionToReachTargetCandidate;
+//	_mvStateCandidate = n._mvStateCandidate;
+//
+//	_gScore = n._gScore;
+//	_hScore = n._hScore;
+//	_parent = n._parent;
+//
+//	_opened = n._opened;
+//	_closed = n._closed;
+//	_visited = n._visited;
+//
+//	_CCnr = n._CCnr;
+//	_dij_dist = n._dij_dist;
+//	_dij_prev = n._dij_prev;
+//
+//	_arrowTrapOnWay = n._arrowTrapOnWay;
+//	_arrowTrapOnWayCandidate = n._arrowTrapOnWayCandidate;
+//
+//	_arrowTrapCoords = n._arrowTrapCoords;
+//	_arrowTrapCoordsCandidate = n._arrowTrapCoordsCandidate;
+//}
 
 void MapNode::SolidifyCandidates()
 {
@@ -186,9 +186,9 @@ void MapNode::SolidifyCandidates()
 
 int MapNode::GetPenalty()
 {
-	if (_actionToReach == WALK || _actionToReachCandidate == WALK) return 0;
-	else if (_actionToReach == JUMP || _actionToReachCandidate == JUMP) return 5;
-	else if (_actionToReach == WALKOFFLEDGE || _actionToReachCandidate == WALKOFFLEDGE) return 7;
+	if (/*_actionToReach == WALK || */ _actionToReachCandidate == WALK) return 0;
+	else if (/*_actionToReach == JUMP || */ _actionToReachCandidate == JUMP) return 5;
+	else if (/*_actionToReach == WALKOFFLEDGE || */ _actionToReachCandidate == WALKOFFLEDGE) return 7;
 	else return 1;
 }
 

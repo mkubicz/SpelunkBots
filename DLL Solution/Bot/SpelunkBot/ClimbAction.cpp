@@ -30,8 +30,14 @@ ordersStruct ClimbAction::GetOrders()
 		CalculateTargetNode(0, _distY);
 		if (!_bot->IsNodePassable(_targetNode.GetX(), _targetNode.GetY() + 1, NODE_COORDS))
 			_targetIsGround = true;
+
+		//initial boost when starting from ground
+		if (_bot->GetSpelunkerState() != spCLIMBING)
+			orders.jump = true;
+
 		_actionInProgress = true;
 	}
+
 
 	if (!_targetIsGround)
 	{

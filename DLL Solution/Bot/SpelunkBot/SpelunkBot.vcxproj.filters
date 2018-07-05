@@ -186,6 +186,12 @@
     <ClInclude Include="MovementSimulator.h">
       <Filter>Header Files\Bots\DebugBot</Filter>
     </ClInclude>
+    <ClInclude Include="ThrowRopeAction.h">
+      <Filter>Header Files\Bots\DebugBot\Actions</Filter>
+    </ClInclude>
+    <ClInclude Include="ExploitDisarmAction.h">
+      <Filter>Header Files\Bots\DebugBot\Actions</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -298,6 +304,12 @@
     </ClCompile>
     <ClCompile Include="MovementSimulator.cpp">
       <Filter>Source Files\Bots\DebugBot</Filter>
+    </ClCompile>
+    <ClCompile Include="ThrowRopeAction.cpp">
+      <Filter>Source Files\Bots\DebugBot\Actions</Filter>
+    </ClCompile>
+    <ClCompile Include="ExploitDisarmAction.cpp">
+      <Filter>Source Files\Bots\DebugBot\Actions</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

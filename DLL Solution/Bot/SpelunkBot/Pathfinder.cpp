@@ -698,7 +698,7 @@ void Pathfinder::HandleUnsafeNeighbours(MapNode origin, std::vector<MapNode> &ne
 {
 	DeleteUnsafeNeighboursSpikes(origin, neighbours);
 	HandleUnsafeNeighboursSpearTrap(origin, neighbours);
-	HandleUnsafeNeighboursArrowTrap(origin, neighbours);
+	//HandleUnsafeNeighboursArrowTrap(origin, neighbours);
 }
 
 void Pathfinder::DeleteUnsafeNeighboursSpikes(MapNode origin, std::vector<MapNode> &neighbours)
@@ -715,7 +715,7 @@ void Pathfinder::DeleteUnsafeNeighboursSpikes(MapNode origin, std::vector<MapNod
 		y = it->GetY();
 		distX = x - origin.GetX();
 		distY = y - origin.GetY();
-		target = it->GetActionTarget();
+		target = it->GetPrevActionTarget();
 		action = it->GetActionToReach();
 		unsafe = false;
 
@@ -764,7 +764,7 @@ void Pathfinder::HandleUnsafeNeighboursSpearTrap(MapNode origin, std::vector<Map
 		y = it->GetY();
 		distX = x - origin.GetX();
 		distY = y - origin.GetY();
-		target = it->GetActionTarget();
+		target = it->GetPrevActionTarget();
 		action = it->GetActionToReach();
 		unsafe = false;
 
@@ -775,7 +775,8 @@ void Pathfinder::HandleUnsafeNeighboursSpearTrap(MapNode origin, std::vector<Map
 	}
 }
 
-void Pathfinder::HandleUnsafeNeighboursArrowTrap(MapNode origin, std::vector<MapNode> &neighbours)
+void Pathfinder::HandleUnsafeNeighboursArrowTrap(MapNode origin, std::vector<MapNode> &neighbours, AT_MODE atmode,
+	std::vector<Coords> allowedArrowTraps)
 {
 	int x, y, distX, distY;
 	ACTION_TARGET target;
@@ -797,7 +798,7 @@ void Pathfinder::HandleUnsafeNeighboursArrowTrap(MapNode origin, std::vector<Map
 		y = neighbour->GetY();
 		distX = x - origin.GetX();
 		distY = y - origin.GetY();
-		target = neighbour->GetActionTarget();
+		target = neighbour->GetPrevActionTarget();
 		action = neighbour->GetActionToReach();
 		unsafe = false;
 		
@@ -849,11 +850,38 @@ void Pathfinder::HandleUnsafeNeighboursArrowTrap(MapNode origin, std::vector<Map
 		//nie
 
 		if (unsafe)
-			//neighbour = neighbours.erase(neighbour);
 		{
 			neighbour->_arrowTrapOnWay = true;
 			neighbour->_arrowTrapCoords = coords;
-			neighbour++;
+
+			switch (atmode)
+			{
+			case STOP_ON_ARROWTRAPS:
+				neighbour = neighbours.erase(neighbour);
+				break;
+			case ALLOW_ARROWTRAPS:
+				neighbour++;
+				break;
+			case ALLOW_SELECTED:
+			{
+				bool allowed = false;
+
+				for (auto c : allowedArrowTraps)
+					if (coords == c)
+					{
+						allowed = true;
+						neighbour++;
+						break;
+					}
+
+				if (!allowed)
+					neighbour = neighbours.erase(neighbour);
+
+				break;
+			}
+			default:
+				break;
+			}
 		}
 		else 
 			neighbour++;
@@ -958,89 +986,126 @@ void Pathfinder::AddNeighboursLR(int x, int y, bool right, std::vector<MapNode> 
 	}
 }
 
-std::vector<MapNode> Pathfinder::RemoveDuplicateNeighbours(std::vector<MapNode> neighboursTemp)
+void Pathfinder::RemoveDuplicateNeighbours(std::vector<MapNode> &neighbours)
 {
-	std::vector<MapNode> neighbours;
-	bool dupe_found;
+	bool n1_erased;
+	std::vector<MapNode>::iterator n1, n2; 
+	n1 = neighbours.begin();
 
-	for (MapNode nt : neighboursTemp)
+	while (n1 != neighbours.end())
 	{
-		dupe_found = false;
-		for (MapNode n : neighbours)
-			if (nt == n)
+		n1_erased = false;
+		n2 = n1 + 1;
+
+		while (n2 != neighbours.end())
+		{
+			//if neighbours pointed by n1, n2 are equal (have the same coordinates)
+			if (*n1 == *n2)
 			{
-				if (nt.GetPenalty() < n.GetPenalty())
+				if (n2->GetPenalty() < n1->GetPenalty())
 				{
-					n.CopyInfo(nt);
+					//erase n1
+					n1 = neighbours.erase(n1);
+					//if n1 points to the same element as n2 move n2
+					if (n1 == n2) n2++;
+					n1_erased = true;
+					break;
 				}
-				dupe_found = true;
-				break;
+				else
+				{
+					//erase n2
+					n2 = neighbours.erase(n2);
+				}
 			}
-
-		if (!dupe_found)
-		{
-			neighbours.push_back(nt);
-		}
-	}
-
-	return neighbours;
-}
-
-std::vector<MapNode> Pathfinder::RemoveNeighboursWithArrowTraps(std::vector<MapNode> neighboursTemp, 
-	PATHFINDING_AT_MODE atmode, 
-	std::vector<Coords> allowedArrowTraps)
-{
-	std::vector<MapNode> neighbours;
-
-	for (MapNode n : neighboursTemp)
-	{
-		switch (atmode)
-		{
-		case STOP_ON_ARROWTRAPS:
-			if (!n._arrowTrapOnWay) 
-				neighbours.push_back(n);
-			break;
-		case ALLOW_ARROWTRAPS:
-			neighbours.push_back(n);
-			break;
-		case ALLOW_SELECTED:
-			if (!n._arrowTrapOnWay) 
-				neighbours.push_back(n);
-			else
-			{
-				for (auto c : allowedArrowTraps)
-					if (n.GetArrowTrapCoords() == c)
-					{
-						neighbours.push_back(n);
-						break;
-					}
-			}
-			break;
-		default:
-			break;
+			else n2++;
 		}
 
+		if (!n1_erased) n1++;
 	}
 
-	
-	return neighbours;
+
+	//for (auto n = neighbours.begin(); n != neighbours.end(); n++)
+	//{
+	//	for (auto n = neighbours.begin(); n != neighbours.end(); n++)
+	//		if (*nt == *n)
+	//		{
+	//			if (nt->GetPenalty() < n->GetPenalty())
+	//			{
+	//				neighbours.erase(n);
+	//				neighbours.push_back(*nt);
+	//			}
+	//			dupe_found = true;
+	//			break;
+	//		}
+
+	//	if (!dupe_found)
+	//	{
+	//		neighbours.push_back(*nt);
+	//	}
+	//}
+
 }
 
-std::vector<MapNode*> Pathfinder::ConvertNeighboursToGrid(std::vector<MapNode> n)
+//std::vector<MapNode> Pathfinder::RemoveNeighboursWithArrowTraps(std::vector<MapNode> &neighboursTemp, 
+//	AT_MODE atmode, 
+//	std::vector<Coords> allowedArrowTraps)
+//{
+//	std::vector<MapNode> neighbours;
+//
+//	for (MapNode n : neighboursTemp)
+//	{
+//		switch (atmode)
+//		{
+//		case STOP_ON_ARROWTRAPS:
+//			if (!n._arrowTrapOnWay) 
+//				neighbours.push_back(n);
+//			break;
+//		case ALLOW_ARROWTRAPS:
+//			neighbours.push_back(n);
+//			break;
+//		case ALLOW_SELECTED:
+//			if (!n._arrowTrapOnWay) 
+//				neighbours.push_back(n);
+//			else
+//			{
+//				for (auto c : allowedArrowTraps)
+//					if (n.GetArrowTrapCoords() == c)
+//					{
+//						neighbours.push_back(n);
+//						break;
+//					}
+//			}
+//			break;
+//		default:
+//			break;
+//		}
+//
+//	}
+//
+//	
+//	return neighbours;
+//}
+
+std::vector<MapNode*> Pathfinder::GetNodesFromGrid(std::vector<MapNode> &n)
 {
 	std::vector<MapNode*> neighboursGrid;
 
 	for (int i = 0; i < n.size(); i++)
-	{
-		_grid[n[i].GetX()][n[i].GetY()]->_actionToReachCandidate = n[i].GetActionToReach();
-		_grid[n[i].GetX()][n[i].GetY()]->_actionToReachTargetCandidate = n[i].GetActionTarget();
-		_grid[n[i].GetX()][n[i].GetY()]->_mvStateCandidate = n[i].GetMvState();
-		_grid[n[i].GetX()][n[i].GetY()]->_arrowTrapOnWayCandidate = n[i]._arrowTrapOnWay;
-		_grid[n[i].GetX()][n[i].GetY()]->_arrowTrapCoordsCandidate = n[i]._arrowTrapCoords;
 		neighboursGrid.push_back(_grid[n[i].GetX()][n[i].GetY()]);
-	}
 
 	return neighboursGrid;
+}
+
+void Pathfinder::UpdateMovementInfoInGrid(std::vector<MapNode>& neighbours)
+{
+	for (int i = 0; i < neighbours.size(); i++)
+	{
+		_grid[neighbours[i].GetX()][neighbours[i].GetY()]->_actionToReachCandidate = neighbours[i].GetActionToReach();
+		_grid[neighbours[i].GetX()][neighbours[i].GetY()]->_actionToReachTargetCandidate = neighbours[i].GetPrevActionTarget();
+		_grid[neighbours[i].GetX()][neighbours[i].GetY()]->_mvStateCandidate = neighbours[i].GetMvState();
+		_grid[neighbours[i].GetX()][neighbours[i].GetY()]->_arrowTrapOnWayCandidate = neighbours[i]._arrowTrapOnWay;
+		_grid[neighbours[i].GetX()][neighbours[i].GetY()]->_arrowTrapCoordsCandidate = neighbours[i]._arrowTrapCoords;
+	}
 }
 
 std::vector<MapNode> Pathfinder::CalculateNeighboursHanging(MapNode node)
@@ -1802,7 +1867,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursStandingLT(MapNode node)
 	int i = 0;
 	while (i < neighbours.size())
 	{
-		if (neighbours[i].GetActionTarget() == HANG)
+		if (neighbours[i].GetPrevActionTarget() == HANG)
 			neighbours.erase(neighbours.begin() + i);
 		else
 			i++;
@@ -1831,11 +1896,12 @@ std::vector<MapNode> Pathfinder::CalculateNeighboursStandingLT(MapNode node)
 	return neighbours;
 }
 
-std::vector<MapNode> Pathfinder::CalculateNeighbours(MapNode node, MVSTATE mvstate, ACTION_TARGET prevActionTarget)
+std::vector<MapNode> Pathfinder::CalculateNeighbours(MapNode node, bool allow_duplicates, AT_MODE atmode,
+	std::vector<Coords> allowedArrowTraps)
 {
 	std::vector<MapNode> neighbours;
 	
-	switch (mvstate)
+	switch (node.GetMvState())
 	{
 	case mvHANGING:
 		neighbours = CalculateNeighboursHanging(node);
@@ -1847,7 +1913,7 @@ std::vector<MapNode> Pathfinder::CalculateNeighbours(MapNode node, MVSTATE mvsta
 		neighbours = CalculateNeighboursClimbingWithMomentum(node);
 		break;
 	case mvSTANDING:
-		if (prevActionTarget == LADDERTOP)
+		if (node.GetPrevActionTarget() == LADDERTOP)
 			neighbours = CalculateNeighboursStandingLT(node);
 		else
 			neighbours = CalculateNeighboursStanding(node);
@@ -1857,7 +1923,13 @@ std::vector<MapNode> Pathfinder::CalculateNeighbours(MapNode node, MVSTATE mvsta
 		break;
 	}
 
-	HandleUnsafeNeighbours(node, neighbours);
+	//HandleUnsafeNeighbours(node, neighbours);
+	DeleteUnsafeNeighboursSpikes(node, neighbours);
+	HandleUnsafeNeighboursSpearTrap(node, neighbours);
+	HandleUnsafeNeighboursArrowTrap(node, neighbours, atmode, allowedArrowTraps);
+	
+	if (!allow_duplicates) RemoveDuplicateNeighbours(neighbours);
+	//RemoveNeighboursWithArrowTraps(neighbours, atmode, allowedArrowTraps);
 
 	//delete any accidental out of bounds neighbours or neighbours in fog
 	for (int i = 0; i < neighbours.size(); i++)
@@ -1875,29 +1947,29 @@ std::vector<MapNode> Pathfinder::CalculateNeighbours(MapNode node, MVSTATE mvsta
 	return neighbours;
 }
 
-std::vector<MapNode*> Pathfinder::CalculateNeighboursInGrid(MapNode * node, MVSTATE mvstate, ACTION_TARGET target)
-{
-	std::vector<MapNode*> neighbours;
-	
-	std::vector<MapNode> n = CalculateNeighbours(*node, mvstate, target);
-	for (int i = 0; i < n.size(); i++)
-	{
-		_grid[n[i].GetX()][n[i].GetY()]->_actionToReachCandidate = n[i].GetActionToReach();
-		_grid[n[i].GetX()][n[i].GetY()]->_actionToReachTargetCandidate = n[i].GetActionTarget();
-		_grid[n[i].GetX()][n[i].GetY()]->_mvStateCandidate = n[i].GetMvState();
-		_grid[n[i].GetX()][n[i].GetY()]->_arrowTrapOnWayCandidate = n[i]._arrowTrapOnWay;
-		_grid[n[i].GetX()][n[i].GetY()]->_arrowTrapCoordsCandidate = n[i]._arrowTrapCoords;
-		neighbours.push_back(_grid[n[i].GetX()][n[i].GetY()]);
-	}
-	
-	return neighbours;
-}
+//std::vector<MapNode*> Pathfinder::CalculateNeighboursInGrid(MapNode * node, MVSTATE mvstate, ACTION_TARGET target)
+//{
+//	std::vector<MapNode*> neighbours;
+//	
+//	std::vector<MapNode> n = CalculateNeighbours(*node, mvstate, target);
+//	for (int i = 0; i < n.size(); i++)
+//	{
+//		_grid[n[i].GetX()][n[i].GetY()]->_actionToReachCandidate = n[i].GetActionToReach();
+//		_grid[n[i].GetX()][n[i].GetY()]->_actionToReachTargetCandidate = n[i].GetPrevActionTarget();
+//		_grid[n[i].GetX()][n[i].GetY()]->_mvStateCandidate = n[i].GetMvState();
+//		_grid[n[i].GetX()][n[i].GetY()]->_arrowTrapOnWayCandidate = n[i]._arrowTrapOnWay;
+//		_grid[n[i].GetX()][n[i].GetY()]->_arrowTrapCoordsCandidate = n[i]._arrowTrapCoords;
+//		neighbours.push_back(_grid[n[i].GetX()][n[i].GetY()]);
+//	}
+//	
+//	return neighbours;
+//}
 
 #pragma endregion
 
 #pragma region Calculating strong connected components
 
-void Pathfinder::TarjanDFS(MapNode* n, PATHFINDING_AT_MODE atmode, std::vector<Coords> allowedArrowTraps)
+void Pathfinder::TarjanDFS(MapNode* n, AT_MODE atmode, std::vector<Coords> allowedArrowTraps)
 {
 	_tar_cvn++;
 	_tar_VN[n->GetX()][n->GetY()] = _tar_cvn;
@@ -1905,11 +1977,9 @@ void Pathfinder::TarjanDFS(MapNode* n, PATHFINDING_AT_MODE atmode, std::vector<C
 	_tar_S.push(n);
 	_tar_VS[n->GetX()][n->GetY()] = true;
 
-	//CalculateNeighboursInGrid(n, n->GetMvState(), n->GetActionTarget());
-	std::vector<MapNode> neighboursTemp = CalculateNeighbours(*n, n->GetMvState(), n->GetActionTarget());
-	neighboursTemp = RemoveDuplicateNeighbours(neighboursTemp);
-	neighboursTemp = RemoveNeighboursWithArrowTraps(neighboursTemp, atmode, allowedArrowTraps);
-	std::vector<MapNode*> neighbours = ConvertNeighboursToGrid(neighboursTemp);
+	std::vector<MapNode> neighboursTemp = CalculateNeighbours(*n, false, atmode, allowedArrowTraps);
+	UpdateMovementInfoInGrid(neighboursTemp);
+	std::vector<MapNode*> neighbours = GetNodesFromGrid(neighboursTemp);
 
 	for each (MapNode * m in neighbours)
 	{
@@ -1949,7 +2019,7 @@ void Pathfinder::TarjanDFS(MapNode* n, PATHFINDING_AT_MODE atmode, std::vector<C
 	_tar_CCmap[m->_CCnr] = sccp;
 }
 
-void Pathfinder::CalculateConnectedComponents(PATHFINDING_AT_MODE atmode, std::vector<Coords> allowedArrowTraps)
+void Pathfinder::CalculateConnectedComponents(AT_MODE atmode, std::vector<Coords> allowedArrowTraps)
 {
 	//initialize variables
 	_tar_cvn = 0;
@@ -2001,11 +2071,6 @@ std::vector<MapNode*> Pathfinder::GetAllNodesFromCC(int ccnr)
 MapNode* Pathfinder::GetNodeFromGrid(Coords c)
 {
 	return _grid[c.GetX()][c.GetY()];
-}
-
-std::vector<MapNode> Pathfinder::GetPath2()
-{
-	return _pathList2;
 }
 
 std::vector<MapNode*> Pathfinder::GetPathFromGrid()
@@ -2088,7 +2153,7 @@ bool Pathfinder::IsExitFound()
 
 #pragma region Dijkstra
 
-void Pathfinder::Dijkstra(Coords startc, PATHFINDING_AT_MODE atmode, std::vector<Coords> allowedArrowTraps)
+void Pathfinder::Dijkstra(Coords startc, AT_MODE atmode, std::vector<Coords> allowedArrowTraps)
 {
 	int x, y;
 	x = startc.GetX();
@@ -2102,43 +2167,80 @@ void Pathfinder::Dijkstra(Coords startc, PATHFINDING_AT_MODE atmode, std::vector
 			_dij_visited[i][j] = false;
 		}
 
+	while (!_dij_pL.empty())
+		_dij_pL.clear();
+	
 
 	_grid[x][y]->_dij_dist = 0;
 	_dij_visited[x][y] = true;
 
-	while (!_dij_pQ.empty())
-		_dij_pQ.pop();
+	_dij_pL.push_front(_grid[x][y]);
 
-	_dij_pQ.push(_grid[x][y]);
-
-	while (!_dij_pQ.empty())
+	//instead of a priority Queue we have a list and we keep it ordered
+	//we can't have a priority queue because we are using nodes from grid, and
+	//when you update a node that is already in a queue the queue is ruined
+	while (!_dij_pL.empty())
 	{
-		MapNode *n = _dij_pQ.top();
-		_dij_pQ.pop();
+		MapNode *n = _dij_pL.front();
+		_dij_pL.pop_front();
 
-		//break if you reach unreachable nodes
-		if (n->_dij_dist == INT_MAX) break;
+		_dij_visited[n->GetX()][n->GetY()] = true;
 
-		vector<MapNode> neighboursTemp = CalculateNeighbours(*n, n->GetMvState(), n->GetActionTarget());
-		neighboursTemp = RemoveNeighboursWithArrowTraps(neighboursTemp, atmode, allowedArrowTraps);
-		neighboursTemp = RemoveDuplicateNeighbours(neighboursTemp);
-		vector<MapNode*> neighbours = ConvertNeighboursToGrid(neighboursTemp);
-
+		std::vector<MapNode> neighboursTemp = CalculateNeighbours(*n, false, atmode, allowedArrowTraps);
+		UpdateMovementInfoInGrid(neighboursTemp);
+		std::vector<MapNode*> neighbours = GetNodesFromGrid(neighboursTemp);
 
 		for (MapNode* m : neighbours)
 		{
 			if (!_dij_visited[m->GetX()][m->GetY()])
-				if (n->_dij_dist + CalculateDistance(n->GetCoords(), m->GetCoords()) < m->_dij_dist)
+				if (n->_dij_dist + CalculateDistance(n->GetCoords(), m->GetCoords()) + m->GetPenalty() < m->_dij_dist)
 				{
-					m->_dij_dist = n->_dij_dist + CalculateDistance(n->GetCoords(), m->GetCoords());
+					m->_dij_dist = n->_dij_dist + CalculateDistance(n->GetCoords(), m->GetCoords()) + m->GetPenalty();
 					m->_dij_prev = n;
 					m->SolidifyCandidates();
-					_dij_pQ.push(m);
-					_dij_visited[m->GetX()][m->GetY()] = true;
+
+
+					auto i = _dij_pL.begin();
+					while (i != _dij_pL.end())
+					{
+						if (*i == m)
+							i = _dij_pL.erase(i);
+						else
+							i++;
+					}
+
+					//update priority list
+					if (_dij_pL.empty())
+					{
+						_dij_pL.push_front(m);
+					}
+					else
+					{
+						//podzielmy to gówno na 2 pêtle bo rzal
+						for (auto i = _dij_pL.begin(); i != _dij_pL.end(); i++)
+						{
+
+							if ((*i)->_dij_dist > m->_dij_dist)
+							{
+								//wstawiamy przed aktualn¹ pozycjê "i"...
+								_dij_pL.insert(i, m);
+								break;
+							}
+							if (*i == _dij_pL.back())
+							{
+								//...lub na koniec
+								_dij_pL.push_back(m);
+								break;
+							}
+						
+						}
+					}
 				}
 		}
 
 	}
+
+
 }
 
 std::vector<MapNode*> Pathfinder::GetDijPath(Coords targetC)
@@ -2161,6 +2263,10 @@ int Pathfinder::GetDijDist(Coords c)
 {
 	return _grid[c.GetX()][c.GetY()]->_dij_dist;
 }
+
+#pragma endregion
+
+#pragma region Other
 
 MapNode Pathfinder::GetSafeNodeToDisarmAT(MapNode candidate, Coords arrowTrap)
 {
@@ -2198,9 +2304,8 @@ MapNode Pathfinder::GetSafeNodeToDisarmAT(MapNode candidate, Coords arrowTrap)
 		}
 
 		if (!safe)
-		{
-			std::vector<MapNode> neighbours = CalculateNeighbours(curr, curr.GetMvState(), curr.GetActionTarget());
-			//powinienem blokowaæ arrowtrapy, na razie muszê robiæ to manualnie wywo³uj¹c DeleteNeighboursWithArrowTraps - trochê lipa
+		{	
+			std::vector<MapNode> neighbours = CalculateNeighbours(curr, false, AT_MODE::STOP_ON_ARROWTRAPS);
 
 			for (int i = 0; i < neighbours.size(); i++)
 				candidates.push(neighbours[i]);
@@ -2209,19 +2314,70 @@ MapNode Pathfinder::GetSafeNodeToDisarmAT(MapNode candidate, Coords arrowTrap)
 	}
 
 	return curr;
-};
+}
+directions Pathfinder::SetThrowDirections(Coords beforeAT, Coords afterAT, Coords arrowTrapToDisarm)
+{
+	directions dirToAT, dirToAfterAT, throwDir;
+	dirToAT = CalculateDirections(beforeAT, arrowTrapToDisarm);
+	dirToAfterAT = CalculateDirections(beforeAT, afterAT);
+	throwDir = dirToAT.x == dirToAfterAT.x ? dirToAT : dirToAfterAT;
+
+	return throwDir;
+}
+
+void Pathfinder::ModifyThrowDownLaddertop(MapNode &beforeAT, directions & throwDir)
+{
+	if (beforeAT.GetPrevActionTarget() == LADDERTOP)
+	{
+		MapNode beforeATold = beforeAT;
+
+		if (beforeAT.GetActionToReach() == WALK)
+			beforeAT = *beforeAT.GetDijParent();
+		else
+		{
+			if (CanStandInNode(Coords(beforeAT.GetX() - 1, beforeAT.GetY())))
+				beforeAT = *GetNodeFromGrid(Coords(beforeAT.GetX() - 1, beforeAT.GetY()));
+			else if (CanStandInNode(Coords(beforeAT.GetX() + 1, beforeAT.GetY())))
+				beforeAT = *GetNodeFromGrid(Coords(beforeAT.GetX() + 1, beforeAT.GetY()));
+			else
+			{
+				//ultra rare case - can stay as-is for now
+			}
+		}
+
+		if (beforeATold.GetX() > beforeAT.GetX()) throwDir.x = xRIGHT;
+		if (beforeATold.GetX() < beforeAT.GetX()) throwDir.x = xLEFT;
+	}
+
+	if (beforeAT.GetPrevActionTarget() == LADDER && beforeAT.GetActionToReach() == HANG)
+	{
+		MapNode beforeATold = beforeAT;
+		beforeAT = *beforeAT.GetDijParent();
+
+		if (beforeATold.GetX() > beforeAT.GetX()) throwDir.x = xRIGHT;
+		if (beforeATold.GetX() < beforeAT.GetX()) throwDir.x = xLEFT;
+	}
+}
 
 #pragma endregion
 
 #pragma region Pathfinding methods
 
-bool Pathfinder::TryToCalculatePath(Coords c1, Coords c2, PATHFINDING_AT_MODE atmode, std::vector<Coords> allowedArrowTraps)
+bool Pathfinder::TryToCalculatePath(Coords c1, Coords c2, AT_MODE atmode, std::vector<Coords> allowedArrowTraps)
 {
 	bool DEBUG = true;
 
 	bool path_found = false;
 
 	_pathList.clear();
+	for (int i = 0; i < X_NODES; i++)
+		for (int j = 0; j < Y_NODES; j++)
+		{
+			_grid[i][j]->_arrowTrapOnWay = false;
+			_grid[i][j]->_arrowTrapOnWayCandidate = false;
+			_grid[i][j]->_arrowTrapCoords = Coords();
+			_grid[i][j]->_arrowTrapCoordsCandidate = Coords();
+		}
 
 	if (c1.GetX() != c2.GetX() || c1.GetY() != c2.GetY())
 	{
@@ -2298,12 +2454,9 @@ bool Pathfinder::TryToCalculatePath(Coords c1, Coords c2, PATHFINDING_AT_MODE at
 			closedList.push_back(current);
 			current->_closed = true;
 
-			//std::vector<MapNode*> neighbours = CalculateNeighboursInGrid(current, current->GetMvState(), current->GetActionTarget());
-			std::vector<MapNode> neighboursTemp = CalculateNeighbours(*current, current->GetMvState(), current->GetActionTarget());
-			neighboursTemp = RemoveDuplicateNeighbours(neighboursTemp);
-			neighboursTemp = RemoveNeighboursWithArrowTraps(neighboursTemp, atmode, allowedArrowTraps);
-			std::vector<MapNode*> neighbours = ConvertNeighboursToGrid(neighboursTemp);
-
+			std::vector<MapNode> neighboursTemp = CalculateNeighbours(*current, false, atmode, allowedArrowTraps);
+			UpdateMovementInfoInGrid(neighboursTemp);
+			std::vector<MapNode*> neighbours = GetNodesFromGrid(neighboursTemp);
 
 			for (int i = 0; i < neighbours.size(); i++)
 			{
@@ -2329,8 +2482,8 @@ bool Pathfinder::TryToCalculatePath(Coords c1, Coords c2, PATHFINDING_AT_MODE at
 					if (child->_gScore > child->CalculateGScore(current))
 					{
 						child->_parent = current;
-						child->SolidifyCandidates();
 						child->ComputeScores(end);
+						child->SolidifyCandidates();
 					}
 				}
 				else
@@ -2340,8 +2493,8 @@ bool Pathfinder::TryToCalculatePath(Coords c1, Coords c2, PATHFINDING_AT_MODE at
 
 					// COMPUTE THE G
 					child->_parent = current;
-					child->SolidifyCandidates();
 					child->ComputeScores(end);
+					child->SolidifyCandidates();
 				}
 			}
 
@@ -2394,7 +2547,7 @@ bool Pathfinder::TryToCalculatePath(Coords c1, Coords c2, PATHFINDING_AT_MODE at
 			(*i)->_gScore = 0;
 
 			(*i)->_parent = NULL;
-			(*i)->_arrowTrapOnWay = false;
+			//(*i)->_arrowTrapOnWay = false;
 		}
 		for (i = closedList.begin(); i != closedList.end(); i++)
 		{
@@ -2403,7 +2556,7 @@ bool Pathfinder::TryToCalculatePath(Coords c1, Coords c2, PATHFINDING_AT_MODE at
 			(*i)->_gScore = 0;
 
 			(*i)->_parent = NULL;
-			(*i)->_arrowTrapOnWay = false;
+			//(*i)->_arrowTrapOnWay = false;
 		}
 
 		return path_found;
@@ -2415,211 +2568,8 @@ bool Pathfinder::TryToCalculatePath(Coords c1, Coords c2, PATHFINDING_AT_MODE at
 }
 
 
-//bool Pathfinder::TryToCalculatePathNoGrid(Coords c1, Coords c2)
-//{
-//	bool DEBUG = true;
-//
-//	bool path_found = false;
-//
-//	if (c1.GetX() != c2.GetX() || c1.GetY() != c2.GetY())
-//	{
-//		_pathList.clear();
-//
-//		ofstream fileStream;
-//		if (DEBUG) fileStream.open(".\\Pathfinder\\level_paths.txt");
-//
-//		//we have to take start from grid to be able to use info about previous action
-//		MapNode start = *GetNodeFromGrid(c1);
-//		MapNode end = *GetNodeFromGrid(c2);
-//
-//		if (DEBUG)
-//		{
-//			fileStream << "START:" << endl;
-//			fileStream << "X: ";
-//			fileStream << start.GetX();
-//			fileStream << " Y: ";
-//			fileStream << start.GetY();
-//			fileStream << endl;
-//
-//			fileStream << "END" << endl;
-//			fileStream << "X: ";
-//			fileStream << end.GetX();
-//			fileStream << " Y: ";
-//			fileStream << end.GetY();
-//			fileStream << endl;
-//		}
-//
-//		MapNode current;
-//		MapNode child;
-//
-//		std::list<MapNode> openList;
-//		std::list<MapNode> closedList;
-//		list<MapNode>::iterator i;
-//
-//		unsigned int n = 0;
-//
-//		openList.push_back(start);
-//		start._opened = true;
-//
-//		while (n == 0 || (current != end && n < 500))
-//		{
-//			// Look for the smallest f value in the openList
-//			for (i = openList.begin(); i != openList.end(); i++)
-//			{
-//				if (i == openList.begin() || i->CalculateFScore() <= current.CalculateFScore())
-//				{
-//					current = (*i);
-//				}
-//			}
-//
-//			if (DEBUG)
-//			{
-//				fileStream << "searching";
-//				fileStream << " Current X: ";
-//				fileStream << current.GetX();
-//				fileStream << " Current Y: ";
-//				fileStream << current.GetY();
-//			}
-//
-//			// Stop if we've reached the end
-//			if (current == end)
-//			{
-//				if (DEBUG) fileStream << endl << "end reached";
-//				path_found = true;
-//
-//				//save info to grid
-//				_grid[end.GetX()][end.GetY()]->CopyInfo(end);
-//
-//				break;
-//			}
-//
-//			// Remove the current point from the open list
-//			openList.remove(current);
-//			current._opened = false;
-//
-//			// Add the current point to the closed list
-//			closedList.push_back(current);
-//			current._closed = true;
-//
-//			std::vector<MapNode> neighbours = CalculateNeighbours(current, current.GetMvState(), current.GetActionTarget());
-//
-//			for (int i = 0; i < neighbours.size(); i++)
-//			{
-//				child = neighbours[i];
-//
-//				// if it's closed then pass
-//				bool isClosed = false;
-//				for(MapNode node : closedList)
-//					if (child == node)
-//					{
-//						if (DEBUG)
-//						{
-//							fileStream << "\n";
-//							fileStream << "closed";
-//						}
-//						isClosed = true;
-//					}
-//				if (isClosed) continue;
-//
-//				
-//				bool isOpened = false;
-//				for (MapNode node : openList)
-//					if (child == node)
-//						isOpened = true;
-//
-//				// if it's already in the opened list
-//				if (isOpened)
-//				{
-//					//we can compare the G score, because F = G+H, and H is just our distance to target prediction, 
-//					//which is going to be the same because its the same node reached in 2 different ways
-//					if (child._gScore > child.CalculateGScore(&current))
-//					{
-//						child._parent = &current;
-//						child.ComputeScores(&end);
-//					}
-//				}
-//				else
-//				{
-//					openList.push_back(child);
-//					child._opened = true;
-//
-//					// COMPUTE THE G
-//					child._parent = &current;
-//					child.ComputeScores(&end);
-//				}
-//			}
-//
-//			n++;
-//			if (DEBUG) fileStream << "\n";
-//		}
-//
-//		if (DEBUG) fileStream.close();
-//
-//		if (DEBUG) fileStream.open(".\\Pathfinder\\level_path.txt");
-//
-//		if (path_found)
-//		{
-//			// resolve the path starting from the end point
-//			while (current._parent && current != start)
-//			{
-//				_pathList2.push_back(current);
-//				current = *(current._parent);
-//			}
-//			_pathList2.push_back(start);
-//
-//			reverse(_pathList2.begin(), _pathList2.end());
-//		}
-//
-//		if (DEBUG)
-//		{
-//			for (int i = 0; i < _pathList2.size(); i++)
-//			{
-//
-//				fileStream << "X ";
-//				fileStream << _pathList2[i].GetX();
-//				fileStream << " Y ";
-//				fileStream << _pathList2[i].GetY();
-//				fileStream << " Akcja: ";
-//				fileStream << MVactionStrings[_pathList2[i]._actionToReach];
-//				fileStream << " G: ";
-//				fileStream << _pathList2[i]._gScore;
-//				fileStream << " H: ";
-//				fileStream << _pathList2[i]._hScore;
-//				fileStream << "\n";
-//			}
-//			fileStream.close();
-//		}
-//
-//		//// Reset
-//		//for (i = openList.begin(); i != openList.end(); i++)
-//		//{
-//		//	(i)->_opened = false;
-//		//	(i)->_hScore = 0;
-//		//	(i)->_gScore = 0;
-//
-//		//	(i)->_parent = NULL;
-//		//	(i)->_arrowTrapOnWay = false;
-//		//}
-//		//for (i = closedList.begin(); i != closedList.end(); i++)
-//		//{
-//		//	(i)->_closed = false;
-//		//	(i)->_hScore = 0;
-//		//	(i)->_gScore = 0;
-//
-//		//	(i)->_parent = NULL;
-//		//	(i)->_arrowTrapOnWay = false;
-//		//}
-//
-//		return path_found;
-//
-//
-//	}
-//	else //we are standing on the exit
-//		return true;
-//}
 
-
-bool Pathfinder::TryToFindExplorationTarget(Coords startc, PATHFINDING_AT_MODE atmode, std::vector<Coords> allowedArrowTraps)
+bool Pathfinder::TryToFindExplorationTarget(Coords startc, AT_MODE atmode, std::vector<Coords> allowedArrowTraps)
 {
 	bool targetFound = false;
 	std::list<MapNode*> visitedList;
@@ -2644,11 +2594,9 @@ bool Pathfinder::TryToFindExplorationTarget(Coords startc, PATHFINDING_AT_MODE a
 			break;
 		}
 
-		//vector<MapNode*> neighbours = CalculateNeighboursInGrid(current, current->GetMvState(), current->GetActionTarget());
-		std::vector<MapNode> neighboursTemp = CalculateNeighbours(*current, current->GetMvState(), current->GetActionTarget());
-		neighboursTemp = RemoveDuplicateNeighbours(neighboursTemp);
-		neighboursTemp = RemoveNeighboursWithArrowTraps(neighboursTemp, atmode, allowedArrowTraps);
-		std::vector<MapNode*> neighbours = ConvertNeighboursToGrid(neighboursTemp);
+		std::vector<MapNode> neighboursTemp = CalculateNeighbours(*current, false, atmode, allowedArrowTraps);
+		UpdateMovementInfoInGrid(neighboursTemp);
+		std::vector<MapNode*> neighbours = GetNodesFromGrid(neighboursTemp);
 
 		//no neighbours - backtracking
 		if (neighbours.empty())
@@ -2704,7 +2652,7 @@ bool Pathfinder::TryToFindExplorationTarget(Coords startc, PATHFINDING_AT_MODE a
 }
 
 
-bool Pathfinder::TryToFindTargetInNextCC(Coords startc, PATHFINDING_AT_MODE atmode, std::vector<Coords> allowedArrowTraps)
+bool Pathfinder::TryToFindTargetInNextCC(Coords startc, AT_MODE atmode, std::vector<Coords> allowedArrowTraps)
 {
 	bool targetFound = false;
 	std::list<MapNode*> visitedList;
@@ -2729,11 +2677,9 @@ bool Pathfinder::TryToFindTargetInNextCC(Coords startc, PATHFINDING_AT_MODE atmo
 			break;
 		}
 
-		//vector<MapNode*> neighbours = CalculateNeighboursInGrid(current, current->GetMvState(), current->GetActionTarget());
-		std::vector<MapNode> neighboursTemp = CalculateNeighbours(*current, current->GetMvState(), current->GetActionTarget());
-		neighboursTemp = RemoveDuplicateNeighbours(neighboursTemp);
-		neighboursTemp = RemoveNeighboursWithArrowTraps(neighboursTemp, atmode, allowedArrowTraps);
-		std::vector<MapNode*> neighbours = ConvertNeighboursToGrid(neighboursTemp);
+		std::vector<MapNode> neighboursTemp = CalculateNeighbours(*current, false, atmode, allowedArrowTraps);
+		UpdateMovementInfoInGrid(neighboursTemp);
+		std::vector<MapNode*> neighbours = GetNodesFromGrid(neighboursTemp);
 
 		//no neighbours - backtracking
 		if (neighbours.empty())
@@ -2817,7 +2763,7 @@ Coords Pathfinder::GetTargetInNextCC()
 //			explTargets.push_back(Node(current->_x, current->_y));
 //		}
 //
-//		vector<MapSearchNode*> neighbours = CalculateNeighboursInGrid(current, current->GetMvState(), current->GetActionTarget());
+//		vector<MapSearchNode*> neighbours = CalculateNeighboursInGrid(current, current->GetMvState(), current->GetPrevActionTarget());
 //
 //		//no neighbours - backtracking
 //		if (neighbours.empty())
@@ -2895,14 +2841,14 @@ void Pathfinder::NeighboursDebug(Coords c, bool hasMomentum)
 	else if (Passable(x, y) && LadderTop(x, y + 1)) target = LADDERTOP;
 	else target = LEDGE;
 
-	std::vector<MapNode> neighbours = CalculateNeighbours(MapNode(x,y), mvState, target);
+	std::vector<MapNode> neighbours = CalculateNeighbours(MapNode(x, y, IDLE, target, mvState), true, AT_MODE::ALLOW_ARROWTRAPS);
 
 	for (int i = 0; i < neighbours.size(); i++)
 	{
 		fileStream << " X: " << neighbours[i].GetX();
 		fileStream << " Y: " << neighbours[i].GetY();
 		fileStream << " " << MVactionStrings[neighbours[i].GetActionToReach()];
-		fileStream << " " << ActionTargetStrings[neighbours[i].GetActionTarget()];
+		fileStream << " " << ActionTargetStrings[neighbours[i].GetPrevActionTarget()];
 		fileStream << " arrowtr=" << neighbours[i].IsArrowTrapOnWay();
 		fileStream << endl;
 

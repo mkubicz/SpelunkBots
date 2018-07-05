@@ -7,13 +7,13 @@ PathScheduler::PathScheduler(std::shared_ptr<IBot> bot, std::shared_ptr<Pathfind
 	_currentAction = NULL;
 }
 
-bool PathScheduler::TryToSchedulePath(Coords target, PATHFINDING_AT_MODE atmode,
+bool PathScheduler::TryToSchedulePath(Coords target, AT_MODE atmode,
 	std::vector<Coords> allowedArrowTraps)
 {
 	return TryToAddPath(GetStartNodeForNextPath(), target, atmode, allowedArrowTraps);
 }
 
-bool PathScheduler::TryToInsertPath(Coords target, int i, PATHFINDING_AT_MODE atmode,
+bool PathScheduler::TryToInsertPath(Coords target, int i, AT_MODE atmode,
 	std::vector<Coords> allowedArrowTraps)
 {
 	while (_pathInfoQ.size() >= i)
@@ -29,7 +29,6 @@ void PathScheduler::PickUpItem(int itemID)
 	std::vector<std::shared_ptr<IMovementAction>> actions;
 	actions.push_back(std::make_shared<PickUpItemAction>(_bot, itemID));
 
-	//_pathInfoQ.push_back(new PathInfo(std::vector<MapNode>(), Coords(-1,-1), actions));
 	_pathInfoQ.push_back(std::make_unique<PathInfo>(std::vector<MapNode>(), Coords(-1, -1), actions));
 }
 
@@ -38,44 +37,27 @@ void PathScheduler::ScheduleAction(std::shared_ptr<IMovementAction> action)
 	std::vector<std::shared_ptr<IMovementAction>> actions;
 	actions.push_back(action);
 
-	//_pathInfoQ.push_back(new PathInfo(std::vector<MapNode>(), Coords(-1,-1), actions));
 	_pathInfoQ.push_back(std::make_unique<PathInfo>(std::vector<MapNode>(), Coords(-1, -1), actions));
 }
 
-bool PathScheduler::TryToAddPath(Coords start, Coords target, PATHFINDING_AT_MODE atmode,
+bool PathScheduler::TryToAddPath(Coords start, Coords target, AT_MODE atmode,
 	std::vector<Coords> allowedArrowTraps)
 {
 	if (_pathfinder->TryToCalculatePath(start, target, atmode, allowedArrowTraps))
-	//if (_pathfinder->TryToCalculatePathNoGrid(start, target))
 	{
+		//taking a copy because we will hold it in the queue for potentially a long time - 
+		//technically this is not a problem because we create actions immediately, but it 
+		//might create problems later. And it would look weird.
 		std::vector<MapNode> path = _pathfinder->GetPathCopy();
 
 		std::vector<std::shared_ptr<IMovementAction>> actions = CreateActions(path);
 
-		//_pathInfoQ.push_back(new PathInfo(path, target, actions));
 		_pathInfoQ.push_back(std::make_unique<PathInfo>(path, target, actions));
 		return true;
 	}
 	else
 		return false;
 }
-
-
-//void PathScheduler::ModifyPathToDangers(std::vector<MapNode>* path)
-//{
-//	std::vector<MapNode>::iterator pathIt = path->begin();
-//	while (pathIt != path->end())
-//	{
-//		if (pathIt->IsArrowTrapOnWay())
-//		{
-//
-//			if ()
-//
-//		}
-//		else pathIt++;
-//	}
-//}
-
 
 ordersStruct PathScheduler::GetOrdersFromCurrentAction()
 {
@@ -219,10 +201,11 @@ std::vector<std::shared_ptr<IMovementAction>> PathScheduler::CreateActions(std::
 		distY = path[i].GetY() - currC.GetY();
 
 		action = path[i].GetActionToReach();
-		actionTarget = path[i].GetActionTarget();
+		actionTarget = path[i].GetPrevActionTarget();
 		mvState = path[i - 1].GetMvState();
 		
-		if (action == DROP && _pathfinder->LadderTop(currC.OffsetY(1)))
+		if (action == DROP && _pathfinder->LadderTop(currC.OffsetY(1)) ||
+			action == CLIMB && mvState == GROUND && distY < 0)
 			actions.push_back(std::make_shared<CentralizeAction>(_bot));
 
 		actions.push_back(CreateAction(action, actionTarget, mvState, distX, distY));

@@ -19,7 +19,7 @@ private:
 	void UpdateCurrentAction();
 	std::shared_ptr<IMovementAction> GetNextAction();
 
-	bool TryToAddPath(Coords start, Coords target, PATHFINDING_AT_MODE atmode,
+	bool TryToAddPath(Coords start, Coords target, AT_MODE atmode,
 		std::vector<Coords> allowedArrowTraps = std::vector<Coords>());
 
 	std::vector<std::shared_ptr<IMovementAction>> CreateActions(std::vector<MapNode> path);
@@ -34,9 +34,9 @@ public:
 
 	void NewLevel();
 
-	bool TryToSchedulePath(Coords target, PATHFINDING_AT_MODE atmode,
+	bool TryToSchedulePath(Coords target, AT_MODE atmode,
 		std::vector<Coords> allowedArrowTraps = std::vector<Coords>());
-	bool TryToInsertPath(Coords target, int i, PATHFINDING_AT_MODE atmode,
+	bool TryToInsertPath(Coords target, int i, AT_MODE atmode,
 		std::vector<Coords> allowedArrowTraps = std::vector<Coords>());
 	void PickUpItem(int itemID);
 	void ScheduleAction(std::shared_ptr<IMovementAction> action);

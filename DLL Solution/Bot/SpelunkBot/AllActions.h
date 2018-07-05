@@ -14,3 +14,5 @@
 #include "PickUpItemAction.h"
 #include "ThrowItemAction.h"
 #include "WaitAction.h"
+#include "ThrowRopeAction.h"
+#include "ExploitDisarmAction.h"
