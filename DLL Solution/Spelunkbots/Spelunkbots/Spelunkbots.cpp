@@ -130,9 +130,12 @@ double bats[X_NODES][Y_NODES];
 
 int _heldItemID = 0;
 
+using CoordsType = pair<int, int>;
+
 std::vector<collectableObject> collectablesList;
 std::vector<enemyObject> enemiesList;
-vector<pair<int, int>> disarmedArrowTraps;
+vector<CoordsType> disarmedArrowTraps;
+map<CoordsType, int> spearTrapStates;
 
 double hasResetMap = 0;
 
@@ -2216,6 +2219,58 @@ GMEXPORT bool IsArrowTrapDisarmed(int x, int y)
 			return true;
 	
 	return false;
+}
+
+/**
+* \brief SetSpearTrapState Sets speartrap animation state.
+*
+* @param x X coordinate of the arrowtrap.
+* @param y Y coordinate of the arrowtrap.
+* @param state State of the spear trap's animation (50 - triggered, 0 - end of animation).
+*
+* \note This function should not be changed or used when implementing a bot.
+*/
+GMEXPORT double SetSpearTrapState(double x, double y, double state)
+{
+	ConvertToNodeCoordinates(x, y);
+	CoordsType coords = make_pair(x, y);
+	
+	spearTrapStates[coords] = state;
+		
+	return 0;
+}
+
+/*
+*\brief ResetSpearTrapStates Resets spear trap states for a new level.
+*
+* \note This function should not be changed or used when implementing a bot.
+*/
+GMEXPORT double ResetSpearTrapStates()
+{
+	spearTrapStates.clear();
+	return 0;
+}
+
+/**
+* \brief GetSpearTrapState Returns state of animation of the arrowtrap with coords (x,y).
+* If there is no speartrap in that node, returns -1.
+* 50 - triggered, 0 - end of animation
+*
+* @param x X coordinate of the speartrap.
+* @param y Y coordinate of the speartrap.
+*
+* \note To be used by the bot.
+*/
+GMEXPORT int GetSpearTrapState(int x, int y)
+{
+	CoordsType coords = make_pair(x, y);
+
+	auto it = spearTrapStates.find(coords);
+
+	if (it != spearTrapStates.end())
+		return spearTrapStates[coords];
+
+	return -1;
 }
 
 /**

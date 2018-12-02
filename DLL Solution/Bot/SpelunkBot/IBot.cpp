@@ -130,6 +130,7 @@ void IBot::InitialiseDLLFunctions()
 	IsArrowTrapDisarmed = (IsArrowTrapDisarmedPROC)GetProcAddress(spelunkbots_hModule, "IsArrowTrapDisarmed");
 	GetHeldItemID = (GetHeldItemIDPROC)GetProcAddress(spelunkbots_hModule, "GetHeldItemID");
 	IsHoldingItem = (IsHoldingItemPROC)GetProcAddress(spelunkbots_hModule, "IsHoldingItem");
+	GetSpearTrapState = (GetSpearTrapStatePROC)GetProcAddress(spelunkbots_hModule, "GetSpearTrapState");
 	
 	DisplayLevelLayout = (DisplayLevelLayoutPROC)GetProcAddress(spelunkbots_hModule, "DisplayLevelLayout");
 	IsFacingLeft = (IsFacingLeftPROC)GetProcAddress(spelunkbots_hModule, "IsFacingLeft");

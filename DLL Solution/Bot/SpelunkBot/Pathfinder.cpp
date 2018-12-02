@@ -814,7 +814,7 @@ void Pathfinder::HandleUnsafeNeighboursArrowTrap(MapNode origin, std::vector<Map
 				if (ArrowTrapR(n.GetX() - i, n.GetY()) && !_bot->IsArrowTrapDisarmed(n.GetX() - i, n.GetY()))
 				{
 					//HANG and HANGDROP is technically safe and can disarm a trap, but I don't have the infrastructure
-					//to use it yet and it only causes problems
+					//to use it yet and it only causes problemms --well i have it now
 					//if (i == 1 && (action == HANG || action == HANGDROP) && origin.GetCoords() == n.Offset(-1, -1))
 					//	continue;
 

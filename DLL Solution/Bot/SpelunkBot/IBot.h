@@ -67,6 +67,7 @@ typedef double(__cdecl *IsNodePassablePROC)(double x, double y, double usingPixe
 typedef bool(__cdecl *IsArrowTrapDisarmedPROC)(int x, int y);
 typedef int(__cdecl *GetHeldItemIDPROC)();
 typedef bool(__cdecl *IsHoldingItemPROC)();
+typedef int(__cdecl *GetSpearTrapStatePROC)(int x, int y);
 
 typedef double(__cdecl *DisplayLevelLayoutPROC)();
 typedef bool(__cdecl *IsFacingLeftPROC)();
@@ -201,6 +202,7 @@ public:
 	IsArrowTrapDisarmedPROC IsArrowTrapDisarmed;
 	GetHeldItemIDPROC GetHeldItemID;
 	IsHoldingItemPROC IsHoldingItem;
+	GetSpearTrapStatePROC GetSpearTrapState;
 
 	DisplayLevelLayoutPROC DisplayLevelLayout;
 	IsFacingLeftPROC IsFacingLeft;

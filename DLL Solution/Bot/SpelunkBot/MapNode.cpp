@@ -29,31 +29,11 @@ MapNode::MapNode(int x, int y, MOVEMENTACTION actionToReach, MVSTATE mvState)
 MapNode::MapNode(int x, int y, MOVEMENTACTION actionToReach, ACTION_TARGET jumpTarget, MVSTATE mvState)
 	: _coords(Coords(x, y, NODE_ROUNDDOWN))
 {
+	Reset();
+
 	_actionToReach = actionToReach;
 	_actionToReachTarget = jumpTarget;
 	_mvState = mvState;
-
-	_actionToReachCandidate = IDLE;
-	_actionToReachTargetCandidate = GROUND;
-	_mvStateCandidate = mvSTANDING;
-
-	_gScore = 0;
-	_hScore = 0;
-	_parent = NULL;
-
-	_opened = false;
-	_closed = false;
-	_visited = false;
-
-	_CCnr = 0;
-	_dij_dist = INT_MAX;
-	_dij_prev = NULL;
-
-	_arrowTrapOnWay = false;
-	_arrowTrapOnWayCandidate = false;
-
-	_arrowTrapCoords = Coords();
-	_arrowTrapCoordsCandidate = Coords();
 }
 
 void MapNode::Reset()

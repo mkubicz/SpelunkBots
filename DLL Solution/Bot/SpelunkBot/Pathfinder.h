@@ -107,7 +107,6 @@ public:
 private:	
 	std::shared_ptr<IBot> _bot;
 	std::shared_ptr<MovementSimulator> _moveSim;
-	//std::map<int, std::map<int, MapNode*> > _grid;
 	std::vector<std::vector<MapNode*> > _grid;
 
 	std::vector<MapNode*> _pathList;

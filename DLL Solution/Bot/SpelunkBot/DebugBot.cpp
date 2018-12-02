@@ -52,7 +52,9 @@ DebugBot::~DebugBot()
 {
 	//_botLogicState = EXIT;
 	_botLogicExit = true;
-	_botLogicThread.join();
+	//invoking join on unjoinable thread yields undefined behaviour, so we have to check
+	if (_botLogicThread.joinable())
+		_botLogicThread.join();
 }
 
 #pragma endregion
@@ -217,7 +219,6 @@ void DebugBot::BotLogic()
 
 	while (true)
 	{
-		//if (_botLogicState == EXIT) return;
 		if (_botLogicExit) return;
 
 		if (_botLogicState == DEBUG)
@@ -277,7 +278,7 @@ void DebugBot::BotLogic()
 			Item* closest = NULL;
 
 			//znajdujemy najbli¿szy item który nie jest ju¿ scheduled, jak takiego nie ma to czekamy,
-			// jak nie ma ju¿ nic scheduled to przechodzimy do daszego stanu.
+			// jak nie ma ju¿ nic scheduled to przechodzimy do dalszego stanu.
 
 			Coords start = _pathScheduler->GetStartNodeForNextPath();
 			_pathfinder->Dijkstra(start, ALLOW_ARROWTRAPS);
@@ -356,7 +357,7 @@ void DebugBot::BotLogic()
 				{
 					_botLogicState = MOVE_TO_NEXT_CC;
 				}
-			}
+			}se
 			else
 			{
 				_waitTimer = 10;
@@ -429,6 +430,7 @@ void DebugBot::BotLogic()
 			break;
 		}
 		case SEARCH_FOR_EXIT:
+		{
 			if (_pathfinder->IsExitFound())
 			{
 				Coords exit = _pathfinder->GetExit();
@@ -449,7 +451,9 @@ void DebugBot::BotLogic()
 			}
 
 			break;
+		}
 		case GO_TO_EXIT:
+		{
 			if (playerC == _pathfinder->GetExit())
 				_botLogicState = EXIT_REACHED;
 			else
@@ -457,19 +461,28 @@ void DebugBot::BotLogic()
 				_botLogicWaiting = true;
 			}
 			break;
+		}
 		case EXIT_REACHED:
+		{
 			//mo¿na wcisn¹æ strza³kê w górê albo coœ
 			std::this_thread::sleep_for(100ms);
 			break;
+		}
 		case UNREACHABLE_EXIT:
+		{
 			std::this_thread::sleep_for(100ms);
 			break;
+		}
 		case NO_EXIT_EXPLORE:
+		{
 			std::this_thread::sleep_for(100ms);
 			break;
+		}
 		case NO_EXIT_ERROR:
+		{
 			std::this_thread::sleep_for(100ms);
 			break;
+		}
 		case DISARM_ARROWTRAP:
 		{
 			//_arrowTrapToDisarm = _pathfinder->GetNodeFromGrid(_targetAfterDisarm)->GetArrowTrapCoords();
@@ -687,9 +700,12 @@ void DebugBot::Update()
 		_pathfinder->NeighboursDebug(playerc, hasMomentum);
 		_debugTimer = 10;
 
+
+
 	}
 	_debugTimer -= 1;
 
+	std::cout << GetSpearTrapState(5, 5) << std::endl;
 
 	ordersStruct orders = _pathScheduler->GetOrdersFromCurrentAction();
 	ExecuteOrders(orders);

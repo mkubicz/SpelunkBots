@@ -54,7 +54,7 @@ protected:
 
 public:
 	IMovementAction(std::shared_ptr<IBot> const& bot);
-	~IMovementAction();
+	~IMovementAction(); //raczej nie potrzeba destruktora
 
 	bool ActionDone();
 	MOVEMENTACTION ActionType();
